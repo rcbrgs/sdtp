@@ -1,0 +1,16 @@
+__pycache__*
+*egg-info
+*~
+#*
+
+*.db
+*.json
+*.log
+*.pyc
+
+build/
+dist/
+lib/
+src/
+test/
+windows/
