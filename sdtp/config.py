@@ -13,7 +13,7 @@ class config ( object ):
         self.values = {
             "app_name" : "SDTP",
             
-            "auto_updater_url" : "http://www.ime.usp.br/~rborges/sdtp/",
+            "auto_updater_url" : "https://github.com/rcbrgs/sdtp/releases/download/0.9.0/",
             
             "show_chat_window" : False,
 
