@@ -4,20 +4,21 @@ from PyQt4 import QtCore, QtGui
 #from PySide import QtCore, QtGui
 import sys
 
-class players_window ( QtGui.QWidget ):
+class players_control_widget ( QtGui.QWidget ):
 
-    def __init__ ( self, parent = None, controller = None, title = None ):
+    def __init__ ( self, parent = None, controller = None, title = "Players" ):
         super ( self.__class__, self ).__init__ ( )
-
         self.controller = controller
+        self.parent = parent
         self.title = title
         
         self.init_GUI ( )
         self.show ( )
 
-        self.controller.config.verify ( "show_players_window" )
+        self.controller.config.verify ( "{}_show".format ( self.__class__.__name__ ) )
 
     def init_GUI ( self ):
+        self.controller.log ( )
 
         self.player_selected_label = QtGui.QLabel ( "No player selected", self )
         self.player_selected_steamid = None
@@ -41,9 +42,6 @@ class players_window ( QtGui.QWidget ):
         self.controller.metronomer.lp_sent.connect ( self.cleanup_players_list )
         self.players_list_widget.cellClicked.connect ( self.change_selected_player )
 
-        close_button = QtGui.QPushButton ( "Close", self )
-        close_button.clicked.connect ( self.close )
-
         main_layout = QtGui.QVBoxLayout ( )
         player_actions_layout = QtGui.QHBoxLayout ( )
         player_actions_layout.addWidget ( self.player_selected_label )
@@ -54,7 +52,6 @@ class players_window ( QtGui.QWidget ):
         player_actions_layout.addWidget ( abort_challenge )
         main_layout.addLayout ( player_actions_layout )
         main_layout.addWidget ( self.players_list_widget )
-        main_layout.addWidget ( close_button )
         self.setLayout ( main_layout )
 
         if self.title != None:
@@ -79,7 +76,7 @@ class players_window ( QtGui.QWidget ):
             self.controller.log ( "debug", "Selected player update tried with invalid selection. Exception: {}".format ( e ) )
 
     def close ( self ):
-        self.controller.config.falsify ( "show_players_window" )
+        self.controller.config.falsify ( "{}_show".format ( self.__class__.__name__ ) )
         super ( self.__class__, self ).close ( )
 
     def give_screamer_player ( self ):
@@ -111,7 +108,13 @@ class players_window ( QtGui.QWidget ):
         self.players_list_widget.setRowCount ( row + 1 )
         for index in range ( len ( match_groups ) ):
             self.players_list_widget.setItem ( row, index, QtGui.QTableWidgetItem ( str ( match_groups [ index ] ) ) )
-            #self.controller.log ( "debug", "{} {} {}".format ( row, index, str ( match_groups [ index ] ) ) )
 
     def cleanup_players_list ( self ):
         self.players_list_widget.setRowCount ( 0 )
+
+    def closeEvent ( self, event ):
+        self.controller.log ( )
+        
+        event.ignore ( )
+        self.parent.subwindow_actions [ "{}_show_action".format ( self.__class__.__name__ ) ].setChecked ( False )
+

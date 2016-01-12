@@ -1,24 +1,28 @@
 # -*- coding: utf-8 -*-
+# 0.2.0
 
 import json
 import os
+import pathlib
 import sys
 
 class config ( object ):
-    def __init__ ( self, controller ):
+    def __init__ ( self, controller = None ):
         super ( self.__class__, self ).__init__ ( )
-
         self.controller = controller
-        
+
         self.values = {
             "app_name" : "SDTP",
+            "mdi_auto_organizing" : True,
             
             "auto_updater_url" : "https://github.com/rcbrgs/sdtp/releases/download/0.9.0/",
             
             "show_chat_window" : False,
 
-            "enable_challenge" : False,
-            "show_challenge_window" : False,
+            "db_engine" : "sqlite",
+            "database_widget_show" : True,
+
+            #"interpreter_widget_show" : True,
             
             "configuration_file_name" : "default.json",
 
@@ -29,16 +33,16 @@ class config ( object ):
     
             "log_file_name" : "sdtp.log",
             "log_file_path" : "",
-            "show_log_window" : False,
-            "show_debug" : False,
-            "show_info" : False,
-            "show_warning" : True,
-            "show_error" : True,
-            "show_critical" : True,
+            "log_widget_show" : False,
+            "log_show_debug" : False,
+            "log_show_info" : False,
+            "log_show_warning" : True,
+            "log_show_error" : True,
+            "log_show_critical" : True,
 
             "enable_lp" : True,
             "lp_interval" : 2,
-            "show_metronomer_window" : False,
+            "metronomer_widget_show" : False,
             
             "enable_ping_limiter" : False,
             "max_ping" : 10000,
@@ -55,6 +59,9 @@ class config ( object ):
             "auto_connect" : False,
 
             # mods
+            "enable_challenge" : False,
+            "show_challenge_window" : False,
+            
             "enable_auto_horde_portals" : False,
             "enable_player_portals" : False,
             "show_player_portals_window" : False,
@@ -68,66 +75,25 @@ class config ( object ):
             "frequency_reboots_interval" : 24,
             "latest_reboot" : 0,
             "server_empty_condition" : True,
-            "show_server_reboot_window" : False,
+            "server_reboots_widget_show" : False,
         }
-
         if os.name == "nt":
-            self.values [ "configuration_file_path" ] = os.environ [ "ALLUSERSPROFILE" ]
+            self.values [ "workdir" ] = os.environ [ "ALLUSERSPROFILE" ]
             self.values [ "separator" ] = "\\\\"
         else:
-            self.values [ "configuration_file_path" ] = os.path.expanduser ( "~" )
+            self.values [ "workdir" ] = os.path.expanduser ( "~" )
             self.values [ "separator" ] = "/"
+        self.values [ "config_file" ] = "{}{}.{}_preconfig.json".format ( self.values [ "workdir" ], self.values [ "separator" ], self.values [ "app_name" ] )
+        self.values [ "db_sqlite_file_path" ] = "{}{}.{}_default_db.sqlite".format ( self.values [ "workdir" ], self.values [ "separator" ], self.values [ "app_name" ] )
 
     def falsify ( self, key ):
+        self.controller.log ( )
+        
         self.values [ key ] = False
 
-    def load_configuration_file ( self ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "debug", prefix + " ( )" )
-
-        try:
-            if os.name == 'posix':
-                config_file_name = self.values [ 'configuration_file_path' ] + "/" + self.values [ 'configuration_file_name' ]
-            elif os.name == 'nt':
-                config_file_name = self.values [ 'configuration_file_path' ] + "\\" + self.values [ 'configuration_file_name' ]
-            config_file = open ( config_file_name, "r" )
-        except IOError:
-            self.controller.log ( "warning", "Could not find configuration file {}.".format ( config_file_name ) )
-            return
-        try:
-            new_config = json.load ( config_file )
-            self.controller.log ( "debug", str ( new_config ) )
-            for key in list ( self.values.keys ( ) ):
-                if key in list ( new_config.keys ( ) ):
-                    self.values [ key ] = new_config [ key ]
-            self.controller.log ( "debug", "Loaded configuration file {}.".format ( config_file_name ) )
-        except ValueError:
-            self.controller.log ( "info", "Configuration file named '{}' is invalid. Using default values.".format ( config_file_name ) )
-
-    def save_configuration_file ( self ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "debug", prefix + " ( )" )
-
-        if os.name == 'posix':
-            config_file =  open ( self.values [ 'configuration_file_path' ] + "/" + self.values [ 'configuration_file_name' ], "w" )
-        elif os.name == 'nt':
-            config_file =  open ( self.values [ 'configuration_file_path' ] + "\\" + self.values [ 'configuration_file_name' ], "w" )
-        json.dump ( self.values, config_file )
-        self.controller.log ( "debug", "Configuration file saved." )
-
-    def toggle ( self, key ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "debug", prefix + " ( {} )".format ( key ) )
-
-        if self.values [ key ] == True:
-            self.values [ key ] = False
-            return
-        if self.values [ key ] == False:
-            self.values [ key ] = True
-            return
-        self.controller.log ( "error", "config.toggle ( {} ) called, but value for key is not a boolean.".format ( key ) )
-        
     def verify ( self, key ):
+        self.controller.log ( )
+        
         self.values [ key ] = True
 
     def get ( self, key ):
@@ -138,3 +104,67 @@ class config ( object ):
         except:
             self.controller.log ( "error", "unable to find key '{}' among configuration values.".format ( key ) )
             return None
+        
+    def set ( self, key, value ):
+        self.controller.log ( )
+        
+        self.values [ key ] = value
+        
+    def load_configuration_file ( self ):
+        self.controller.log ( )
+
+        # bridge 0.9.0 to 0.10.0:
+        possible_old = "{}{}default.json".format ( self.get ( "workdir" ), self.get ( "separator" ) )
+        possibility = pathlib.Path ( possible_old )
+        if possibility.exists ( ):
+            self.controller.log ( "info", "old config file found - renaming." )
+            os.rename ( possible_old, self.get ( "config_file" ) )
+        # bridge ends here
+        
+        try:
+            preconfig_file = open ( self.get ( "config_file" ), "r" )
+        except:
+            self.controller.log ( "error", "Could not open the pre-configuration file {}.".format ( self.get ( "config_file" ) ) )
+            return
+        try:
+            preconfig = json.load ( preconfig_file )
+            for key in list ( preconfig.keys ( ) ):
+                self.controller.log ( "debug", "config [ \"{}\" ] = {}".format ( key, preconfig [ key ] ) )
+                self.values [ key ] = preconfig [ key ]
+            self.controller.log ( "debug", "Loaded pre-configuration file." )
+        except ValueError:
+            self.controller.log ( "info", "Configuration file named '{}' is invalid. Using default values.".format ( self.get ( "config_file" ) ) )
+            return
+
+        try:
+            config_file = open ( self.get ( "config_file" ), "r" )
+        except IOError:
+            self.controller.log ( "error", "Could not open the configuration file {}.".format ( self.get ( "config_file" ) ) )
+            return
+        try:
+            final_config = json.load ( config_file )
+            for key in list ( final_config.keys ( ) ):
+                self.controller.log ( "debug", "config [ \"{}\" ] = {}".format ( key, final_config [ key ] ) )
+                self.values [ key ] = final_config [ key ]
+            self.controller.log ( "debug", "Loaded configuration file." )
+        except ValueError:
+            self.controller.log ( "info", "Configuration file named '{}' is invalid. Using default values.".format ( self.get ( "config_file" ) ) )
+
+    def save_configuration_file ( self ):
+        self.controller.log ( )
+
+        self.controller.log ( "debug", "saving current configuration in '{}'.".format ( self.get ( "config_file" ) ) )
+        config_file = open ( self.get ( "config_file" ), "w" )
+        json.dump ( self.values, config_file )
+        self.controller.log ( "debug", "Configuration file '{}' saved.".format ( self.get ( "config_file" ) ) )
+
+    def toggle ( self, key ):
+        self.controller.log ( )
+
+        if self.values [ key ] == True:
+            self.values [ key ] = False
+            return
+        if self.values [ key ] == False:
+            self.values [ key ] = True
+            return
+        self.controller.log ( "error", "config.toggle ( {} ) called, but value for key is not a boolean.".format ( key ) )

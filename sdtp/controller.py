@@ -13,7 +13,7 @@ from .mods.challenge import challenge
 from .mods.forbidden_countries import forbidden_countries
 from .mods.ping_limiter import ping_limiter
 from .mods.portals import portals
-from .mods.server_reboot import server_reboot 
+from .mods.server_reboots import server_reboots
 
 import json
 import os
@@ -50,7 +50,7 @@ class controller ( QtCore.QThread ):
         self.forbidden_countries = None
         self.ping_limiter = None
         self.portals = None
-        self.server_reboot = None
+        self.server_reboots = None
         
     def run ( self ):
         self.log ( "debug", "controller.run ( )" )
@@ -83,12 +83,12 @@ class controller ( QtCore.QThread ):
         self.forbidden_countries.start ( )
         self.ping_limiter = ping_limiter ( self )
         self.portals = portals ( self )
-        self.server_reboot = server_reboot ( self )
+        self.server_reboots = server_reboots ( self )
         self.mods = [ self.challenge,
                       self.forbidden_countries,
                       self.ping_limiter,
                       self.portals,
-                      self.server_reboot ]
+                      self.server_reboots ]
                 
         self.config.load_configuration_file ( )
         self.logger.set_initial_level ( )

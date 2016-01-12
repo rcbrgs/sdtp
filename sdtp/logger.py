@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# 0.2.0
 
 from PyQt4 import QtCore, QtGui
 from datetime import datetime
@@ -41,10 +42,10 @@ class logger ( QtCore.QThread ):
     # specific
     ##########
 
-    def add_to_buffer ( self, gui_message ):
+    def add_to_buffer ( self, log_level, gui_message ):
         if len ( self.log_buffer ) > self.log_buffer_size:
             self.log_buffer = self.log_buffer [ 1 : ]
-        self.log_buffer.append ( gui_message )
+        self.log_buffer.append ( ( log_level, gui_message ) )
         
     def log_call ( self, log_level, log_message ):
         self.log_gui.emit ( log_level, log_message )
@@ -58,7 +59,7 @@ class logger ( QtCore.QThread ):
             self.logger.error ( log_message )
         if ( log_level.lower ( ) == "critical" ):
             self.logger.critical ( log_message )
-        self.add_to_buffer ( log_message )
+        self.add_to_buffer ( log_level, log_message )
 
     def log ( self, log_level, log_message ):
         frame = sys._getframe ( 2 )
@@ -86,24 +87,19 @@ class logger ( QtCore.QThread ):
             self.logger.setLevel ( logging.CRITICAL )
 
     def set_initial_level ( self ):
-        if self.controller.config.values [ "show_debug" ]:
-            #print ( "logging.DEBUG" )
+        if self.controller.config.values [ "log_show_debug" ]:
             self.logger.setLevel ( logging.DEBUG )
             return
-        if self.controller.config.values [ "show_info" ]:
-            #print ( "logging.INFO" )
+        if self.controller.config.values [ "log_show_info" ]:
             self.logger.setLevel ( logging.INFO )
             return
-        if self.controller.config.values [ "show_warning" ]:
-            #print ( "logging.WARNING" )
+        if self.controller.config.values [ "log_show_warning" ]:
             self.logger.setLevel ( logging.WARNING )
             return
-        if self.controller.config.values [ "show_error" ]:
-            #print ( "logging.ERROR" )
+        if self.controller.config.values [ "log_show_error" ]:
             self.logger.setLevel ( logging.ERROR )
             return
-        if self.controller.config.values [ "show_critical" ]:
-            #print ( "logging.CRITICAL" )
+        if self.controller.config.values [ "log_show_critical" ]:
             self.logger.setLevel ( logging.CRITICAL )
             return
     
@@ -119,14 +115,54 @@ class log_widget ( QtGui.QWidget ):
     def init_GUI ( self ):
         self.controller.log ( )
 
-        layout = QtGui.QHBoxLayout ( )
-        self.log_list = QtGui.QListWidget ( )
-        self.add_buffer ( )
-        self.controller.logger.log_gui.connect ( self.insert_log )
-        layout.addWidget ( self.log_list )
-        self.setLayout ( layout )
+        self.debug_checkbox = QtGui.QCheckBox ( "Show DEBUG messages", self )
+        self.debug_checkbox.setChecked ( self.controller.config.values [ "show_debug" ] )
+        self.debug_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "show_debug" ) )
+        self.info_checkbox = QtGui.QCheckBox ( "Show INFO messages", self )
+        self.info_checkbox.setChecked ( self.controller.config.values [ "show_info" ] )
+        self.info_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "show_info" ) )        
+        self.warning_checkbox = QtGui.QCheckBox ( "Show WARNING messages", self )
+        self.warning_checkbox.setChecked ( self.controller.config.values [ "show_warning" ] )
+        self.warning_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "show_warning" ) )
+        self.error_checkbox = QtGui.QCheckBox ( "Show ERROR messages", self )
+        self.error_checkbox.setChecked ( self.controller.config.values [ "show_error" ] )
+        self.error_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "show_error" ) )
+        self.critical_checkbox = QtGui.QCheckBox ( "Show CRITICAL messages", self )
+        self.critical_checkbox.setChecked ( self.controller.config.values [ "show_critical" ] )
+        self.critical_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "show_critical" ) )
+        
+        self.log_widget = QtGui.QListWidget ( self )
+        self.log_widget.setFont ( QtGui.QFont ( 'Monospace', 10 ) )
+
+        checkboxes_layout = QtGui.QVBoxLayout ( )
+        checkboxes_layout.addWidget ( self.debug_checkbox )
+        checkboxes_layout.addWidget ( self.info_checkbox )
+        checkboxes_layout.addWidget ( self.warning_checkbox )
+        checkboxes_layout.addWidget ( self.error_checkbox )
+        checkboxes_layout.addWidget ( self.critical_checkbox )
+        checkboxes_frame = QtGui.QFrame ( )
+        checkboxes_frame.setLayout ( checkboxes_layout )
+        
+        main_layout = QtGui.QHBoxLayout ( )
+        main_layout.addWidget ( self.log_widget )
+        main_frame = QtGui.QFrame ( )
+        main_frame.setLayout ( main_layout )
+
+        tabs = QtGui.QTabWidget ( )
+        tabs.addTab ( checkboxes_frame, "Config" )
+        tabs.addTab ( main_frame, "Log" )
+        
+        tab_layout = QtGui.QHBoxLayout ( )
+        tab_layout.addWidget ( tabs )
+        
+        self.setLayout ( tab_layout )
+
+        QtGui.QApplication.setStyle ( QtGui.QStyleFactory.create ( 'Cleanlooks' ) )       
         if self.title != None:
             self.setWindowTitle ( self.title )
+            
+        self.add_buffer ( )
+        self.controller.logger.log_gui.connect ( self.insert_log )
 
     def closeEvent ( self, event ):
         self.controller.log ( )
@@ -136,8 +172,54 @@ class log_widget ( QtGui.QWidget ):
             
     def add_buffer ( self ):
         for item in self.controller.logger.log_buffer:
-            self.insert_log ( item )
+            self.insert_log ( item [ 0 ], item [ 1 ] )
 
-    def insert_log ( self, log_message ):
-        self.log_list.insertItem ( 0, log_message )
+    def insert_log ( self, log_level_input, log_message_input ):
+        try:
+            log_message = str ( log_message_input )
+        except UnicodeEncodeError as e:
+            print ( "UnicodeEncodeError at logger.add_log: {}".format ( e ) )
+            return
+        log_level = str ( log_level_input )
+        now = datetime.strftime ( datetime.now ( ), "%Y-%m-%d %H:%M:%S" )
+        if log_level == "debug":
+            if self.debug_checkbox.isChecked ( ):
+                self.log_widget.insertItem ( 0, "{} {:5s} {}".format ( now, log_level.upper ( ), log_message ) )
+        if log_level == "info":
+            if self.info_checkbox.isChecked ( ):
+                self.log_widget.insertItem ( 0, "{} {:5s} {}".format ( now, log_level.upper ( ), log_message ) )
+        if log_level == "warning":
+            if self.warning_checkbox.isChecked ( ):
+                self.log_widget.insertItem ( 0, "{} {:5s} {}".format ( now, log_level.upper ( ), log_message ) )
+        if log_level == "error":
+            if self.error_checkbox.isChecked ( ):
+                self.log_widget.insertItem ( 0, "{} {:5s} {}".format ( now, log_level.upper ( ), log_message ) )
+        if log_level == "critical":
+            if self.critical_checkbox.isChecked ( ):
+                self.log_widget.insertItem ( 0, "{} {:5s} {}".format ( now, log_level.upper ( ), log_message ) )
         
+    def show_checkbox_changed_state ( self, log_level_config ):
+        if self.controller.config.values [ log_level_config ]:
+            self.controller.config.values [ log_level_config ] = False
+        else:
+            self.controller.config.values [ log_level_config ] = True
+
+        if self.controller.config.values [ "log_show_debug" ]:
+            self.controller.logger.set_level ( "debug" )
+            return
+        if self.controller.config.values [ "log_show_info" ]:
+            self.controller.logger.set_level ( "info" )
+            return
+        if self.controller.config.values [ "log_show_warning" ]:
+            self.controller.logger.set_level ( "warning" )
+            return
+        if self.controller.config.values [ "log_show_error" ]:
+            self.controller.logger.set_level ( "error" )
+            return
+        if self.controller.config.values [ "log_show_critical" ]:
+            self.controller.logger.set_level ( "critical" )
+            return
+
+    def close ( self ):
+        self.controller.config.values [ "{}_show".format ( self.__class__.__name__ ) ] = False
+        super ( self.__class__, self ).close ( )

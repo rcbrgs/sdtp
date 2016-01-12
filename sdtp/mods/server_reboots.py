@@ -7,7 +7,7 @@ from PyQt4 import QtCore, QtGui
 import sys
 import time
 
-class server_reboot ( QtCore.QThread ):
+class server_reboots ( QtCore.QThread ):
 
     def __init__ ( self, controller ):
         super ( self.__class__, self ).__init__ ( )
@@ -114,12 +114,12 @@ class server_reboot ( QtCore.QThread ):
         self.uptime_triggered = False
         self.alarm_triggered = False
 
-class server_reboot_window ( QtGui.QWidget ):
+class server_reboots_widget ( QtGui.QWidget ):
 
     def __init__ ( self, parent = None, controller = None, title = None ):
         super ( self.__class__, self ).__init__ ( )
-
         self.controller = controller
+        self.parent = parent
         self.title = title
         
         self.init_GUI ( )
@@ -161,11 +161,8 @@ class server_reboot_window ( QtGui.QWidget ):
         server_empty_condition.stateChanged.connect ( lambda: self.controller.config.toggle ( "server_empty_condition" ) )
 
         abort = QtGui.QPushButton ( "Abort current shutdown", self )
-        abort.clicked.connect ( self.controller.server_reboot.abort_shutdown )
+        abort.clicked.connect ( self.controller.server_reboots.abort_shutdown )
         
-        close_button = QtGui.QPushButton ( "Close", self )
-        close_button.clicked.connect ( self.close )
-
         main_layout = QtGui.QVBoxLayout ( )
         reboot_layout = QtGui.QHBoxLayout ( )
         reboot_layout.addWidget ( enable_reboots )
@@ -182,7 +179,6 @@ class server_reboot_window ( QtGui.QWidget ):
 
         control_layout = QtGui.QHBoxLayout ( )
         control_layout.addWidget ( abort )
-        control_layout.addWidget ( close_button )
 
         main_layout.addLayout ( control_layout )
 
@@ -213,3 +209,10 @@ class server_reboot_window ( QtGui.QWidget ):
         self.controller.config.values [ "alarm_reboots_time" ] = int ( self.alarm_reboots.text ( ) ) 
         self.reboots_alarm_label.setText ( "everyday at {} (24 hour notation).".format ( self.alarm_reboots.text ( ) ) )
         self.alarm_reboots.setText ( "" )
+
+    def closeEvent ( self, event ):
+        self.controller.log ( )
+        
+        #event.ignore ( )
+        #self.parent.subwindow_actions [ "{}_show_action".format ( self.__class__.__name__ ) ].setChecked ( False )
+        self.parent.mdi_area.removeSubWindow ( self )
