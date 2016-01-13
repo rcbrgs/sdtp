@@ -2,6 +2,7 @@
 
 from .forbidden_countries import forbidden_countries_widget
 from .ping_limiter import ping_limiter_widget
+from .portals import portals_widget
 from .server_reboots import server_reboots_widget
 
 from PyQt4 import QtGui, QtCore
@@ -30,7 +31,12 @@ class mods_widget ( QtGui.QWidget ):
         ping_limiter_button.clicked.connect ( lambda: self.spawn_subwindow ( ping_limiter_widget ( self.parent, self.controller ) ) )
         if self.controller.config.get ( "ping_limiter_widget_show" ):
             ping_limiter_button.clicked.emit ( True )
-            
+
+        portals_button = QtGui.QPushButton ( 'Configure portals', self )
+        portals_button.clicked.connect ( lambda: self.spawn_subwindow ( portals_widget ( self.parent, self.controller ) ) )
+        if self.controller.config.get ( "portals_widget_show" ):
+            portals_button.clicked.emit ( True )
+
         server_reboots = QtGui.QPushButton ( "Configure server reboots", self )
         server_reboots.clicked.connect ( lambda: self.spawn_subwindow ( server_reboots_widget ( self.parent, self.controller, "Server reboots configuration" ) ) )
         if self.controller.config.get ( "server_reboots_widget_show" ):
@@ -39,7 +45,9 @@ class mods_widget ( QtGui.QWidget ):
         layout = QtGui.QVBoxLayout ( self )
         layout.addWidget ( forbidden_countries_button )
         layout.addWidget ( ping_limiter_button )
+        layout.addWidget ( portals_button )
         layout.addWidget ( server_reboots )
+        layout.addStretch ( )
         self.setLayout ( layout )
 
         if self.title != None:

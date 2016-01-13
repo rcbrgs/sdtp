@@ -2,7 +2,6 @@
 
 from PyQt4 import QtCore, QtGui
 #from PySide import QtCore, QtGui
-#from time import sleep, strftime
 import sys
 
 class chat_widget ( QtGui.QWidget ):
@@ -16,20 +15,24 @@ class chat_widget ( QtGui.QWidget ):
         self.init_GUI ( )
         self.show ( )
 
-        #self.controller.config.verify ( "{}_show".format ( self.__class__.__name__ ) )
-        
     def init_GUI ( self ):
                
         self.chat_log_widget = QtGui.QListWidget ( self )
         self.controller.dispatcher.register_callback ( "chat message", self.add_chat )
 
+        self.chat_input_name = QtGui.QLineEdit ( )
+        #self.chat_input_name.sizePolicy ( ).setHorizontalPolicy ( QtGui.QSizePolicy.Fixed )
+        my_name = self.controller.config.get ( "chat_input_name" )
+        if my_name != None:
+            self.chat_input_name.setText ( my_name )
         self.input_chat = QtGui.QLineEdit ( self )
         self.input_chat.returnPressed.connect ( self.send_chat )
+        input_layout = QtGui.QHBoxLayout ( )
+        input_layout.addWidget ( self.chat_input_name, 10 )
+        input_layout.addWidget ( self.input_chat, 90 )
         
         main_layout = QtGui.QVBoxLayout ( )
         main_layout.addWidget ( self.chat_log_widget )
-        input_layout = QtGui.QHBoxLayout ( )
-        input_layout.addWidget ( self.input_chat )
         main_layout.addLayout ( input_layout )
         self.setLayout ( main_layout )
 
@@ -39,8 +42,7 @@ class chat_widget ( QtGui.QWidget ):
             self.setWindowTitle ( self.title )
 
     def add_chat ( self, match_group ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "debug", prefix + " ( {} )".format ( match_group ) )
+        self.controller.log ( )
 
         message_time = "{}-{}-{} {}:{}:{}".format ( match_group [ 0 ], match_group [ 1 ], match_group [ 2 ], match_group [ 3 ], match_group [ 4 ], match_group [ 5 ] )
         try:
@@ -58,15 +60,19 @@ class chat_widget ( QtGui.QWidget ):
     def send_chat ( self ):
         self.controller.log ( )
 
+        self.controller.config.set ( "chat_input_name", str ( self.chat_input_name.text ( ) ) )
+        my_name = "({}° ".format ( str ( self.chat_input_name.text ( ) ) )
+        if my_name == "() ":
+            my_name = ""
         try:
             message_qstring = self.input_chat.text ( )
-            self.controller.log ( "info", prefix + " qstring obtained" )
+            self.controller.log ( "info", "qstring obtained" )
             message = str ( message_qstring )
-            self.controller.log ( "info", prefix + " unicode obtained" )
-            self.controller.telnet.write ( 'say "{}"'.format ( message ) )
+            self.controller.log ( "info", "unicode obtained" )
+            self.controller.telnet.write ( 'say "{}{}"'.format ( my_name, message ) )
         except Exception as e:
-            self.controller.log ( "warning", " exception: {}".format ( e ) )
-            self.controller.telnet.write ( 'say "{}"'.format ( message.encode ( "latin-1" ) ) )
+            self.controller.log ( "warning", "exception: {}".format ( e ) )
+            self.controller.telnet.write ( 'say "{}{}"'.format ( my_name, message.encode ( "latin-1" ) ) )
             
         self.input_chat.clear ( )
 

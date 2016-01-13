@@ -10,11 +10,9 @@ from ..version import api, feature, bug
 #from .interpreter_widget import interpreter_widget
 from ..metronomer import metronomer_widget
 from ..players_control import players_control_widget
-from .player_portals_window import player_portals_window
 
 #from ..database.database_widget import database_widget
 from ..mods.mods import mods_widget
-#from ..mods.server_reboot import server_reboot_window
 
 from PyQt4 import QtGui, QtCore
 #from PySide import QtGui, QtCore
@@ -151,42 +149,11 @@ class main_window ( QtGui.QMainWindow ):
         #toolbar.addAction ( open_FITS_file_action )
         #self.addToolBar ( toolbar )
 
-        mainLayout = QtGui.QHBoxLayout ( )
-
-
-        open_ping_limiter_window = QtGui.QPushButton ( "Configure ping limiter", self )
-        open_ping_limiter_window.clicked.connect ( lambda: self.children.append ( ping_limiter_window ( self, self.controller, "Ping limiter configuration" ) ) )
-        if self.controller.config.values [ "show_ping_limiter_window" ]:
-            open_ping_limiter_window.clicked.emit ( True )
-
-        show_player_portals_window = QtGui.QPushButton ( "Configure player portals", self )
-        show_player_portals_window.clicked.connect ( lambda: self.children.append ( player_portals_window ( self, self.controller, "Player portals configuration" ) ) )
-        if self.controller.config.values [ "show_player_portals_window" ]:
-            show_player_portals_window.clicked.emit ( True )
-            
-        # Mods
-        ######
-
-        modsFrame = QtGui.QFrame ( self )
-        modsFrame.setFrameShape ( QtGui.QFrame.StyledPanel )
-        modsFrameLayout = QtGui.QVBoxLayout ( )
-        modsFrame.setLayout ( modsFrameLayout )
-
-        mainLayout.addWidget ( modsFrame )
-
-        modsFrameLayout.addWidget ( open_ping_limiter_window )
-        modsFrameLayout.addWidget ( show_player_portals_window )
-
         # assorted config
         QtGui.QToolTip.setFont ( QtGui.QFont ( 'SansSerif', 10 ) )
         QtGui.QApplication.setStyle ( QtGui.QStyleFactory.create ( 'Cleanlooks' ) )
         self.setWindowTitle ( '{} v{}.{}.{}'.format ( self.controller.config.get ( "app_name" ), api, feature, bug ) )
-        
-        old_frame = QtGui.QFrame ( )
-        old_frame.setLayout ( mainLayout )       
-        self.mdi_area.addSubWindow ( old_frame )
         self.setCentralWidget ( self.mdi_area )
-        
         QtGui.QApplication.setStyle ( QtGui.QStyleFactory.create ( 'Cleanlooks' ) )
         self.show ( )
         self.organize_subwindows ( )

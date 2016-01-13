@@ -13,6 +13,7 @@ class telnet ( QtCore.QThread ):
 
     connectable = QtCore.pyqtSignal ( )
     disconnectable = QtCore.pyqtSignal ( )
+    status = QtCore.pyqtSignal ( str )
     
     def __init__ ( self, controller ):
         super ( self.__class__, self ).__init__ ( )
@@ -72,9 +73,7 @@ class telnet ( QtCore.QThread ):
         Should return True if everything is fine with the connection.
         Do not rely on metadata for this; this function is supposed to be reliable, and the metadata set according to its results.
         """
-
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "debug", prefix + " ( )".format ( ) )
+        #self.controller.log ( )
 
         if self.controller.config.values [ "auto_connect" ]:
             self.open_connection ( )
@@ -129,6 +128,7 @@ class telnet ( QtCore.QThread ):
 
         if time.time ( ) - self.latest_handshake < 10:
             self.controller.log ( "info", prefix + " sleeping 10 seconds before attempting to connect again." )
+            self.status.emit ( "Waiting 10s before retry." )
             time.sleep ( 10 )
 
         self.latest_handshake = time.time ( )
@@ -166,14 +166,19 @@ class telnet ( QtCore.QThread ):
 
         if self.connectivity_level == 2:
             self.controller.log ( "debug", prefix + " attempted to re-open connection, ignoring call." )
+            self.status.emit ( "connected." )
+            self.disconnectable.emit ( )
             return
         if self.connectivity_level == 0:
             self.create_telnet_object ( )
+            self.status.emit ( "trying to connect." )
         if self.connectivity_level == 1:
             self.handshake_hi ( )
+            self.status.emit ( "handshake accepted." )
             
         if self.connectivity_level != 2:
             self.controller.log ( "warning", prefix + " open_connection failed." )
+            self.status.emit ( "connection failed." )
             self.close_connection ( )
             return
         
@@ -286,14 +291,24 @@ class telnet_widget ( QtGui.QWidget ):
         self.disconnect_button.clicked.connect ( self.__disconnect )
         connection_layout.addWidget ( self.disconnect_button )
 
+        self.status_label = QtGui.QLabel ( "Current status: unknown" )
+        self.controller.telnet.status.connect ( self.change_status )
+
         self.controller.telnet.connectable.connect ( self.__disconnect )
         self.controller.telnet.disconnectable.connect ( self.__connect )
-        
+
         layout.addLayout ( connection_layout )
+        layout.addWidget ( self.status_label )
+        layout.addStretch ( )
         
         if self.title != None:
             self.setWindowTitle ( self.title )
 
+    def change_status ( self, status ):
+        self.controller.log ( )
+
+        self.status_label.setText ( "Connection status: {}".format ( status ) )
+            
     def __update_auto_connection ( self, qt_checked_value ):
         if ( qt_checked_value == 2 ):
             self.controller.config.values [ 'auto_connect' ] = True

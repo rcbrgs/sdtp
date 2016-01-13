@@ -19,6 +19,7 @@ class config ( object ):
             
             #"show_chat_window" : False,
             "chat_widget_show" : False,
+            "chat_input_name" : "",
 
             "db_engine" : "sqlite",
             "database_widget_show" : True,
@@ -53,16 +54,23 @@ class config ( object ):
 
             "sdtp_greetings" : "[SDTP] Seven Days To Py: started.",
             "sdtp_goodbye" : "[SDTP] Seven Days To Py: stopped.",
-            
+
+            "telnet_widget_show" : True,
             "telnet_password" : "BEWARE - PASSWORD WILL BE STORED UNENCRYPTED",
             "telnet_IP" : "127.0.0.1",
             "telnet_port" : 8081,
             "auto_connect" : False,
 
             # mods
+            "mods_widget_show" : True,
             "enable_challenge" : False,
+            "forbidden_countries_widget_show" : False,
+            "ping_limiter_widget_show" : False,
             "show_challenge_window" : False,
             
+            "players_control_widget_show" : True,
+
+            "portals_widget_show" : False,
             "enable_auto_horde_portals" : False,
             "enable_player_portals" : False,
             "show_player_portals_window" : False,
