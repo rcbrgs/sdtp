@@ -17,7 +17,8 @@ class config ( object ):
             
             "auto_updater_url" : "https://github.com/rcbrgs/sdtp/releases/download/0.9.0/",
             
-            "show_chat_window" : False,
+            #"show_chat_window" : False,
+            "chat_widget_show" : False,
 
             "db_engine" : "sqlite",
             "database_widget_show" : True,

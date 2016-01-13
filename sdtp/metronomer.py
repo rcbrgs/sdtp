@@ -45,7 +45,7 @@ class metronomer_widget ( QtGui.QWidget ):
         self.init_GUI ( )
         self.show ( )
 
-        self.controller.config.verify ( "{}_show".format ( self.__class__.__name__ ) )
+        #self.controller.config.verify ( "{}_show".format ( self.__class__.__name__ ) )
         
     def init_GUI ( self ):
 

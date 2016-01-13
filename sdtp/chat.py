@@ -16,7 +16,7 @@ class chat_widget ( QtGui.QWidget ):
         self.init_GUI ( )
         self.show ( )
 
-        self.controller.config.verify ( "{}_show".format ( self.__class__.__name__ ) )
+        #self.controller.config.verify ( "{}_show".format ( self.__class__.__name__ ) )
         
     def init_GUI ( self ):
                
@@ -55,10 +55,6 @@ class chat_widget ( QtGui.QWidget ):
 
         self.chat_log_widget.scrollToBottom ( )
         
-    def close ( self ):
-        self.controller.config.values [ "{}_show".format ( self.__class__.__name__ ) ] = False
-        super ( self.__class__, self ).close ( )
-
     def send_chat ( self ):
         self.controller.log ( )
 
@@ -79,3 +75,8 @@ class chat_widget ( QtGui.QWidget ):
         
         event.ignore ( )
         self.parent.subwindow_actions [ "{}_show_action".format ( self.__class__.__name__ ) ].setChecked ( False )
+
+    def close ( self ):
+        self.controller.config.set ( "{}_show".format ( self.__class__.__name__ ), False )
+        super ( self.__class__, self ).close ( )
+

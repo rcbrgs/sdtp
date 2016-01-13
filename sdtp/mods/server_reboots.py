@@ -191,6 +191,11 @@ class server_reboots_widget ( QtGui.QWidget ):
         self.controller.config.falsify ( "show_{}".format ( self.__class__.__name__ ) )
         super ( self.__class__, self ).close ( )
 
+    def closeEvent ( self, event ):
+        self.controller.log ( )
+        
+        self.parent.mdi_area.removeSubWindow ( self )
+
     # Specific
     ##########
         
@@ -210,9 +215,3 @@ class server_reboots_widget ( QtGui.QWidget ):
         self.reboots_alarm_label.setText ( "everyday at {} (24 hour notation).".format ( self.alarm_reboots.text ( ) ) )
         self.alarm_reboots.setText ( "" )
 
-    def closeEvent ( self, event ):
-        self.controller.log ( )
-        
-        #event.ignore ( )
-        #self.parent.subwindow_actions [ "{}_show_action".format ( self.__class__.__name__ ) ].setChecked ( False )
-        self.parent.mdi_area.removeSubWindow ( self )

@@ -291,12 +291,6 @@ class telnet_widget ( QtGui.QWidget ):
         
         layout.addLayout ( connection_layout )
         
-        ok_button = QtGui.QPushButton ( "Ok", self )
-        #ok_button.clicked.connect ( self.accept )
-        ok_button.clicked.connect ( self.close )
-        layout.addWidget ( ok_button )
-
-        self.controller.config.verify ( "{}_show".format ( self.__class__.__name__ ) )
         if self.title != None:
             self.setWindowTitle ( self.title )
 

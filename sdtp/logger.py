@@ -88,18 +88,23 @@ class logger ( QtCore.QThread ):
 
     def set_initial_level ( self ):
         if self.controller.config.values [ "log_show_debug" ]:
+            self.logger.debug ( "setting logger level to debug." )
             self.logger.setLevel ( logging.DEBUG )
             return
         if self.controller.config.values [ "log_show_info" ]:
+            self.logger.debug ( "setting logger level to info." )
             self.logger.setLevel ( logging.INFO )
             return
         if self.controller.config.values [ "log_show_warning" ]:
+            self.logger.debug ( "setting logger level to warning." )
             self.logger.setLevel ( logging.WARNING )
             return
         if self.controller.config.values [ "log_show_error" ]:
+            self.logger.debug ( "setting logger level to error." )
             self.logger.setLevel ( logging.ERROR )
             return
         if self.controller.config.values [ "log_show_critical" ]:
+            self.logger.debug ( "setting logger level to critical." )
             self.logger.setLevel ( logging.CRITICAL )
             return
     
@@ -116,20 +121,20 @@ class log_widget ( QtGui.QWidget ):
         self.controller.log ( )
 
         self.debug_checkbox = QtGui.QCheckBox ( "Show DEBUG messages", self )
-        self.debug_checkbox.setChecked ( self.controller.config.values [ "show_debug" ] )
-        self.debug_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "show_debug" ) )
+        self.debug_checkbox.setChecked ( self.controller.config.values [ "log_show_debug" ] )
+        self.debug_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "log_show_debug" ) )
         self.info_checkbox = QtGui.QCheckBox ( "Show INFO messages", self )
-        self.info_checkbox.setChecked ( self.controller.config.values [ "show_info" ] )
-        self.info_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "show_info" ) )        
+        self.info_checkbox.setChecked ( self.controller.config.values [ "log_show_info" ] )
+        self.info_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "log_show_info" ) )        
         self.warning_checkbox = QtGui.QCheckBox ( "Show WARNING messages", self )
-        self.warning_checkbox.setChecked ( self.controller.config.values [ "show_warning" ] )
-        self.warning_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "show_warning" ) )
+        self.warning_checkbox.setChecked ( self.controller.config.values [ "log_show_warning" ] )
+        self.warning_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "log_show_warning" ) )
         self.error_checkbox = QtGui.QCheckBox ( "Show ERROR messages", self )
-        self.error_checkbox.setChecked ( self.controller.config.values [ "show_error" ] )
-        self.error_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "show_error" ) )
+        self.error_checkbox.setChecked ( self.controller.config.values [ "log_show_error" ] )
+        self.error_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "log_show_error" ) )
         self.critical_checkbox = QtGui.QCheckBox ( "Show CRITICAL messages", self )
-        self.critical_checkbox.setChecked ( self.controller.config.values [ "show_critical" ] )
-        self.critical_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "show_critical" ) )
+        self.critical_checkbox.setChecked ( self.controller.config.values [ "log_show_critical" ] )
+        self.critical_checkbox.stateChanged.connect ( lambda: self.show_checkbox_changed_state ( "log_show_critical" ) )
         
         self.log_widget = QtGui.QListWidget ( self )
         self.log_widget.setFont ( QtGui.QFont ( 'Monospace', 10 ) )
@@ -164,12 +169,6 @@ class log_widget ( QtGui.QWidget ):
         self.add_buffer ( )
         self.controller.logger.log_gui.connect ( self.insert_log )
 
-    def closeEvent ( self, event ):
-        self.controller.log ( )
-        
-        event.ignore ( )
-        self.parent.subwindow_actions [ "{}_show_action".format ( self.__class__.__name__ ) ].setChecked ( False )
-            
     def add_buffer ( self ):
         for item in self.controller.logger.log_buffer:
             self.insert_log ( item [ 0 ], item [ 1 ] )
@@ -220,6 +219,12 @@ class log_widget ( QtGui.QWidget ):
             self.controller.logger.set_level ( "critical" )
             return
 
+    def closeEvent ( self, event ):
+        self.controller.log ( )
+        
+        event.ignore ( )
+        self.parent.subwindow_actions [ "{}_show_action".format ( self.__class__.__name__ ) ].setChecked ( False )
+            
     def close ( self ):
         self.controller.config.values [ "{}_show".format ( self.__class__.__name__ ) ] = False
         super ( self.__class__, self ).close ( )

@@ -7,11 +7,9 @@ from ..controller import controller
 from ..logger import log_widget
 from ..telnet import telnet_widget
 from ..version import api, feature, bug
-from .country_ban_window import country_ban_window
 #from .interpreter_widget import interpreter_widget
 from ..metronomer import metronomer_widget
 from ..players_control import players_control_widget
-from .ping_limiter_window import ping_limiter_window
 from .player_portals_window import player_portals_window
 
 #from ..database.database_widget import database_widget
@@ -155,12 +153,6 @@ class main_window ( QtGui.QMainWindow ):
 
         mainLayout = QtGui.QHBoxLayout ( )
 
-        self.country_ban_dialog = country_ban_window ( self, self.controller )
-
-        country_ban_button = QtGui.QPushButton ( 'Configure per-country bans', self )
-        country_ban_button.clicked.connect ( self.country_ban_dialog.show )
-        country_ban_button.setToolTip ( 'Opens the country ban configuration tool.' )
-        country_ban_button.resize ( country_ban_button.sizeHint() )
 
         open_ping_limiter_window = QtGui.QPushButton ( "Configure ping limiter", self )
         open_ping_limiter_window.clicked.connect ( lambda: self.children.append ( ping_limiter_window ( self, self.controller, "Ping limiter configuration" ) ) )
@@ -182,8 +174,6 @@ class main_window ( QtGui.QMainWindow ):
 
         mainLayout.addWidget ( modsFrame )
 
-        #modsFrameLayout.addWidget ( server_reboots )       
-        modsFrameLayout.addWidget ( country_ban_button )       
         modsFrameLayout.addWidget ( open_ping_limiter_window )
         modsFrameLayout.addWidget ( show_player_portals_window )
 

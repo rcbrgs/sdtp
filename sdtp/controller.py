@@ -53,10 +53,12 @@ class controller ( QtCore.QThread ):
         self.server_reboots = None
         
     def run ( self ):
-        self.log ( "debug", "controller.run ( )" )
-        self.config = config ( self )
-        self.logger.set_initial_level ( )
+        self.log ( )
         
+        self.config = config ( self )
+        self.config.load_configuration_file ( )
+        self.logger.set_initial_level ( )
+
         self.log ( "debug", "controller.run: dispatcher" )
         self.dispatcher = dispatcher ( self )
         self.dispatcher.start ( )
@@ -90,9 +92,6 @@ class controller ( QtCore.QThread ):
                       self.portals,
                       self.server_reboots ]
                 
-        self.config.load_configuration_file ( )
-        self.logger.set_initial_level ( )
-
         if ( self.config.values [ 'auto_connect' ] ):
             self.log ( "debug", "Automatically initiating connection." )
             self.telnet.open_connection ( )
