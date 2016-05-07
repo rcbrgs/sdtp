@@ -61,18 +61,18 @@ class chat_widget ( QtGui.QWidget ):
         self.controller.log ( )
 
         self.controller.config.set ( "chat_input_name", str ( self.chat_input_name.text ( ) ) )
-        my_name = "({}° ".format ( str ( self.chat_input_name.text ( ) ) )
+        my_name = "{}".format ( str ( self.chat_input_name.text ( ) ) )
         if my_name == "() ":
             my_name = ""
         try:
             message_qstring = self.input_chat.text ( )
-            self.controller.log ( "info", "qstring obtained" )
+            self.controller.log ( "info", "qstring obtained: {}".format ( message_qstring ) )
             message = str ( message_qstring )
-            self.controller.log ( "info", "unicode obtained" )
-            self.controller.telnet.write ( 'say "{}{}"'.format ( my_name, message ) )
+            self.controller.log ( "info", "unicode obtained: {}".format ( message ) )
+            self.controller.telnet.write ( 'say "({}): {}"'.format ( my_name, message ) )
         except Exception as e:
             self.controller.log ( "warning", "exception: {}".format ( e ) )
-            self.controller.telnet.write ( 'say "{}{}"'.format ( my_name, message.encode ( "latin-1" ) ) )
+            self.controller.telnet.write ( 'say "({}): {}"'.format ( my_name, message.encode ( "latin-1" ) ) )
             
         self.input_chat.clear ( )
 

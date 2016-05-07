@@ -218,7 +218,8 @@ class parser ( QtCore.QThread ):
 #            'item fell off' : self.match_prefix + r'WRN Entity Item_([\d]+) \(EntityItem\) ' + \
 #                                       r'fell off the world, id=([\d]+) pos=' + self.match_string_pos + r'$',
 #                                       'to_call'  : [ ] },
-            'chat message' : self.match_string_date + r' INF GMSG: (.*: .*)$',
+            'chat message (pre A14)' : self.match_string_date + r' INF GMSG: (.*: .*)$',
+            'chat message' : self.match_string_date + r' INF Chat: (.*: .*)$',
             # 0 - 6. date
             # 7. message
 #                                       'to_call'  : [ self.advise_deprecation_chat ] },
