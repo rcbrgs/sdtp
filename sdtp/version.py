@@ -2,4 +2,4 @@
 
 api = 0
 feature = 10
-bug = 0
+bug = 1

@@ -127,6 +127,5 @@ class world_state ( QtCore.QThread ):
                 self.server_empty = True
                 return
         else:
+            self.server_empty = False
             self.latest_nonzero_players = time.time ( )
-
-
