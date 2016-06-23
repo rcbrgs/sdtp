@@ -14,7 +14,6 @@ class parser ( QtCore.QThread ):
         super ( self.__class__, self ).__init__ ( )
         self.controller = controller
         self.keep_running = True
-        
         self.match_string_date = r'([0-9]{4})-([0-9]{2})-([0-9]{2}).+([0-9]{2}):([0-9]{2}):([0-9]{2}) ([+-]*[0-9]+\.[0-9]+)' # 7 groups
         self.match_string_date_simple = r'([\d]{4})-([\d]{2})-([\d]{2}) ([\d]{2}):([\d]{2})' # 5 groups
         self.match_string_ip = r'([\d]+\.[\d]+\.[\d]+\.[\d]+)' # 1 group
@@ -25,18 +24,14 @@ class parser ( QtCore.QThread ):
         self.queue_lock = None
         self.telnet_output_matchers = {
             'adding observed entity' : self.match_prefix + r'INF Adding observed entity: [\d]+, ' + self.match_string_pos + r', [\d]+$',
-            
 #            'AI air drop paths' : self.match_prefix + r'INF AIAirDrop: Computed flight paths for 1 aircraft$',
 #            'AI night horde' : self.match_prefix + r'INF AIDirector: Night Horde Spawn Finished \(all mobs spawned\).$',
 #            'AI no good spot' : self.match_prefix + r'INF AIDirector: Could not find a valid position to spawn wandering horde \(trying again in 1 hour\)$',
 #            'AI scout horde' : self.match_prefix + r'INF AIDirector: scout horde zombie \'\[type=EntityZombie, name=spiderzombie, id=[\d]+\]\' was spawned and is moving towards point of interest\.$',
 
             'AI scouts' : self.match_prefix + r'INF AIDirector: Spawning scouts @ \(' + self.match_string_pos + r'\) heading towards \(' + self.match_string_pos + r'\)$',
-            
 #            'AI scout fail' : self.match_prefix + r'INF AIDirector: Scout spawning failed, FindHordeTargets\(\) returned false!',
-
             'AI Director Scout Horde Spawn Finished' : self.match_prefix + r'INF AIDirector: Scout Horde Spawn Finished \(all mobs spawned\)\.$',
-            
 #            'AI scout remove' : self.match_prefix + r'INF AIDirector: scout horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control.$',
 #                                       'to_call'  : [ ] },
 #            'AI scout-trig fin' : self.match_prefix + r'INF AIDirector: Scout-Triggered Horde Finished \(all mobs spawned\).$',
@@ -47,8 +42,7 @@ class parser ( QtCore.QThread ):
 #                                       'to_call'  : [ ] },
 #            'AI wander finish' : self.match_prefix + r'INF AIDirector: Wandering Horde Spawn Finished \(all mobs spawned\)\.$',
 #                                       'to_call'  : [ ] },
-#            'AI wanderer player' : self.match_prefix + r'INF AIDirector: Spawning wandering horde moving towards player \'\[type=EntityPlayer, name=.*, id=[\d]+\]\'$',
-#                                       'to_call'  : [ ] },
+            'AI wanderer player' : self.match_prefix + r'INF AIDirector: Spawning wandering horde moving towards player \'\[type=EntityPlayer, name=.*, id=[\d]+\]\'$',
 #            'AI wander remove' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control.$',
 #                                       'to_call'  : [ ] },
 #            'AI wander stop' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' has wandered long enough and is going to endstop now.$',
@@ -158,6 +152,7 @@ class parser ( QtCore.QThread ):
 #            'EAC callback' : self.match_prefix + r'INF \[EAC\] UserStatusHandler callback.'+\
 #                                       r' Status: UserAuthenticated GUID: [\d]+ ReqKick: [\w]+ Message:.*$',
 #                                       'to_call'  : [ ] },
+            "EAC Cerberus" : self.match_prefix + r"WRN \[EAC\] Log: \[Cerberus\] Connection attempt to the back-end failed! Reconnecting in 60 seconds\.\.",
 #            'EAC free user' : r'INF \[EAC\] FreeUser \(.*\)',
 #                                       'to_call'  : [ ] },
 #            'EAC kicking player' : self.match_prefix + r'Kicking player: Kicked by EAC. ' + \
@@ -232,31 +227,17 @@ class parser ( QtCore.QThread ):
 
             'header  0' : r'^\*\*\* Connected with 7DTD server\.$',
 
-#            'header  1' : r'^\*\*\* Server version: Alpha [\d]+\.[\d]+ \(.*\) Compatibility Version: Alpha [\d]+\.[\d]+.*$',
-#                                       'to_call'  : [ ] },
-#            'header  2' : r'^\*\*\* Dedicated server only build$',
-#                                       'to_call'  : [ ] },
-#            'header  3' : r'^Server IP:   ' + self.match_string_ip + r'$',
-#                                       'to_call'  : [ ] },
-#            'header server ip any' : r'^Server IP:   Any$',
-#                                       'to_call'  : [ ] },
-#            'header  4' : r'^Server port: [\d]+$',
-#                                       'to_call'  : [ ] },
-#            'header  5' : r'^Max players: [\d]+$',
-#                                       'to_call'  : [ ] },
-#            'header  6' : r'^Game mode:   GameModeSurvivalMP$',
-#                                       'to_call'  : [ ] },
-#            'header  7' : r'^World:       Random Gen$',
-#                                       'to_call'  : [ ] },
-#            'header  8' : r'Game name:   (.*)$',
-#                                       'to_call'  : [ ] },
-#            'header  9' : r'^Difficulty:  [\d]+$',
-#                                       'to_call'  : [ ] },
-#            'header 10' : r'Press \'help\' to get a list of all commands\. Press ' + \
-#                                       r'\'exit\' to end session.',
-#                                       'to_call'  : [ ] },
-#            'header A12' : '\*\*\* Server version: Alpha 12 \(b56\) Compatibility Version: Alpha 12$',
-#                                       'to_call'  : [ ] },
+            'header  1' : r'^\*\*\* Server version: Alpha [\d]+\.[\d]+ \(.*\) Compatibility Version: Alpha [\d]+\.[\d]+.*$',
+            'header  2' : r'^\*\*\* Dedicated server only build$',
+            'header  3' : r'^Server IP:   ' + self.match_string_ip + r'$',
+            'header server ip any' : r'^Server IP:   Any$',
+            'header  4' : r'^Server port: [\d]+$',
+            'header  5' : r'^Max players: [\d]+$',
+            'header  6' : r'^Game mode:   GameModeSurvivalMP$',
+            'header  7' : r'^World:       Random Gen$',
+            'header  8' : r'Game name:   (.*)$',
+            'header  9' : r'^Difficulty:  [\d]+$',
+            'header 10' : r'Press \'help\' to get a list of all commands\. Press \'exit\' to end session.',
 #            'icon nof found' : self.match_prefix + r'INF Web:IconHandler:FileNotFound: ".*"$',
 #                                       'to_call'  : [ ] },
 #            'static not found' : self.match_prefix + r'INF Web:Static:FileNotFound: ".*" @ ".*"$',
@@ -267,8 +248,9 @@ class parser ( QtCore.QThread ):
 #                                       'to_call'  : [ self.framework.world_state.update_inventory ] },
 #            'inventory item' : r'^Slot ([\d]+): ([\d]+) \* (.*)$',
 #                                       'to_call'  : [ self.framework.world_state.update_inventory ] },
-#            'IOException' : self.match_prefix + r'ERR IOException in ReadLine: Read failure$',
-#                                       'to_call'  : [ self.loglevel_ERR_off ] },
+            'IOException readline' : self.match_prefix + r'ERR IOException in ReadLine: Read failure$',
+            'IOException telnet' : self.match_prefix + r'ERR IOException in ReadLine for TelnetClientReceive_.*: Read failure$',
+            'IOException sharing' : r'IOException: Sharing violation on path .*',
 #            'item dropped' : r'^Dropped item$',
 #                                       'to_call'  : [ ] },
 #            'kicking executing' : self.match_prefix + r'INF Executing command \'kick' + \
@@ -415,9 +397,7 @@ class parser ( QtCore.QThread ):
 #            'spawn night horde' : r'^' + self.match_string_date + \
 #                                       r' INF Spawning Night Horde for day [\d]+',
 #                                       'to_call'  : [ ] },
-#            'spawn wander horde' : self.match_prefix + r'INF Spawning Wandering Horde.$',
-#                                       'to_call'  : [ ] },
-
+            'spawn wander horde' : self.match_prefix + r'INF Spawning Wandering Horde.$',
             'spawned' : r'^' + self.match_string_date + r' INF Spawned \[type=[\w]+, name=(.*), id=[\d]+\] at ' + self.match_string_pos + r' Day=[\d]+ TotalInWave=[\d]+ CurrentWave=[\d]+$',
 
 #            'spawn ent wrong pos' : self.match_prefix + r'WRN Spawned entity with wrong pos: Item_([\d]+) \((EntityItem)\) id=([\d]+) pos=' + self.match_string_pos + r'$',
@@ -465,52 +445,17 @@ class parser ( QtCore.QThread ):
 #            'telnet conn from' : self.match_prefix + r'INF Telnet connection from: ' + \
 #                                       self.match_string_ip + ':[\d]+$',
 #                                       'to_call'  : [ ] },
-#            'telnet thread exit' : '^' + self.match_string_date + \
-#                                       r' INF Exited thread TelnetClient[\w]+_' + self.match_string_ip + r':[\d]+$',
-#                                       'to_call'  : [ ] },
+            'telnet thread exit' : '^' + self.match_string_date + r' INF Exited thread TelnetClient[\w]+_' + self.match_string_ip + r':[\d]+$',
 #            'telnet thread start r' : '^' + self.match_string_date + \
 #                                       r' INF Started thread TelnetClientReceive_' + self.match_string_ip + \
 #                                       r':[\d]+$',
 #                                       'to_call'  : [ ] },
 #            'telnet thread start s' : '^' + self.match_string_date + \
 #                                       r' INF Started thread TelnetClientSend_' + self.match_string_ip + r':[\d]+$',
-#                                       'to_call'  : [ ] },
-#            'token length' : self.match_prefix + r'INF Token length: [\d]+$',
-#                                       'to_call'  : [ ] },
-#            'tp command executing' : self.match_string_date + \
-#                                       r' INF Executing command \'teleportplayer ([\d]+) ([+-]*[\d]+) ' + \
-#                                       r'([+-]*[\d]+) ([+-]*[\d]+)\' by Telnet from ' + \
-#                                       self.match_string_ip + ':([\d]+)',
-#                                       'to_call'  : [ ] },
-#            'version' : r'^' + self.match_string_date + r' INF Executing ' + \
-#                                       r'command \'version\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
-#                                       'to_call'  : [ ] },
-#            'exception sharing' : r'IOException: Sharing violation on path .*',
-#                                       'to_call'  : [ self.framework.quiet_listener ] },
-        }
-        
-        # must run after self.telnet_output_matchers is defined
-        self.controller.log ( "debug", "parser.init: compile telnet_output_matchers" )
-        for key in self.telnet_output_matchers.keys ( ):
-            self.matchers [ key ] = re.compile ( self.telnet_output_matchers [ key ] )
-
-    def run ( self ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "info", prefix + " ( )" )
-        
-        while ( self.keep_running ):
-            line = self.dequeue ( )
-            if line [ "text" ]  == "":
-                continue
-            self.controller.log ( "debug", prefix + " line = {}".format ( line ) )
-            if type ( line [ "text" ] ) != str:
-                self.controller.log ( "debug", prefix + " type ( line [ 'text' ] ) = {}".format ( type ( line [ "text" ] ) ) )
-                try:
-                    line [ "text" ] = bytes ( line [ "text" ] )
+            "telnet client send error" : self.match_prefix + r"ERR Error in TelnetClientSend_.*",
                 except Exception as e:
-                    self.controller.log ( "error", prefix + " unable to cast to bytes." )
+                    self.controller.log ( "error", "Unable to cast to bytes." )
                     return
-            
             any_match = False
             for key in self.matchers.keys ( ):
                 match = self.matchers [ key ].search ( line [ 'text' ] )
@@ -518,14 +463,14 @@ class parser ( QtCore.QThread ):
                     any_match = True
                     matched_key = key
                     match_timestamp = time.time ( )
-                    self.controller.log ( "debug", prefix + " key '{}', match.groups = '{}'.".format ( key, match.groups ( ) ) )
+                    self.controller.log ( "debug", "key '{}', match.groups = '{}'.".format ( key, match.groups ( ) ) )
                     self.controller.dispatcher.call_registered_callbacks ( key, match.groups ( ) )
 
             if not any_match:
                 try:
-                    self.controller.log ( "info", prefix + " unparsed output: '{}'.".format ( line [ "text" ] ) )
+                    self.controller.log ( "info", "Unparsed output: '{}'.".format ( line [ "text" ] ) )
                 except UnicodeEncodeError as e:
-                    self.controller.log ( "error", prefix + " UnicodeEncodeError: {}".format ( e ) )
+                    self.controller.log ( "error", "UnicodeEncodeError: {}".format ( e ) )
                 continue
 
     def stop ( self ):

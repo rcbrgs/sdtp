@@ -14,25 +14,15 @@ class config ( object ):
         self.values = {
             "app_name" : "SDTP",
             "mdi_auto_organizing" : True,
-            
             "auto_updater_url" : "https://github.com/rcbrgs/sdtp/releases/download/0.9.0/",
-            
-            #"show_chat_window" : False,
             "chat_widget_show" : False,
             "chat_input_name" : "",
-
             "db_engine" : "sqlite",
             "database_widget_show" : True,
-
-            #"interpreter_widget_show" : True,
-            
             "configuration_file_name" : "default.json",
-
             "database_file_name" : "sdtp_sqlite.db",
-            
             "forbidden_countries" : [ "" ],
             "enable_per_country_bans" : False,
-    
             "log_file_name" : "sdtp.log",
             "log_file_path" : "",
             "log_widget_show" : False,
@@ -41,35 +31,27 @@ class config ( object ):
             "log_show_warning" : True,
             "log_show_error" : True,
             "log_show_critical" : True,
-
             "enable_lp" : True,
             "lp_interval" : 2,
             "metronomer_widget_show" : False,
-            
             "enable_ping_limiter" : False,
             "max_ping" : 10000,
             "show_ping_limiter_window" : False,
-           
             "show_players_window" : False,
-
             "sdtp_greetings" : "[SDTP] Seven Days To Py: started.",
             "sdtp_goodbye" : "[SDTP] Seven Days To Py: stopped.",
-
             "telnet_widget_show" : True,
             "telnet_password" : "BEWARE - PASSWORD WILL BE STORED UNENCRYPTED",
             "telnet_IP" : "127.0.0.1",
             "telnet_port" : 8081,
             "auto_connect" : False,
-
             # mods
             "mods_widget_show" : True,
             "enable_challenge" : False,
             "forbidden_countries_widget_show" : False,
             "ping_limiter_widget_show" : False,
             "show_challenge_window" : False,
-            
             "players_control_widget_show" : True,
-
             "portals_widget_show" : False,
             "enable_auto_horde_portals" : False,
             "enable_player_portals" : False,
@@ -77,7 +59,6 @@ class config ( object ):
             "max_portals_per_player" : 0,
             "portal_cost" : 0,
             "teleport_cost" : 0,
-
             "alarm_reboots_time" : -1,
             "enable_alarm_reboots" : False,
             "enable_frequency_reboots" : False,
@@ -121,7 +102,6 @@ class config ( object ):
         
     def load_configuration_file ( self ):
         self.controller.log ( )
-
         # bridge 0.9.0 to 0.10.0:
         possible_old = "{}{}default.json".format ( self.get ( "workdir" ), self.get ( "separator" ) )
         possibility = pathlib.Path ( possible_old )
@@ -129,7 +109,6 @@ class config ( object ):
             self.controller.log ( "info", "old config file found - renaming." )
             os.rename ( possible_old, self.get ( "config_file" ) )
         # bridge ends here
-        
         try:
             preconfig_file = open ( self.get ( "config_file" ), "r" )
         except:

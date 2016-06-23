@@ -1,5 +1,5 @@
 from .config import config
-from .logger import logger
+#from .logger import logger
 
 from .auto_updater import auto_updater
 from .database import database 
@@ -19,25 +19,22 @@ import json
 import os
 from PyQt4 import QtCore
 #from PySide import QtCore
+import sdtp
 import sys
 import threading
 import time
 
 class controller ( QtCore.QThread ):
 
-    #log_gui = QtCore.Signal ( str, str )
     log_gui = QtCore.pyqtSignal ( str, str )
-    
+
     def __init__ ( self, gui_thread ):
         super ( self.__class__, self ).__init__ ( )
-
         self.keep_running = False
         self.telnet_ongoing = False
         self.gui_thread = gui_thread
-
-        self.logger = logger ( self )
+        self.logger = sdtp.logger ( self )
         self.config = None
-
         self.auto_updater = None
         self.dispatcher = None
         self.metronomer = None
@@ -45,20 +42,17 @@ class controller ( QtCore.QThread ):
         self.telnet = None
         self.database = None
         self.world_state = None
-
         self.challenge = None
         self.forbidden_countries = None
         self.ping_limiter = None
         self.portals = None
         self.server_reboots = None
-        
+
     def run ( self ):
         self.log ( )
-        
         self.config = config ( self )
         self.config.load_configuration_file ( )
         self.logger.set_initial_level ( )
-
         self.log ( "debug", "controller.run: dispatcher" )
         self.dispatcher = dispatcher ( self )
         self.dispatcher.start ( )
@@ -72,14 +66,13 @@ class controller ( QtCore.QThread ):
         self.telnet = telnet ( self )
         self.telnet.start ( )
         self.database = database ( self )
-        self.world_state = world_state ( self )        
+        self.world_state = world_state ( self )
         self.components = [ self.dispatcher,
                             self.metronomer,
                             self.parser,
                             self.telnet,
                             self.database,
                             self.world_state ]
-
         self.challenge = challenge ( self )
         self.forbidden_countries = forbidden_countries ( self )
         self.forbidden_countries.start ( )
@@ -91,60 +84,48 @@ class controller ( QtCore.QThread ):
                       self.ping_limiter,
                       self.portals,
                       self.server_reboots ]
-                
         if ( self.config.values [ 'auto_connect' ] ):
             self.log ( "debug", "Automatically initiating connection." )
             self.telnet.open_connection ( )
-
         self.telnet.write ( 'say "{}"'.format ( self.config.values [ "sdtp_greetings" ] ) )
-            
         self.auto_updater = auto_updater ( self )
         self.auto_updater.update_available.connect ( self.gui_thread.ask_about_fetching_update )
         self.auto_updater.install_available.connect ( self.gui_thread.ask_about_installing_update )
         self.auto_updater.reinitialization_available.connect ( self.gui_thread.ask_about_reinitialize_update )
-
         # poll for input / events
         self.keep_running = True
         while ( self.keep_running ):
             time.sleep ( 1 )
-
         self.config.save_configuration_file ( )
         if ( self.telnet_ongoing ):
             self.telnet.close_connection ( )
-            
         self.log ( "debug", "controller.run exiting." )
-        
+
     def stop ( self ):
         self.log ( "info", "Shutdown of sdtp initiated." )
         self.telnet.write ( 'say "{}"'.format ( self.config.values [ "sdtp_goodbye" ] ) )
-
         for mod in self.mods:
             self.log ( "debug", "controller.stop: calling mod.stop in {}.".format ( mod.__class__ ) )
             mod.stop ( )
-
         for mod in self.mods:
             while ( mod.isRunning ( ) ):
                 self.log ( "debug", "controller.stop: Waiting on mod {} to stop.".format ( mod.__class__ ) )
                 time.sleep ( 0.1 )
-
         self.world_state.stop ( )
         self.metronomer.stop ( )
         self.database.stop ( )
         self.telnet.stop ( )
         self.parser.stop ( )
-
         for component in self.components:
             if component == self.dispatcher:
                 continue
             while ( component.isRunning ( ) ):
                 self.log ( "debug", "controller.stop: Waiting on component {} to stop.".format ( component.__class__ ) )
                 time.sleep ( 0.1 )
-
         self.dispatcher.stop ( )
         while ( self.dispatcher.isRunning ( ) ):
             self.log ( "debug", "controller.stop: Waiting on dispatcher to stop." )
             time.sleep ( 0.1 )
-
         if self.keep_running:
             self.keep_running = False
             self.gui_thread.stop ( )
@@ -173,3 +154,8 @@ class controller ( QtCore.QThread ):
         else:
             print ( log_message )
 
+    def debug ( self, log_message ):
+        if self.logger != None:
+            self.logger.log ( "debug", log_message )
+        else:
+            print ( log_message )
