@@ -453,6 +453,38 @@ class parser ( QtCore.QThread ):
 #            'telnet thread start s' : '^' + self.match_string_date + \
 #                                       r' INF Started thread TelnetClientSend_' + self.match_string_ip + r':[\d]+$',
             "telnet client send error" : self.match_prefix + r"ERR Error in TelnetClientSend_.*",
+#            'token length' : self.match_prefix + r'INF Token length: [\d]+$',
+#                                       'to_call'  : [ ] },
+#            'tp command executing' : self.match_string_date + \
+#                                       r' INF Executing command \'teleportplayer ([\d]+) ([+-]*[\d]+) ' + \
+#                                       r'([+-]*[\d]+) ([+-]*[\d]+)\' by Telnet from ' + \
+#                                       self.match_string_ip + ':([\d]+)',
+#                                       'to_call'  : [ ] },
+#            'version' : r'^' + self.match_string_date + r' INF Executing ' + \
+#                                       r'command \'version\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
+#                                       'to_call'  : [ ] },
+#            'exception sharing' : r'IOException: Sharing violation on path .*',
+#                                       'to_call'  : [ self.framework.quiet_listener ] },
+        }
+        
+        # must run after self.telnet_output_matchers is defined
+        self.controller.log ( "debug", "parser.init: compile telnet_output_matchers" )
+        for key in self.telnet_output_matchers.keys ( ):
+            self.matchers [ key ] = re.compile ( self.telnet_output_matchers [ key ] )
+
+    def run ( self ):
+        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
+        self.controller.log ( "info", prefix + " ( )" )
+        
+        while ( self.keep_running ):
+            line = self.dequeue ( )
+            if line [ "text" ]  == "":
+                continue
+            self.controller.log ( "debug", prefix + " line = {}".format ( line ) )
+            if type ( line [ "text" ] ) != str:
+                self.controller.log ( "debug", prefix + " type ( line [ 'text' ] ) = {}".format ( type ( line [ "text" ] ) ) )
+                try:
+                    line [ "text" ] = bytes ( line [ "text" ] )
                 except Exception as e:
                     self.controller.log ( "error", "Unable to cast to bytes." )
                     return

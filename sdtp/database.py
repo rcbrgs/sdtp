@@ -3,6 +3,7 @@
 import datetime
 import os
 import pathlib
+import queue
 from PyQt4 import QtCore
 from sqlalchemy import create_engine
 from sqlalchemy import ( create_engine, Column, Float, Integer, MetaData, String, Table )
@@ -28,6 +29,7 @@ class database ( QtCore.QThread ):
         self.engine = None
         self.mutex = False
         self.metadata = None
+        self.queue = queue.Queue ( )
         self.queue_mutex = QtCore.QMutex ( )
         self.start ( )
 
@@ -44,13 +46,13 @@ class database ( QtCore.QThread ):
         self.controller.log ( "debug", "returning." )
 
     def enqueue ( self, method, arguments = [ ], keyword_arguments = { } ):
-        mutex_loader = QtCore.QMutexLoader ( self.queue_mutex )
+        mutex_loader = QtCore.QMutexLocker ( self.queue_mutex )
         self.queue.add ( { "method" : method,
                            "arguments" : arguments,
                            "keyword_arguments" : keyword_arguments } )
 
     def execute ( self ):
-        mutex_loader = QtCore.QMutexLoader ( self.queue_mutex )
+        mutex_loader = QtCore.QMutexLocker ( self.queue_mutex )
         if self.queue.empty ( ):
             return
         task = self.queue.get ( )
