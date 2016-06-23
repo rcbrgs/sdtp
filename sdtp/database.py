@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-# 0.2.0
 
 import datetime
 import os
 import pathlib
 from PyQt4 import QtCore
-#from PySide import QtCore
 from sqlalchemy import create_engine
 from sqlalchemy import ( create_engine, Column, Float, Integer, MetaData, String, Table )
 from sqlalchemy.ext.declarative import declarative_base
@@ -30,6 +28,7 @@ class database ( QtCore.QThread ):
         self.engine = None
         self.mutex = False
         self.metadata = None
+        self.queue_mutex = QtCore.QMutex ( )
         self.start ( )
 
     # Thread control
@@ -39,9 +38,24 @@ class database ( QtCore.QThread ):
         self.create_tables ( )
         self.ready = True
         while ( self.keep_running ):
-            time.sleep ( 0.1 )
+            self.execute ( )
+            self.sleep ( 0.1 )
         self.ready = False
         self.controller.log ( "debug", "returning." )
+
+    def enqueue ( self, method, arguments = [ ], keyword_arguments = { } ):
+        mutex_loader = QtCore.QMutexLoader ( self.queue_mutex )
+        self.queue.add ( { "method" : method,
+                           "arguments" : arguments,
+                           "keyword_arguments" : keyword_arguments } )
+
+    def execute ( self ):
+        mutex_loader = QtCore.QMutexLoader ( self.queue_mutex )
+        if self.queue.empty ( ):
+            return
+        task = self.queue.get ( )
+        mutex_loader.unlock ( )
+        task [ "method" ] ( *task [ "arguments" ], **task [ "keyword_arguments" ] )
 
     def stop ( self ):
         self.controller.log ( )
@@ -84,7 +98,10 @@ class database ( QtCore.QThread ):
         self.controller.log ( "debug", "database.create_tables returning." )
 
     # API
-    def consult ( self, table, conditions ):
+    def consult ( self, table, conditions, callback ):
+        self.enqueue ( self.__consult, [ table, conditions, callback ] )
+
+    def __consult ( self, table, conditions, callback ):
         self.controller.log ( )
         session = self.get_session ( )
         query = session.query ( table )
@@ -92,7 +109,7 @@ class database ( QtCore.QThread ):
             query = query.filter ( condition [ 0 ] == condition [ 2 ] )
         results = query.all ( )
         self.let_session ( session )
-        return results
+        callback ( results )
 
     def get_session ( self ):
         self.controller.log ( )

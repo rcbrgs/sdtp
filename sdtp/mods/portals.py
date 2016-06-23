@@ -103,10 +103,13 @@ class portals ( QtCore.QThread ):
         self.controller.debug (
             "player_name = {}, possible_portal_name = {}".format (
                 player_name, possible_portal_name ) )
-        answer = self.controller.database.consult (
+        self.controller.database.consult (
             portals_table,
             [ ( portals_table.name, "==", possible_portal_name ),
-              ( portals_table.steamid, "==", str ( -1 ) ) ] )
+              ( portals_table.steamid, "==", str ( -1 ) ) ],
+            self.consulted_portal )
+
+    def consulted_portal ( self, answer ):
         self.controller.debug ( "answer = {}".format ( answer ) )
         if len ( answer ) != 1:
             return False
