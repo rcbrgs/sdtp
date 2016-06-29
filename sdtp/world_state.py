@@ -3,34 +3,35 @@
 from sdtp.lp_table import lp_table
 
 from PyQt4 import QtCore
-#from PySide import QtCore
 from sqlalchemy import Integer
 import sys
 import time
 
 class world_state ( QtCore.QThread ):
 
+    # Boilerplate
+    debug = QtCore.pyqtSignal ( str, str, str, str )
+
+    def log ( self, level, message ):
+        self.debug.emit ( message, level, self.__class__.__name__,
+                          sys._getframe ( 1 ).f_code.co_name )
+
     def __init__ ( self, controller ):
         super ( self.__class__, self ).__init__ ( )
         self.controller = controller
         self.keep_running = True
-
         self.online_players_count = 100000
         self.latest_nonzero_players = time.time ( )
         self.server_empty = False
         self.start ( )
 
     # Thread control
-    ################        
-        
     def run ( self ):
         self.controller.log ( "debug", "world_state.run ( )" )
-
         self.register_callbacks ( )
         while ( self.keep_running ):
             time.sleep ( 0.1 )
         self.deregister_callbacks ( )
-
         self.controller.log ( "debug", "world_state.run returning" )
 
     def stop ( self ):
@@ -46,27 +47,22 @@ class world_state ( QtCore.QThread ):
 
     def deregister_callbacks ( self ):
         self.controller.dispatcher.deregister_callback ( "lp output", self.update_lp_table )
-    
+
     def update_lp_table ( self, match_group ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "debug", prefix + " ( {} )".format ( match_group ) )
-
+        self.log ( "debug", "( {} )".format ( match_group ) )
         this_steamid = int ( match_group [ 15 ] ),
-        session = self.controller.database.get_session ( )
-        self.controller.log ( "debug", prefix + " got session." )
-        try:
-            query = session.query ( lp_table ).filter ( lp_table.steamid == match_group [ 15 ] )
-            self.controller.log ( "debug", prefix + " queried." )
-        except Exception as e:
-            self.controller.log ( "debug", prefix + ": exception during query: {}.".format ( e ) )
-            self.controller.database.let_session ( session )
-            self.controller.log ( "debug", prefix + " let session." )
-            return
+        self.controller.database.consult (
+            lp_table, [ ( lp_table.steamid, "==", match_group [ 15 ] ) ],
+            self.update_lp_table_2,
+            { "match_group" : match_group } )
 
-        if query.count ( ) == 0:
-            self.controller.log ( "debug", prefix + ": New entry." )
-            session.add_all ( [
-                lp_table (
+    def update_lp_table_2 ( self, results, match_group = None ):
+        self.log ( "debug", "results = {}.".format ( results ) )
+        if len ( results ) == 0:
+            self.log ( "debug", "New entry." )
+            self.controller.database.add_all (
+                lp_table,
+                [ lp_table (
                     player_id = match_group [ 0 ],
                     name = match_group [ 1 ],
                     longitude = match_group [ 2 ],
@@ -84,12 +80,12 @@ class world_state ( QtCore.QThread ):
                     level = match_group [ 14 ],
                     steamid = match_group [ 15 ],
                     ip = match_group [ 16 ],
-                    ping = match_group [ 17 ] )
-            ] )                
+                    ping = match_group [ 17 ] ) ],
+                print )
         else:
-            self.controller.log ( "debug", prefix + ": update entry." )
-            entry = query.one ( )
-            self.controller.log ( "debug", prefix + ": obtained entry." )
+            self.log ( "debug", "update entry." )
+            entry = results [ 0 ]
+            self.log ( "debug", "obtained entry." )
             entry.name = match_group [ 1 ]
             entry.longitude = match_group [ 2 ]
             entry.height = match_group [ 3 ]
@@ -106,15 +102,11 @@ class world_state ( QtCore.QThread ):
             entry.level = match_group [ 14 ]
             entry.ip = match_group [ 16 ]
             entry.ping = match_group [ 17 ]
-            self.controller.log ( "debug", prefix + ": setup update." )
-            session.add ( entry )
-            self.controller.log ( "debug", prefix + ": added entry." )
-            #session.commit ( )
-            #self.controller.log ( "info", prefix + ": commit session." )
-        self.controller.log ( "debug", prefix + " let session." )
-        self.controller.database.let_session ( session )
-        
-        self.controller.log ( "debug", prefix + " returning." )
+            self.controller.database.add_all (
+                lp_table, [ entry ],
+                print )
+            self.log ( "debug", "added entry." )
+        self.log ( "debug", "returning." )
 
     def update_online_players_count ( self, match_group ):
         prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )

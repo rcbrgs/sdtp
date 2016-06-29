@@ -78,37 +78,23 @@ class config ( object ):
 
     def falsify ( self, key ):
         self.controller.log ( )
-        
         self.values [ key ] = False
 
     def verify ( self, key ):
         self.controller.log ( )
-        
         self.values [ key ] = True
 
     def get ( self, key ):
-        self.controller.log ( )
-        
         try:
             return self.values [ key ]
         except:
             self.controller.log ( "error", "unable to find key '{}' among configuration values.".format ( key ) )
             return None
-        
+
     def set ( self, key, value ):
-        self.controller.log ( )
-        
         self.values [ key ] = value
-        
+
     def load_configuration_file ( self ):
-        self.controller.log ( )
-        # bridge 0.9.0 to 0.10.0:
-        possible_old = "{}{}default.json".format ( self.get ( "workdir" ), self.get ( "separator" ) )
-        possibility = pathlib.Path ( possible_old )
-        if possibility.exists ( ):
-            self.controller.log ( "info", "old config file found - renaming." )
-            os.rename ( possible_old, self.get ( "config_file" ) )
-        # bridge ends here
         try:
             preconfig_file = open ( self.get ( "config_file" ), "r" )
         except:

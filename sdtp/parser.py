@@ -36,19 +36,13 @@ class parser ( QtCore.QThread ):
 #                                       'to_call'  : [ ] },
 #            'AI scout-trig fin' : self.match_prefix + r'INF AIDirector: Scout-Triggered Horde Finished \(all mobs spawned\).$',
 #                                       'to_call'  : [ ] },
-#            'AI wanderer' : self.match_prefix + r'INF AIDirector: wandering horde zombie' +\
-#                                       r' \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' was spawned and is moving ' + \
-#                                       r'towards pitstop.$',
-#                                       'to_call'  : [ ] },
+            'AI wanderer' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' was spawned and is moving towards pitstop.$',
 #            'AI wander finish' : self.match_prefix + r'INF AIDirector: Wandering Horde Spawn Finished \(all mobs spawned\)\.$',
 #                                       'to_call'  : [ ] },
             'AI wanderer player' : self.match_prefix + r'INF AIDirector: Spawning wandering horde moving towards player \'\[type=EntityPlayer, name=.*, id=[\d]+\]\'$',
-#            'AI wander remove' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control.$',
-#                                       'to_call'  : [ ] },
-#            'AI wander stop' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' has wandered long enough and is going to endstop now.$',
-#                                       'to_call'  : [ ] },
-#            'AI wander trouble' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' reached pitstop and will wander around for awhile looking for trouble.$',
-#                                       'to_call'  : [ ] },
+            'AI wander remove' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control.$',
+            'AI wander stop' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' has wandered long enough and is going to endstop now.$',
+            'AI wander trouble' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' reached pitstop and will wander around for awhile looking for trouble.$',
 #            'allowing player' : self.match_prefix + r'INF Allowing player with id [\d]+$',
 #                                       'to_call'  : [ ] },
 #            'behaviour' : r'The referenced script on this Behaviour is missing!$',
@@ -137,6 +131,7 @@ class parser ( QtCore.QThread ):
 #                                       'to_call'  : [ self.framework.world_state.buffer_claimstones ] },
 #            'claim stone' : r'\(([-+]*[\d]*), ([-+]*[\d]*), ([-+]*[\d]*)\)$',
 #                                       'to_call'  : [ self.framework.world_state.buffer_claimstones ] },
+            "existing connection closed" : r"SocketException: An existing connection was forcibly closed by the remote host.",
 #            'couldnt RPC' : r'^Couldn\'t send RPC function \'RPC_RawData\'$',
 #                                       'to_call'  : [ ] },
 #            'created new player' : self.match_prefix + r'INF Created new player entry for' + \
@@ -249,6 +244,7 @@ class parser ( QtCore.QThread ):
 #            'inventory item' : r'^Slot ([\d]+): ([\d]+) \* (.*)$',
 #                                       'to_call'  : [ self.framework.world_state.update_inventory ] },
             'IOException readline' : self.match_prefix + r'ERR IOException in ReadLine: Read failure$',
+            'ERR telnet' : self.match_prefix + r'ERR ReadLine for TelnetClientReceive_.*: Read failure$',
             'IOException telnet' : self.match_prefix + r'ERR IOException in ReadLine for TelnetClientReceive_.*: Read failure$',
             'IOException sharing' : r'IOException: Sharing violation on path .*',
 #            'item dropped' : r'^Dropped item$',
@@ -361,8 +357,7 @@ class parser ( QtCore.QThread ):
 #            'player kill' : self.match_prefix + r'INF GMSG: Player (.*)' + \
 #                                       r' eliminated Player (.*)',
 #                                       'to_call'  : [ self.framework.game_events.player_kill ] },
-#            'player left' : self.match_prefix + r'INF GMSG: (.*) left the game$',
-#                                       'to_call'  : [ self.framework.game_events.player_left ] },
+            'player left' : self.match_prefix + r'INF GMSG: (.*) left the game$',
 #            'player login' : self.match_prefix + r'INF PlayerLogin: .*/Alpha 11\.6$',
 #                                       'to_call'  : [ ] },
 #            'player req spawn' : self.match_prefix + r'INF RequestToSpawnPlayer: [\d]+, ' + \
@@ -381,6 +376,7 @@ class parser ( QtCore.QThread ):
 #                                       'to_call'  : [ ] },
 #            'saveworld' : r'^' + self.match_string_date + r' INF Executing ' + \
 #                                       r'command \'saveworld\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
+            "server disconnect" : self.match_string_date + r"INF Disconnect",
 #                                       'to_call'  : [ ] },
 #            'si command executing' : self.match_string_date + \
 #                                       r' INF Executing command \'si [\d]+\' by Telnet from ' + \
@@ -404,9 +400,7 @@ class parser ( QtCore.QThread ):
 #                                       'to_call'  : [ self.framework.world_state.buffer_shop_item ] },
 #            'spawn output' : r'^Spawned [\w\d]+$',
 #                                       'to_call'  : [ ] },
-#            'spider spawn horde' : self.match_prefix + r'INF Spider scout spawned a zombie' + \
-#                                       r' horde!$',
-#                                       'to_call'  : [ ] },
+            'spider spawn horde' : self.match_prefix + r'INF Spider scout spawned a zombie horde!$',
 #            'steam auth ()' : self.match_prefix + r'INF \[Steamworks.NET\] Auth\.' + \
 #                                       r'AuthenticateUser\(\)$',
 #                                       'to_call'  : [ ] },
@@ -431,9 +425,7 @@ class parser ( QtCore.QThread ):
 #                                       self.match_string_pos + r', rot=' + self.match_string_pos + \
 #                                       r', lifetime=float.Max, remote=False, dead=False,$',
 #                                       'to_call'  : [ ] },
-#            'telnet closed' : self.match_prefix + r'INF Telnet connection closed: ' +\
-#                                       self.match_string_ip + r':[\d]+$',
-#                                       'to_call'  : [ ] },
+            'telnet closed' : self.match_prefix + r'INF Telnet connection closed: ' + self.match_string_ip + r':[\d]+$',
 #            'wave spawn' : r'^' + self.match_string_date + r' INF Spawning this wave:' +\
 #                                       r' ([\d]+)',
 #                                       'to_call'  : [ ] },
@@ -442,16 +434,10 @@ class parser ( QtCore.QThread ):
 #                                       'to_call'  : [ ] },
 #            'telnet conn block' : self.match_prefix + r'INF Telnet connection closed for too many login attempts: ' + self.match_string_ip + ':[\d]+$',
 #                                       'to_call'  : [ ] },
-#            'telnet conn from' : self.match_prefix + r'INF Telnet connection from: ' + \
-#                                       self.match_string_ip + ':[\d]+$',
-#                                       'to_call'  : [ ] },
+            'telnet conn from' : self.match_prefix + r'INF Telnet connection from: ' + self.match_string_ip + ':[\d]+$',
             'telnet thread exit' : '^' + self.match_string_date + r' INF Exited thread TelnetClient[\w]+_' + self.match_string_ip + r':[\d]+$',
-#            'telnet thread start r' : '^' + self.match_string_date + \
-#                                       r' INF Started thread TelnetClientReceive_' + self.match_string_ip + \
-#                                       r':[\d]+$',
-#                                       'to_call'  : [ ] },
-#            'telnet thread start s' : '^' + self.match_string_date + \
-#                                       r' INF Started thread TelnetClientSend_' + self.match_string_ip + r':[\d]+$',
+            'telnet thread start r' : '^' + self.match_string_date + r' INF Started thread TelnetClientReceive_' + self.match_string_ip + r':[\d]+$',
+            'telnet thread start s' : '^' + self.match_string_date + r' INF Started thread TelnetClientSend_' + self.match_string_ip + r':[\d]+$',
             "telnet client send error" : self.match_prefix + r"ERR Error in TelnetClientSend_.*",
 #            'token length' : self.match_prefix + r'INF Token length: [\d]+$',
 #                                       'to_call'  : [ ] },

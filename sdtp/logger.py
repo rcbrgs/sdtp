@@ -12,10 +12,14 @@ class logger ( QtCore.QThread ):
 
     log_gui = QtCore.pyqtSignal ( str, str )
     debug_toggle = {
-        sdtp.controller : "debug",
-        sdtp.dispatcher : "debug",
-        sdtp.telnet : "debug",
-        sdtp.mods.portals : "info",
+        "config" : "debug",
+        "controller" : "info",
+        "database" : "info",
+        "dispatcher" : "debug",
+        "telnet" : "debug",
+        "world_state" : "debug",
+        "portals" : "info",
+        "server_reboots" : "debug",
         }
 
     def __init__ ( self, controller = None ):
@@ -36,6 +40,30 @@ class logger ( QtCore.QThread ):
         self.logger.addHandler ( self.handler )
         self.start ( )
 
+    def debug ( self, message, level, caller_class, caller_method ):
+        log_message = "{}.{} {} {}".format (
+            caller_class, caller_method, level.upper ( ), message )
+        self.log_gui.emit ( level, log_message )
+        if ( level.lower ( ) == "debug" ):
+            if caller_class in self.debug_toggle:
+                if self.debug_toggle [ caller_class ] != "debug":
+                    self.debug (
+                        message, self.debug_toggle [ caller_class ],
+                        caller_class, caller_method )
+            else:
+                self.debug ( message, "info", caller_class, caller_method )
+            self.logger.debug ( log_message )
+        if ( level.lower ( ) == "info" ):
+            self.logger.info ( log_message )
+        if ( level.lower ( ) == "warning" ):
+            self.logger.warning ( log_message )
+        if ( level.lower ( ) == "error" ):
+            self.logger.error ( log_message )
+        if ( level.lower ( ) == "critical" ):
+            self.logger.critical ( log_message )
+        self.add_to_buffer ( level, log_message )
+
+    # Boilerplate
     def run ( self ):
         while self.keep_running:
             time.sleep ( 0.01 )
@@ -55,7 +83,7 @@ class logger ( QtCore.QThread ):
         self.log_gui.emit ( log_level, log_message )
         caller_frame = sys._getframe ( frame_level )
         caller_class = caller_frame.f_locals [ "self" ].__class__
-        log_message = "[{}] {}".format ( caller_class.__name__, log_message )
+        #log_message = "[{}] {}".format ( caller_class.__name__, log_message )
         if ( log_level.lower ( ) == "debug" ):
             if caller_class in self.debug_toggle:
                 if self.debug_toggle [ caller_class ] != "debug":
@@ -71,18 +99,21 @@ class logger ( QtCore.QThread ):
             self.logger.critical ( log_message )
         self.add_to_buffer ( log_level, log_message )
 
-    def log ( self, log_level, log_message ):
-        frame = sys._getframe ( 2 )
-        if log_message == None:
-            for variable_index in range ( frame.f_code.co_argcount ):
-                try:
-                    variables_string += ", {}".format ( frame.f_code.co_varnames [ variable_index ] )
-                except:
-                    variables_string = "( {}".format ( frame.f_code.co_varnames [ variable_index ] )
-            variables_string += " )"
-            log_message = variables_string
-        prefix = "{}.{} {}".format ( frame.f_locals [ "self" ].__class__.__name__, frame.f_code.co_name, log_message )
-        self.log_call ( log_level, prefix )
+    def log ( self, log_level, log_message, log_prefix = None ):
+        if log_prefix == None:
+            frame = sys._getframe ( 2 )
+            if log_message == None:
+                for variable_index in range ( frame.f_code.co_argcount ):
+                    try:
+                        variables_string += ", {}".format ( frame.f_code.co_varnames [ variable_index ] )
+                    except:
+                        variables_string = "( {}".format ( frame.f_code.co_varnames [ variable_index ] )
+                variables_string += " )"
+                log_message = variables_string
+                prefix = "{}.{} {}".format ( frame.f_locals [ "self" ].__class__.__name__, frame.f_code.co_name, log_message )
+                self.log_call ( log_level, prefix )
+        else:
+            self.log_call ( log_level, log_prefix + " " + log_message )
 
     def set_level ( self, log_level ):
         if ( log_level.lower ( ) == "debug" ):
@@ -98,23 +129,23 @@ class logger ( QtCore.QThread ):
 
     def set_initial_level ( self ):
         if self.controller.config.values [ "log_show_debug" ]:
-            self.logger.debug ( "setting logger level to debug." )
+            self.logger.debug ( "Setting logger level to debug." )
             self.logger.setLevel ( logging.DEBUG )
             return
         if self.controller.config.values [ "log_show_info" ]:
-            self.logger.debug ( "setting logger level to info." )
+            self.logger.debug ( "Setting logger level to info." )
             self.logger.setLevel ( logging.INFO )
             return
         if self.controller.config.values [ "log_show_warning" ]:
-            self.logger.debug ( "setting logger level to warning." )
+            self.logger.debug ( "Setting logger level to warning." )
             self.logger.setLevel ( logging.WARNING )
             return
         if self.controller.config.values [ "log_show_error" ]:
-            self.logger.debug ( "setting logger level to error." )
+            self.logger.debug ( "Setting logger level to error." )
             self.logger.setLevel ( logging.ERROR )
             return
         if self.controller.config.values [ "log_show_critical" ]:
-            self.logger.debug ( "setting logger level to critical." )
+            self.logger.debug ( "Setting logger level to critical." )
             self.logger.setLevel ( logging.CRITICAL )
             return
 

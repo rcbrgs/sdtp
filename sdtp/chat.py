@@ -11,15 +11,12 @@ class chat_widget ( QtGui.QWidget ):
         self.controller = controller
         self.parent = parent
         self.title = title
-        
         self.init_GUI ( )
         self.show ( )
 
     def init_GUI ( self ):
-               
         self.chat_log_widget = QtGui.QListWidget ( self )
         self.controller.dispatcher.register_callback ( "chat message", self.add_chat )
-
         self.chat_input_name = QtGui.QLineEdit ( )
         #self.chat_input_name.sizePolicy ( ).setHorizontalPolicy ( QtGui.QSizePolicy.Fixed )
         my_name = self.controller.config.get ( "chat_input_name" )
@@ -30,23 +27,20 @@ class chat_widget ( QtGui.QWidget ):
         input_layout = QtGui.QHBoxLayout ( )
         input_layout.addWidget ( self.chat_input_name, 10 )
         input_layout.addWidget ( self.input_chat, 90 )
-        
         main_layout = QtGui.QVBoxLayout ( )
         main_layout.addWidget ( self.chat_log_widget )
         main_layout.addLayout ( input_layout )
         self.setLayout ( main_layout )
-
         QtGui.QApplication.setStyle ( QtGui.QStyleFactory.create ( 'Cleanlooks' ) )
-        
         if self.title != None:
             self.setWindowTitle ( self.title )
 
     def add_chat ( self, match_group ):
         self.controller.log ( )
-
         message_time = "{}-{}-{} {}:{}:{}".format ( match_group [ 0 ], match_group [ 1 ], match_group [ 2 ], match_group [ 3 ], match_group [ 4 ], match_group [ 5 ] )
+        item = QtGui.QListWidgetItem ( "{} {}".format ( message_time, match_group [ 7 ] ) )
         try:
-            self.chat_log_widget.addItem ( "{} {}".format ( message_time, match_group [ 7 ] ) )
+            self.chat_log_widget.addItem ( item )
         except Exception as e:
             self.controller.log ( "debug", prefix + " type ( match_group [ 7 ] ) == {}, exception: {}".format ( type ( match_group [ 7 ] ), e ) )
             try:
@@ -54,9 +48,9 @@ class chat_widget ( QtGui.QWidget ):
             except Exception as e:
                 self.controller.log ( "error", prefix + " latin-1" )
                 return
-
+        #self.chat_log_widget.scrollToItem ( item )
         self.chat_log_widget.scrollToBottom ( )
-        
+
     def send_chat ( self ):
         self.controller.log ( )
 

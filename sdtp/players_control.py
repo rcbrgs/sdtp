@@ -82,7 +82,7 @@ class players_control_widget ( QtGui.QWidget ):
         if self.player_selected_label.text ( ) == "No player selected":
             self.controlller.log ( "debug", "No player selected, so no player got a screamer." )
             return
-        self.controller.telnet.write ( "se {} 8".format ( self.player_selected_id ) )
+        self.controller.telnet.write ( "se {} 7".format ( self.player_selected_id ) )
         self.controller.log ( "info", "Player {} ({}) got a screamer.".format ( self.player_selected_label.text ( ), self.player_selected_steamid ) )        
         
     def kick_player ( self ):

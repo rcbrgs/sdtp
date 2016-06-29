@@ -2,7 +2,7 @@ from .config import config
 #from .logger import logger
 
 from .auto_updater import auto_updater
-from .database import database 
+from .database import database
 from .dispatcher import dispatcher
 from .metronomer import metronomer
 from .parser import parser
@@ -49,12 +49,12 @@ class controller ( QtCore.QThread ):
         self.server_reboots = None
 
     def run ( self ):
-        self.log ( )
         self.config = config ( self )
         self.config.load_configuration_file ( )
         self.logger.set_initial_level ( )
         self.log ( "debug", "controller.run: dispatcher" )
         self.dispatcher = dispatcher ( self )
+        self.dispatcher.debug.connect ( self.debug )
         self.dispatcher.start ( )
         self.log ( "debug", "controller.run: metronomer" )
         self.metronomer = metronomer ( self )
@@ -66,7 +66,9 @@ class controller ( QtCore.QThread ):
         self.telnet = telnet ( self )
         self.telnet.start ( )
         self.database = database ( self )
+        self.database.debug.connect ( self.debug )
         self.world_state = world_state ( self )
+        self.world_state.debug.connect ( self.debug )
         self.components = [ self.dispatcher,
                             self.metronomer,
                             self.parser,
@@ -78,6 +80,7 @@ class controller ( QtCore.QThread ):
         self.forbidden_countries.start ( )
         self.ping_limiter = ping_limiter ( self )
         self.portals = portals ( self )
+        self.portals.debug.connect ( self.debug )
         self.server_reboots = server_reboots ( self )
         self.mods = [ self.challenge,
                       self.forbidden_countries,
@@ -119,9 +122,15 @@ class controller ( QtCore.QThread ):
         for component in self.components:
             if component == self.dispatcher:
                 continue
+            count = 0
             while ( component.isRunning ( ) ):
-                self.log ( "debug", "controller.stop: Waiting on component {} to stop.".format ( component.__class__ ) )
+                if count == 0:
+                    self.log ( "debug", "controller.stop: Waiting on component {} to stop.".format ( component.__class__ ) )
                 time.sleep ( 0.1 )
+                count += 1
+                if count == 100:
+                    self.log ( "warning", "calling terminate on component." )
+                    component.terminate ( )
         self.dispatcher.stop ( )
         while ( self.dispatcher.isRunning ( ) ):
             self.log ( "debug", "controller.stop: Waiting on dispatcher to stop." )
@@ -154,8 +163,9 @@ class controller ( QtCore.QThread ):
         else:
             print ( log_message )
 
-    def debug ( self, log_message ):
-        if self.logger != None:
-            self.logger.log ( "debug", log_message )
-        else:
-            print ( log_message )
+    def debug ( self, message, level = "debug", caller_class = "", caller_function = "" ):
+        if self.logger == None:
+            print ( "[DUMMY] {}.{} {} {}".format (
+                caller_class, caller_function, level.upper ( ), message ) )
+            return
+        self.logger.debug ( message, level, caller_class, caller_function )
