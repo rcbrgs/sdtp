@@ -86,24 +86,26 @@ class world_state ( QtCore.QThread ):
             self.log ( "debug", "update entry." )
             entry = results [ 0 ]
             self.log ( "debug", "obtained entry." )
-            entry.name = match_group [ 1 ]
-            entry.longitude = match_group [ 2 ]
-            entry.height = match_group [ 3 ]
-            entry.latitude = match_group [ 4 ]
-            entry.rotation_height = match_group [ 5 ]
-            entry.rotation_longitude = match_group [ 6 ]
-            entry.rotation_latitude = match_group [ 7 ]
-            entry.remote = match_group [ 8 ]
-            entry.health = match_group [ 9 ]
-            entry.deaths = match_group [ 10 ]
-            entry.zombies = match_group [ 11 ]
-            entry.players = match_group [ 12 ]
-            entry.score = match_group [ 13 ]
-            entry.level = match_group [ 14 ]
-            entry.ip = match_group [ 16 ]
-            entry.ping = match_group [ 17 ]
+            entry [ "name" ] = match_group [ 1 ]
+            entry [ "longitude" ] = match_group [ 2 ]
+            entry [ "height" ] = match_group [ 3 ]
+            entry [ "latitude" ] = match_group [ 4 ]
+            entry [ "rotation_height" ] = match_group [ 5 ]
+            entry [ "rotation_longitude" ] = match_group [ 6 ]
+            entry [ "rotation_latitude" ] = match_group [ 7 ]
+            entry [ "remote" ] = match_group [ 8 ]
+            entry [ "health" ] = match_group [ 9 ]
+            entry [ "deaths" ] = match_group [ 10 ]
+            entry [ "zombies" ] = match_group [ 11 ]
+            entry [ "players" ] = match_group [ 12 ]
+            entry [ "score" ] = match_group [ 13 ]
+            entry [ "level" ] = match_group [ 14 ]
+            entry [ "ip" ] = match_group [ 16 ]
+            entry [ "ping" ] = match_group [ 17 ]
+            table_entry = lp_table ( )
+            lp_entry = table_entry.create_from_dictionary ( entry )
             self.controller.database.add_all (
-                lp_table, [ entry ],
+                lp_table, [ lp_entry ],
                 print )
             self.log ( "debug", "added entry." )
         self.log ( "debug", "returning." )

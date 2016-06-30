@@ -265,7 +265,7 @@ class portals ( QtCore.QThread ):
             self.log ( "info", "player does not exist in lp table." )
             return False
         player_lp = answer [ 0 ]
-        player_steamid = player_lp.steamid
+        player_steamid = player_lp [ "steamid" ]
         self.controller.telnet.write ( "tele {} {} {} {}".format ( player_steamid, self.auto_horde_portal [ 0 ], self.auto_horde_portal [ 1 ], self.auto_horde_portal [ 2 ] ) )
 
 class portals_widget ( QtGui.QWidget ):

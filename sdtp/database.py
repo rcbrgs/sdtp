@@ -142,12 +142,15 @@ class database ( QtCore.QThread ):
             self.log ( "debug", "Applying condition '{}' diminished query count from {} to {}".format ( condition, before, query.count ( ) ) )
         results = query.all ( )
         self.log ( "debug", "results = {}".format ( results ) )
+        retval = [ ]
+        for entry in results:
+            retval.append ( entry.get_dictionary ( ) )
         self.let_session ( session )
         if callback == print:
             self.log ( "debug", "Ignoring 'print' callback." )
             return
         self.log ( "debug", "Trying callback." )
-        callback ( results, **pass_along )
+        callback ( retval, **pass_along )
 
     def get_session ( self ):
         session = sessionmaker ( bind = self.engine )
