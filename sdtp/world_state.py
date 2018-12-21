@@ -2,24 +2,19 @@
 
 from sdtp.lp_table import lp_table
 
-from PyQt4 import QtCore
+import logging
 from sqlalchemy import Integer
 import sys
+import threading
 import time
 
-class world_state ( QtCore.QThread ):
-
-    # Boilerplate
-    debug = QtCore.pyqtSignal ( str, str, str, str )
-
-    def log ( self, level, message ):
-        self.debug.emit ( message, level, self.__class__.__name__,
-                          sys._getframe ( 1 ).f_code.co_name )
-
+class WorldState(threading.Thread):
     def __init__ ( self, controller ):
         super ( self.__class__, self ).__init__ ( )
         self.controller = controller
         self.keep_running = True
+        self.logger = logging.getLogger(__name__)
+        
         self.online_players_count = 100000
         self.latest_nonzero_players = time.time ( )
         self.server_empty = False
@@ -27,15 +22,15 @@ class world_state ( QtCore.QThread ):
 
     # Thread control
     def run ( self ):
-        self.controller.log ( "debug", "world_state.run ( )" )
+        self.logger.debug("world_state.run ( )" )
         self.register_callbacks ( )
         while ( self.keep_running ):
             time.sleep ( 0.1 )
         self.deregister_callbacks ( )
-        self.controller.log ( "debug", "world_state.run returning" )
+        self.logger.debug("world_state.run returning" )
 
     def stop ( self ):
-        self.controller.log ( "debug", "{}.stop ( )".format ( self.__class__ ) )
+        self.logger.debug("{}.stop ( )".format ( self.__class__ ) )
         self.keep_running = False
 
     # Component-specific
@@ -49,7 +44,7 @@ class world_state ( QtCore.QThread ):
         self.controller.dispatcher.deregister_callback ( "lp output", self.update_lp_table )
 
     def update_lp_table ( self, match_group ):
-        self.log ( "debug", "( {} )".format ( match_group ) )
+        self.logger.debug("({})".format (match_group))
         this_steamid = int ( match_group [ 15 ] ),
         self.controller.database.consult (
             lp_table, [ ( lp_table.steamid, "==", match_group [ 15 ] ) ],
@@ -57,9 +52,9 @@ class world_state ( QtCore.QThread ):
             { "match_group" : match_group } )
 
     def update_lp_table_2 ( self, results, match_group = None ):
-        self.log ( "debug", "results = {}.".format ( results ) )
+        self.logger.debug("results = {}.".format ( results ) )
         if len ( results ) == 0:
-            self.log ( "debug", "New entry." )
+            self.logger.debug("New entry." )
             self.controller.database.add_all (
                 lp_table,
                 [ lp_table (
@@ -83,9 +78,9 @@ class world_state ( QtCore.QThread ):
                     ping = match_group [ 17 ] ) ],
                 print )
         else:
-            self.log ( "debug", "update entry." )
+            self.logger.debug("update entry." )
             entry = results [ 0 ]
-            self.log ( "debug", "obtained entry." )
+            self.logger.debug("obtained entry." )
             entry [ "name" ] = match_group [ 1 ]
             entry [ "longitude" ] = match_group [ 2 ]
             entry [ "height" ] = match_group [ 3 ]
@@ -107,12 +102,12 @@ class world_state ( QtCore.QThread ):
             self.controller.database.add_all (
                 lp_table, [ lp_entry ],
                 print )
-            self.log ( "debug", "added entry." )
-        self.log ( "debug", "returning." )
+            self.logger.debug("added entry." )
+        self.logger.debug("returning." )
 
     def update_online_players_count ( self, match_group ):
         prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "debug", prefix + " ( {} )".format ( match_group ) )
+        self.logger.debug(prefix + " ( {} )".format ( match_group ) )
 
         count = int ( match_group [ 0 ] )
         self.online_players_count = count

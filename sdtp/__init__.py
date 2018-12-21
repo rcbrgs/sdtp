@@ -1,6 +1,5 @@
-from .controller import controller
-from .dispatcher import dispatcher
-from .logger import logger
-from .telnet import telnet
+from .controller import Controller
+from .dispatcher import Dispatcher
+from .telnet import TelnetClient
 
-from . import mods
+#from . import mods

@@ -1,5 +1,5 @@
 # *-* coding: utf-8 *-*
 
-api = 0
-feature = 10
-bug = 1
+api = 3
+feature = 0
+bug = 0

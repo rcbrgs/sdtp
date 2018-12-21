@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-from PyQt4 import QtCore
-#from PySide import QtCore
+import logging
 import re
 import sys
 import threading
 import time
 
-class parser ( QtCore.QThread ):
+class Parser(threading.Thread):
 
     def __init__ ( self, controller ):
         super ( self.__class__, self ).__init__ ( )
         self.controller = controller
         self.keep_running = True
+        self.logger = logging.getLogger(__name__)
+        
         self.match_string_date = r'([0-9]{4})-([0-9]{2})-([0-9]{2}).+([0-9]{2}):([0-9]{2}):([0-9]{2}) ([+-]*[0-9]+\.[0-9]+)' # 7 groups
         self.match_string_date_simple = r'([\d]{4})-([\d]{2})-([\d]{2}) ([\d]{2}):([\d]{2})' # 5 groups
         self.match_string_ip = r'([\d]+\.[\d]+\.[\d]+\.[\d]+)' # 1 group
@@ -454,25 +455,25 @@ class parser ( QtCore.QThread ):
         }
         
         # must run after self.telnet_output_matchers is defined
-        self.controller.log ( "debug", "parser.init: compile telnet_output_matchers" )
+        self.logger.debug("parser.init: compile telnet_output_matchers" )
         for key in self.telnet_output_matchers.keys ( ):
             self.matchers [ key ] = re.compile ( self.telnet_output_matchers [ key ] )
 
     def run ( self ):
         prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "info", prefix + " ( )" )
+        self.logger.info(prefix + " ( )" )
         
         while ( self.keep_running ):
             line = self.dequeue ( )
             if line [ "text" ]  == "":
                 continue
-            self.controller.log ( "debug", prefix + " line = {}".format ( line ) )
+            self.logger.debug(prefix + " line = {}".format ( line ) )
             if type ( line [ "text" ] ) != str:
-                self.controller.log ( "debug", prefix + " type ( line [ 'text' ] ) = {}".format ( type ( line [ "text" ] ) ) )
+                self.logger.debug(prefix + " type ( line [ 'text' ] ) = {}".format ( type ( line [ "text" ] ) ) )
                 try:
                     line [ "text" ] = bytes ( line [ "text" ] )
                 except Exception as e:
-                    self.controller.log ( "error", "Unable to cast to bytes." )
+                    self.logger.error("Unable to cast to bytes." )
                     return
             any_match = False
             for key in self.matchers.keys ( ):
@@ -481,14 +482,14 @@ class parser ( QtCore.QThread ):
                     any_match = True
                     matched_key = key
                     match_timestamp = time.time ( )
-                    self.controller.log ( "debug", "key '{}', match.groups = '{}'.".format ( key, match.groups ( ) ) )
+                    self.logger.debug("key '{}', match.groups = '{}'.".format ( key, match.groups ( ) ) )
                     self.controller.dispatcher.call_registered_callbacks ( key, match.groups ( ) )
 
             if not any_match:
                 try:
-                    self.controller.log ( "info", "Unparsed output: '{}'.".format ( line [ "text" ] ) )
+                    self.logger.info("Unparsed output: '{}'.".format ( line [ "text" ] ) )
                 except UnicodeEncodeError as e:
-                    self.controller.log ( "error", "UnicodeEncodeError: {}".format ( e ) )
+                    self.logger.error("UnicodeEncodeError: {}".format ( e ) )
                 continue
 
     def stop ( self ):
@@ -525,16 +526,16 @@ class parser ( QtCore.QThread ):
         callee = inspect.stack ( ) [ 1 ] [ 0 ].f_code.co_name
         begin = time.time ( )
         while self.queue_lock:
-            self.controller.log ( "debug", "{}.{} wants parser queue lock from {}.".format (
+            self.logger.debug("{}.{} wants parser queue lock from {}.".format (
                 callee_class, callee, self.queue_lock ) )
             time.sleep ( 0.01 )
             if time.time ( ) - begin > 60:
                 break
         self.queue_lock = callee_class + "." + callee
-        #self.controller.log ( "debug", "{:s} got parser queue lock.".format ( callee ) )
+        #self.logger.debug("{:s} got parser queue lock.".format ( callee ) )
 
     def unlock_queue ( self ):
         callee = inspect.stack ( ) [ 1 ] [ 0 ].f_code.co_name
         self.queue_lock = None
-        #self.controller.log ( "debug", "{:s} unlocked the parser queue.".format ( callee ) )
+        #self.logger.debug("{:s} unlocked the parser queue.".format ( callee ) )
         

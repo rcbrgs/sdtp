@@ -8,18 +8,12 @@ https://github.com/pypa/sampleproject
 """
 
 # To use a consistent encoding
-#from cx_Freeze import setup, Executable
 from codecs import open
-from esky import bdist_esky
-from esky.bdist_esky import Executable
 from os import path
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 
 # version
-#version_api = 0
-#version_feature = 9
-#version_bug = 0
 from sdtp.version import api, feature, bug
 
 here = path.abspath ( path.dirname ( __file__ ) )
@@ -28,17 +22,9 @@ here = path.abspath ( path.dirname ( __file__ ) )
 with open ( path.join ( here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read ( )
 
-# esky
-executables = [ Executable ( "sdt.py", gui_only = True ) ]
-#executables = [ Executable ( "sdtp/gui/main_window.py", gui_only = True, icon = "something.ico" ) ]
-    
 setup (
-    name='SDTP',
+    name='sdtp',
 
-    # cx_Freeze
-    ###########
-    #executables = [ Executable ( "sdtp/gui/main_window.py" ) ],
-    
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
@@ -74,9 +60,6 @@ setup (
         
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        #'Programming Language :: Python :: 2',
-        #'Programming Language :: Python :: 2.6',
-        #'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
@@ -91,11 +74,8 @@ setup (
     # What does your project relate to?
     keywords='games server mod',
 
-    # esky
-    options = { "bdist_esky" : { "freezer_module" : "cxfreeze",
-                                 "includes" : [ "pygeoip" ] } },
-    scripts = executables,
-    data_files = [ ( "", [ "GeoIP.dat" ] ) ],
+    #scripts = executables,
+    data_files = [ ( "", [ "sdtp/GeoIP.dat" ] ) ],
     
     package_dir = { '' : 'sdtp' },
     
@@ -111,7 +91,9 @@ setup (
     #    'tools',
     #    'zeromq'
     #],
-    packages = find_packages ( "sdtp" ),
+    #packages = find_packages ( "sdtp" ),
+    packages = [
+        "sdtp" ],
     
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
@@ -122,7 +104,6 @@ setup (
         #'pymysql',
         "pygeoip",
         #'PySide', # Requires system cmake, tricky.
-        "PyQt4",
         "sqlalchemy",
     ],
     
@@ -152,9 +133,9 @@ setup (
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
-    #entry_points={
-    #    'console_scripts': [
-    #        'sample=sample:main',
-    #    ],
-    #},
+    entry_points={
+        'console_scripts': [
+            'sdtp=sdtp.sdtp:main',
+        ],
+    },
 )
