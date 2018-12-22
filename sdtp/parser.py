@@ -19,6 +19,7 @@ class Parser(threading.Thread):
         self.match_string_date_simple = r'([\d]{4})-([\d]{2})-([\d]{2}) ([\d]{2}):([\d]{2})' # 5 groups
         self.match_string_ip = r'([\d]+\.[\d]+\.[\d]+\.[\d]+)' # 1 group
         self.match_string_pos = r'\(([-+]*[\d]*\.[\d]), ([-+]*[\d]*\.[\d]), ([-+]*[\d]*\.[\d])\)'
+        self.match_string_pos_unparenthesized = r'([-+]*[\d]*\.[\d]), ([-+]*[\d]*\.[\d]), ([-+]*[\d]*\.[\d])'
         self.match_prefix = r'^' + self.match_string_date + r' '
         self.matchers = { }
         self.queue = [ ]
@@ -152,8 +153,8 @@ class Parser(threading.Thread):
 #                                       r' Status: UserAuthenticated GUID: [\d]+ ReqKick: [\w]+ Message:.*$',
 #                                       'to_call'  : [ ] },
             "EAC Cerberus" : self.match_prefix + r"WRN \[EAC\] Log: \[Cerberus\] Connection attempt to the back-end failed! Reconnecting in 60 seconds\.\.",
-#            'EAC free user' : r'INF \[EAC\] FreeUser \(.*\)',
-#                                       'to_call'  : [ ] },
+            'EAC Cerberus disconnect': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\] \[Info\] \[Cerberus\] \[Backend\] Disconnected.',
+            'EAC free user' : self.match_prefix+ r'INF \[EAC\] FreeUser: EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'EAC kicking player' : self.match_prefix + r'Kicking player: Kicked by EAC. ' + \
 #                                       r'Please check if you started the game with AntiCheat protection ' + \
 #                                       r'software enabled$',
@@ -171,12 +172,13 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'EAC unregister' : self.match_prefix + r'INF \[EAC\] Log: User unregistered. GUID: [\d]+$',
 #                                       'to_call'  : [ ] },
+            'EAC server unregister client': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\] \[Info\] \[UnregisterClient\] Client: 0x2 PlayerGUID: [\d]+',
 #            'empty line' : r'^$',
 #                                       'to_call'  : [ ] },
 #            'ERROR' : r'\*\*\* ERROR: unknown command \'(.*)\'',
 #                                       'to_call'  : [ self.output_guard_error] },
-
-# 2016-01-02T15:48:48 52857.460 INF Executing command \'say "[SDTP] Seven Days To Py: stopped."\' by Telnet from 90.37.160.230:55130'
+            "entity killed": self.match_prefix + r"INF Entity [\d]+ killed\.",
+            "entity killed by": self.match_prefix + r"INF Entity [\d]+ killed by [\d]+\.",
             "executing command" : self.match_prefix + r"INF Executing command \'(.*)\' by Telnet from " + self.match_string_ip + r":[\d]+$",
 #            'executing cmd give' : self.match_prefix + r'INF Executing command \'give ' + \
 #                                       r'[\d]+ [\w\d]+ [\d]+\' by Telnet from ' + self.match_string_ip + \
@@ -276,6 +278,7 @@ class Parser(threading.Thread):
 #                                       r'ck\), pos=' + self.match_string_pos + r', rot=' + self.match_string_pos + \
 #                                       r', lifetime=(.*), remote=([\w])+, dead=([\w]+),$',
 #                                       'to_call'  : [ ] },
+            'LiteNetLib received from unknown': self.match_prefix + r'INF NET: LiteNetLib: Received package from an unknown client: ' + self.match_string_ip + r':[\d]+',
 #            'lkp output' : r'[\d]+\. (.*), id=([\d]+), steamid=([\d]+), online=([\w]+), ip=(.*), playtime=([\d]+) m, seen=' + self.match_string_date_simple + '$',
 #                                       'to_call'  : [ self.framework.server.lkp_output_parser ] },
 #            'lkp total' : r'Total of [\d]+ known$',
@@ -315,6 +318,8 @@ class Parser(threading.Thread):
             
 #            'message player' : r'Message to player ".*" sent with sender "Server"',
 #                                       'to_call'  : [ ] },
+            'NCS reader exited thread': self.match_prefix + r'INF Exited thread NCS_Reader_[\d]+_[\d]+',
+            'NCS writer exited thread': self.match_prefix + r'INF Exited thread NCS_Writer_[\d]+_[\d]+',
 #            'not found' : r'^Playername or entity ID not found.$',
 #                                       'to_call'  : [ ] },
             "password incorrect" : r"^Password incorrect, please enter password:$",
@@ -338,11 +343,8 @@ class Parser(threading.Thread):
 #            'player connected' : self.match_prefix + r'INF Player connected, entityid=[\d]+, ' +\
 #                                       r'name=.*, steamid=[\d]+, ip=' + self.match_string_ip + r'$',
 #                                       'to_call'  : [ ] },
-#            'player disconnected' : self.match_prefix + r'INF Player disconnected: EntityID=' + \
-#                                       r'-*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'$',
-#                                       'to_call'  : [ ] },
-#            'player cdonn after' : self.match_prefix + r'INF Player .* disconnected after [\d]+\.[\d] minutes$',
-#                                       'to_call'  : [ ] },
+            'player disconnected' : self.match_prefix + r'INF Player disconnected: EntityID=-*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'$',
+            'player disconnected after': self.match_prefix + r'INF Player .* disconnected after [\d]+\.[\d] minutes$',
 #            'player disconn error' : self.match_prefix + r'ERR DisconnectClient: Player ' + \
 #                                       r'[\d]+ not found$',
 #                                       'to_call'  : [ ] },
@@ -354,8 +356,7 @@ class Parser(threading.Thread):
 #                                       r'EntityID=' + \
 #                                       r'-*[\d]+, PlayerID=\'([\d]+)\', OwnerID=\'[\d]+\', PlayerName=\'(.*)\'$',
 #                                       'to_call'  : [ self.framework.game_events.player_disconnected ] },
-#            'player died' : self.match_prefix + r'INF GMSG: Player (.*) died$',
-#                                       'to_call'  : [ self.framework.game_events.player_died ] },
+            'player died' : self.match_prefix + r'INF GMSG: Player (.*) died$',
 #            'player kill' : self.match_prefix + r'INF GMSG: Player (.*)' + \
 #                                       r' eliminated Player (.*)',
 #                                       'to_call'  : [ self.framework.game_events.player_kill ] },
@@ -365,9 +366,11 @@ class Parser(threading.Thread):
 #            'player req spawn' : self.match_prefix + r'INF RequestToSpawnPlayer: [\d]+, ' + \
 #                                       r'.*, [\d]+$',
 #                                       'to_call'  : [ ] },
+            "player spawned in the world": self.match_prefix + r'PlayerSpawnedInWorld (reason: Died, position: ' + self.match_string_pos + r'): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'\'.',
 #            'pm executing' : r'^' + self.match_string_date + r' INF Executing command' + \
 #                                       r' \'pm (.*) (.*)\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ self.command_pm_executing_parser ] },
+            'pools clearing': self.match_prefix + r'INF Clearing all pools',
 #            'registering player' : self.match_prefix + r'INF \[EAC\] Registering user: id=[\d]+,'+\
 #                                       r' owner=[\d]+$',
 #                                       'to_call'  : [ ] },
@@ -378,14 +381,15 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'saveworld' : r'^' + self.match_string_date + r' INF Executing ' + \
 #                                       r'command \'saveworld\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
+#            'say executing' : self.match_string_date + \
+#                                       r' INF Executing command \'say ".*"\' by Telnet from ' + \
+#                                       self.match_string_ip + ':([\d]+)',
+#                                       'to_call'  : [ ] },
+            "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'sleeperHordeStageGS2\', class .*\'\.',
             "server disconnect" : self.match_string_date + r"INF Disconnect",
 #                                       'to_call'  : [ ] },
 #            'si command executing' : self.match_string_date + \
 #                                       r' INF Executing command \'si [\d]+\' by Telnet from ' + \
-#                                       self.match_string_ip + ':([\d]+)',
-#                                       'to_call'  : [ ] },
-#            'say executing' : self.match_string_date + \
-#                                       r' INF Executing command \'say ".*"\' by Telnet from ' + \
 #                                       self.match_string_ip + ':([\d]+)',
 #                                       'to_call'  : [ ] },
 #            'socket exception' : self.match_prefix + r'SocketException: An established connection was aborted by the software in your host machine.',

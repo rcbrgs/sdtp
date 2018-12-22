@@ -34,13 +34,12 @@ class Config(object):
             "telnet_IP" : "127.0.0.1",
             "telnet_port" : 8081,
             "auto_connect" : False,
-            # mods
+            # mod portals
+            "mod_portals_enable" : False,
+            "mod_portals_max_portals_per_player" : 0,
+            "mod_portals_teleport_cost" : 0,
+            
             "enable_challenge" : False,
-            "enable_auto_horde_portals" : False,
-            "enable_player_portals" : False,
-            "max_portals_per_player" : 0,
-            "portal_cost" : 0,
-            "teleport_cost" : 0,
             "alarm_reboots_time" : -1,
             "enable_alarm_reboots" : False,
             "enable_frequency_reboots" : False,
@@ -48,6 +47,9 @@ class Config(object):
             "latest_reboot" : 0,
             "server_empty_condition" : True,
             "server_reboots_widget_show" : False,
+            # mod chat_logger
+            "mod_chat_logger_enable": True,
+            "mod_chat_logger_file_path": "chat.txt"
         }
         self.values["config_file"] = "{}_preconfig.json".format(self.values["app_name"])
         self.values["db_sqlite_file_path"] = "{}_default_db.sqlite".format(self.values["app_name"])
@@ -101,7 +103,7 @@ class Config(object):
     def save_configuration_file ( self ):
         self.logger.debug("saving current configuration in '{}'.".format ( self.get ( "config_file" ) ) )
         config_file = open ( self.get ( "config_file" ), "w" )
-        json.dump ( self.values, config_file )
+        json.dump(self.values, config_file, indent=4, sort_keys=True)
         self.logger.debug("Configuration file '{}' saved.".format ( self.get ( "config_file" ) ) )
 
     def toggle ( self, key ):

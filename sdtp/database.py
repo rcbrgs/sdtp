@@ -5,7 +5,7 @@ import logging
 import os
 import pathlib
 import queue
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, update
 from sqlalchemy import ( create_engine, Column, Float, Integer, MetaData, String, Table )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -15,7 +15,7 @@ import time
 
 Base = declarative_base ( )
 from sdtp.lp_table import lp_table
-#from sdtp.mods.portals_tables import portals_table
+from sdtp.mods.portals_tables import PortalsTable
 
 class Database(threading.Thread):
     def __init__(self, controller = None):
@@ -39,6 +39,15 @@ class Database(threading.Thread):
         self.logger.debug("table = {}".format ( table ) )
         self.enqueue ( self.__consult, [ table, conditions, callback ], { "pass_along" : pass_along } )
 
+    def delete(self, table, conditions, callback, pass_along = {}):
+        self.logger.debug("table = {}".format(table))
+        self.enqueue(self.__delete, [table, conditions, callback], {"pass_along": pass_along})
+        
+    def update_lp(self, steamid, values, callback, pass_along = {}):
+        self.enqueue(self.__update_lp, [steamid, values, callback],{"pass_along": pass_along})
+
+    # /API
+        
     def run ( self ):
         self.create_engine()
         self.create_tables()
@@ -69,9 +78,6 @@ class Database(threading.Thread):
     def stop ( self ):
         self.keep_running = False
 
-    def emit_has_changed ( self ):
-        self.has_changed.emit ( )
-
     def create_engine(self):
         self.logger.debug("create_engine()")
         config = self.controller.config.values
@@ -85,17 +91,18 @@ class Database(threading.Thread):
         self.metadata = MetaData ( self.engine )
         self.metadata.reflect ( bind = self.engine )
         for table in self.metadata.tables:
-            self.logger.info("table '{}' found in db.".format ( table ) )
+            self.logger.debug("table '{}' found in db.".format ( table ) )
         self.logger.debug("\create_engine()" )
 
     def create_tables(self):
         self.logger.debug("create_tables()")
         self.lp_table = lp_table()
         self.lp_table.create(self.engine)
-        #self.portals = portals_table ( )
+        self.portals = PortalsTable ( )
+        self.portals.create(self.engine)
         global Base
         Base.metadata.create_all(self.engine)
-        self.logger.info("self.metadata = {}".format(self.metadata))
+        self.logger.debug("self.metadata = {}".format(self.metadata))
         self.logger.debug("\create_tables()" )
 
     def __add_all ( self, table, records, callback ):
@@ -130,6 +137,65 @@ class Database(threading.Thread):
         self.logger.debug("Trying callback." )
         callback ( retval, **pass_along )
 
+    def __delete( self, table, conditions, callback, pass_along ):
+        self.logger.debug("Querying table {} with conditions '{}'.".format ( table, conditions ) )
+        session = self.get_session ( )
+        query = session.query ( table )
+        for condition in conditions:
+            before = query.count ( )
+            query = query.filter ( condition [ 0 ] == condition [ 2 ] )
+            self.logger.debug("Applying condition '{}' diminished query count from {} to {}".format ( condition, before, query.count ( ) ) )
+        results = query.all ( )
+        self.logger.debug("results = {}".format ( results ) )
+        retval = [ ]
+        for entry in results:
+            retval.append ( entry.get_dictionary ( ) )
+        self.let_session ( session )
+        query.delete()
+        if callback == print:
+            self.logger.debug("Ignoring 'print' callback." )
+            return
+        self.logger.debug("Trying callback." )
+        callback ( retval, **pass_along )
+        
+    def __update_lp(self, steamid, values, callback, pass_along):
+        self.logger.debug("Updating lp_table record for '{}'.".format(steamid))
+        session = self.get_session()
+        query = session.query(lp_table)
+        query.filter(lp_table.steamid == values["steamid"])
+        results = query.all()
+        if len(results) != 1:
+            self.logger.error("update_lp called with query results = {}".format(results))
+            self.let_session(session)
+            return
+        statement = update(lp_table).where(lp_table.steamid == values["steamid"]).\
+            values(player_id = values["player_id"],
+                   name = values["name"],
+                   longitude = values["longitude"],
+                   height = values["height"],
+                   latitude = values["latitude"],
+                   rotation_height = values["rotation_height"],
+                   rotation_longitude = values["rotation_longitude"],
+                   rotation_latitude = values["rotation_latitude"],
+                   remote = values["remote"],
+                   health = values["health"],
+                   deaths = values["deaths"],
+                   zombies = values["zombies"],
+                   players = values["players"],
+                   score = values["score"],
+                   level = values["level"],
+                   steamid = values["steamid"],
+                   ip = values["ip"],
+                   ping = values["ping"])
+        result = session.execute(statement)
+        self.let_session(session)
+        self.logger.info("result of update: {}".format(result))
+        if callback == print:
+            self.logger.debug("Ignoring 'print' callback.")
+            return
+        self.logger.debug("Trying callback.")
+        callback(**pass_along)
+        
     def get_session ( self ):
         session = sessionmaker ( bind = self.engine )
         return session ( )
@@ -138,7 +204,7 @@ class Database(threading.Thread):
         try:
             session.commit ( )
         except Exception as e:
-            self.logger.info("exception during commit: {}".format ( e ) )
+            self.logger.debug("exception during commit: {}".format ( e ) )
             time.sleep ( 1 )
             session.rollback ( )
             self.let_session ( session )

@@ -78,9 +78,9 @@ class WorldState(threading.Thread):
                     ping = match_group [ 17 ] ) ],
                 print )
         else:
-            self.logger.debug("update entry." )
+            self.logger.debug("Update lp entry." )
             entry = results [ 0 ]
-            self.logger.debug("obtained entry." )
+            self.logger.debug("entry before: {}".format(entry))
             entry [ "name" ] = match_group [ 1 ]
             entry [ "longitude" ] = match_group [ 2 ]
             entry [ "height" ] = match_group [ 3 ]
@@ -95,12 +95,12 @@ class WorldState(threading.Thread):
             entry [ "players" ] = match_group [ 12 ]
             entry [ "score" ] = match_group [ 13 ]
             entry [ "level" ] = match_group [ 14 ]
+            entry["steamid"] = match_group[15]
             entry [ "ip" ] = match_group [ 16 ]
             entry [ "ping" ] = match_group [ 17 ]
-            table_entry = lp_table ( )
-            lp_entry = table_entry.create_from_dictionary ( entry )
-            self.controller.database.add_all (
-                lp_table, [ lp_entry ],
+            self.logger.debug("entry after: {}".format(entry))
+            self.controller.database.update_lp (
+                entry["steamid"], entry,
                 print )
             self.logger.debug("added entry." )
         self.logger.debug("returning." )

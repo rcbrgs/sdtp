@@ -10,7 +10,7 @@ from .world_state import WorldState
 from .mods.chat_logger import ChatLogger
 #from .mods.forbidden_countries import forbidden_countries
 #from .mods.ping_limiter import ping_limiter
-#from .mods.portals import portals
+from .mods.portals import Portals
 #from .mods.server_reboots import server_reboots
 
 import json
@@ -72,14 +72,14 @@ class Controller(threading.Thread):
         #self.forbidden_countries = forbidden_countries ( self )
         #self.forbidden_countries.start ( )
         #self.ping_limiter = ping_limiter ( self )
-        #self.portals = portals ( self )
+        self.portals = Portals(self)
         #self.portals.debug.connect ( self.debug )
         #self.server_reboots = server_reboots ( self )
         self.mods = [ #self.challenge,
             self.chat_logger,
                       #self.forbidden_countries,
                       #self.ping_limiter,
-                      #self.portals,
+                      self.portals,
                       #self.server_reboots ]
             ]
         if ( self.config.values [ 'auto_connect' ] ):
@@ -93,6 +93,7 @@ class Controller(threading.Thread):
             if count > 100:
                 self.logger.error("Telnet never gets ready.")
                 self.stop()
+                break
 
         self.telnet.write ( 'say "{}"'.format ( self.config.values [ "sdtp_greetings" ] ) )
         # poll for input / events

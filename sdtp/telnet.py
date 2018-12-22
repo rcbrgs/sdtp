@@ -182,7 +182,7 @@ class TelnetClient(threading.Thread):
 
     def write ( self, input_msg ):
         if self.connectivity_level == 0:
-            self.logger.info("Ignoring attempt to write  with level 0 connectivity." )
+            self.logger.debug("Ignoring attempt to write  with level 0 connectivity." )
             return
 
         if self.connectivity_level == 1:
