@@ -8,6 +8,7 @@ from .world_state import WorldState
 
 #from .mods.challenge import challenge
 from .mods.chat_logger import ChatLogger
+from .mods.chat_translator import ChatTranslator
 #from .mods.forbidden_countries import forbidden_countries
 #from .mods.ping_limiter import ping_limiter
 from .mods.portals import Portals
@@ -37,6 +38,8 @@ class Controller(threading.Thread):
         self.telnet = None
         self.database = None
         self.world_state = None
+
+        self.chat_translator = None
         self.challenge = None
         self.forbidden_countries = None
         self.ping_limiter = None
@@ -69,6 +72,7 @@ class Controller(threading.Thread):
                             self.world_state ]
         #self.challenge = challenge ( self )
         self.chat_logger = ChatLogger(self)
+        self.chat_translator = ChatTranslator(self)
         #self.forbidden_countries = forbidden_countries ( self )
         #self.forbidden_countries.start ( )
         #self.ping_limiter = ping_limiter ( self )
@@ -77,6 +81,7 @@ class Controller(threading.Thread):
         #self.server_reboots = server_reboots ( self )
         self.mods = [ #self.challenge,
             self.chat_logger,
+            self.chat_translator,
                       #self.forbidden_countries,
                       #self.ping_limiter,
                       self.portals,

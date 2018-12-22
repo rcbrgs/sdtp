@@ -55,7 +55,6 @@ class Portals(threading.Thread):
         possible_portal_name = match.groups()[0]
         self.logger.info("'{}' used portal command with argument '{}'.".format (possible_player_name, possible_portal_name))
 
-        
         self.logger.info("Checking for public portals." )
         if self.check_for_public_portal_use(possible_player_name, possible_portal_name):
             return
@@ -87,7 +86,7 @@ class Portals(threading.Thread):
             {"possible_portal_name": possible_portal_name})
 
     def teleport_to_portal_2(self, answer, possible_portal_name):
-        self.logger.info("answer = {}".format(answer))
+        self.logger.debug("answer = {}".format(answer))
         if len(answer) != 1:
             self.logger.error("Player name not in lp_table!")
             return
@@ -100,7 +99,7 @@ class Portals(threading.Thread):
             {"player": player})
 
     def teleport_to_portal_3(self, answer, player):
-        self.logger.info("answer = {}".format(answer))
+        self.logger.debug("answer = {}".format(answer))
         if len(answer) != 1:
             self.logger.error("Portal name not in portal table!")
             return
@@ -125,7 +124,7 @@ class Portals(threading.Thread):
         self.logger.info("Consult request sent.")
 
     def check_for_public_portal_use_2(self, answer, player_name):
-        self.logger.info("answer = {}".format ( answer ) )
+        self.logger.debug("answer = {}".format ( answer ) )
         if len ( answer ) != 1:
             return False
         portal = answer [ 0 ]

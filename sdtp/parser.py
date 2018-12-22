@@ -368,7 +368,7 @@ class Parser(threading.Thread):
 #            'player req spawn' : self.match_prefix + r'INF RequestToSpawnPlayer: [\d]+, ' + \
 #                                       r'.*, [\d]+$',
 #                                       'to_call'  : [ ] },
-            "player spawned in the world": self.match_prefix + r'PlayerSpawnedInWorld (reason: Died, position: ' + self.match_string_pos + r'): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
+            "player spawned in the world": self.match_prefix + r'PlayerSpawnedInWorld (reason: (.*), position: ' + self.match_string_pos + r'): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'pm executing' : r'^' + self.match_string_date + r' INF Executing command' + \
 #                                       r' \'pm (.*) (.*)\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ self.command_pm_executing_parser ] },
@@ -388,7 +388,7 @@ class Parser(threading.Thread):
 #                                       self.match_string_ip + ':([\d]+)',
 #                                       'to_call'  : [ ] },
             'sideshave hair': self.match_prefix + r'INF Alt slots does not contain female_sideshave_hair!$',
-            "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'sleeperHordeStageGS2\', class .*\'\.',
+            "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'sleeperHordeStageGS2\', class .*',
             "server disconnect" : self.match_string_date + r"INF Disconnect",
 #                                       'to_call'  : [ ] },
 #            'si command executing' : self.match_string_date + \
