@@ -73,30 +73,30 @@ class Database(threading.Thread):
         self.has_changed.emit ( )
 
     def create_engine(self):
-        self.logger.info("create_engine()")
+        self.logger.debug("create_engine()")
         config = self.controller.config.values
         if config [ "db_engine" ] == "sqlite":
             engine_string = "sqlite:///" + config [ "db_sqlite_file_path" ]
         else:
             engine_string = config [ "db_engine" ] + config [ "db_user" ] + ":" + config [ "db_host_user" ] + "@" + config [ "db_host" ] + ":" +config [ "db_port" ] + config [ "separator" ] + config [ "db_name" ]
-        self.logger.info("engine_string = {}".format ( engine_string ) )
+        self.logger.debug("engine_string = {}".format ( engine_string ) )
         self.engine = create_engine ( engine_string )
-        self.logger.info("self.engine = {}".format(self.engine))
+        self.logger.debug("self.engine = {}".format(self.engine))
         self.metadata = MetaData ( self.engine )
         self.metadata.reflect ( bind = self.engine )
         for table in self.metadata.tables:
             self.logger.info("table '{}' found in db.".format ( table ) )
-        self.logger.info("\create_engine()" )
+        self.logger.debug("\create_engine()" )
 
     def create_tables(self):
-        self.logger.info("create_tables()")
+        self.logger.debug("create_tables()")
         self.lp_table = lp_table()
         self.lp_table.create(self.engine)
         #self.portals = portals_table ( )
         global Base
         Base.metadata.create_all(self.engine)
         self.logger.info("self.metadata = {}".format(self.metadata))
-        self.logger.info("\create_tables()" )
+        self.logger.debug("\create_tables()" )
 
     def __add_all ( self, table, records, callback ):
         self.logger.debug("Querying table {}.".format ( table ) )

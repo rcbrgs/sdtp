@@ -7,6 +7,7 @@ from .telnet import TelnetClient
 from .world_state import WorldState
 
 #from .mods.challenge import challenge
+from .mods.chat_logger import ChatLogger
 #from .mods.forbidden_countries import forbidden_countries
 #from .mods.ping_limiter import ping_limiter
 #from .mods.portals import portals
@@ -67,6 +68,7 @@ class Controller(threading.Thread):
                             self.database,
                             self.world_state ]
         #self.challenge = challenge ( self )
+        self.chat_logger = ChatLogger(self)
         #self.forbidden_countries = forbidden_countries ( self )
         #self.forbidden_countries.start ( )
         #self.ping_limiter = ping_limiter ( self )
@@ -74,6 +76,7 @@ class Controller(threading.Thread):
         #self.portals.debug.connect ( self.debug )
         #self.server_reboots = server_reboots ( self )
         self.mods = [ #self.challenge,
+            self.chat_logger,
                       #self.forbidden_countries,
                       #self.ping_limiter,
                       #self.portals,
@@ -82,6 +85,15 @@ class Controller(threading.Thread):
         if ( self.config.values [ 'auto_connect' ] ):
             self.logger.debug("Automatically initiating connection.")
             self.telnet.open_connection ( )
+            
+        count = 1
+        while not self.telnet.ready:
+            time.sleep(0.1)
+            count += 1
+            if count > 100:
+                self.logger.error("Telnet never gets ready.")
+                self.stop()
+
         self.telnet.write ( 'say "{}"'.format ( self.config.values [ "sdtp_greetings" ] ) )
         # poll for input / events
         self.keep_running = True
@@ -99,7 +111,7 @@ class Controller(threading.Thread):
             self.logger.debug("controller.stop: calling mod.stop in {}.".format ( mod.__class__ ) )
             mod.stop ( )
         for mod in self.mods:
-            while ( mod.isRunning ( ) ):
+            while ( mod.is_alive ( ) ):
                 self.logger.debug("controller.stop: Waiting on mod {} to stop.".format(mod.__class__))
                 time.sleep ( 0.1 )
         self.world_state.stop ( )

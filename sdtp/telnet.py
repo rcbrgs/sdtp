@@ -19,6 +19,7 @@ class TelnetClient(threading.Thread):
         self.auto_connect = False
         self.connectivity_level = 0
         self.latest_handshake = 0
+        self.ongoing_handshake = False
         self.output_matchers = [ re.compile ( b'^.*\n' ),
                                  re.compile ( b'^Day [\d]+, [\d]{2}:[\d]{2} ' ),
                                  re.compile ( b'Total of [\d]+ in the game' ) ]
@@ -106,23 +107,31 @@ class TelnetClient(threading.Thread):
             self.logger.debug("Password was sent to server.")
         except Exception as e:
             self.logger.error("Error while opening connection: %s." % str(e))
+            self.ongoing_handshake = False
             return
-        self.logger.debug("Waiting for 'Logon successful'")
+        self.logger.debug("Waiting for 'Logon successful.'")
         try:
             linetest = self.telnet.read_until(b'Logon successful.')
         except Exception as e:
             self.logger.error("linetest exception: {}.".format(e))
+            self.ongoing_handshake = False
             return
         if b'Logon successful.' in linetest:
             self.logger.debug(linetest.decode('utf-8'))
             self.logger.info("Telnet connected successfully.")
         else:
             self.logger.error("Logon failed.")
+            self.ongoing_handshake = False
             return
         self.logger.debug("Telnet step 2 completed." )
         self.connectivity_level = 2
+        self.ongoing_handshake = False
 
     def open_connection ( self ):
+        if self.ongoing_handshake:
+            self.logger.debug("Attempted connection during handshake, ignoring call.")
+            return
+        self.ongoing_handshake = True
         if self.connectivity_level == 2:
             self.logger.debug("Attempted to re-open connection, ignoring call." )
             return
@@ -177,7 +186,7 @@ class TelnetClient(threading.Thread):
             return
 
         if self.connectivity_level == 1:
-            self.logger.info("Writing with level 1 connectivity.")
+            self.logger.debug("Writing with level 1 connectivity.")
         self.logger.debug("Type(input_msg) == {}".format(type(input_msg)))
         try:
             msg = input_msg + "\n"

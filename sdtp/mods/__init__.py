@@ -1,1 +1,1 @@
-from .portals import portals
+#from .portals import portals

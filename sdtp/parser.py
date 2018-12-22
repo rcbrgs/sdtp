@@ -123,6 +123,9 @@ class Parser(threading.Thread):
 #                                       r'=[\d]+ XZ=[+-]*[\d]+/[+-]*[\d]+ ' + \
 #                                       r'ZombiesWastelandNight_Night: c=[\d]+/r=[\d]+ ZombiesWasteland_Day: c=[\d]+/r=[\d]+$',
 #                                       'to_call'  : [ ] },
+            'chat message (pre A14)': self.match_string_date + r' INF GMSG: (.*: .*)$',
+            'chat message (pre A17)': self.match_string_date + r' INF Chat: (.*: .*)$',
+            'chat message': self.match_string_date + r' INF Chat \(from \'(.*)\', entity id \'([+-]*[\d]+)\', to \'(.*)\'\): \'(.*)\': (.*)',
 #            'chunks saved' : r'.* INF Saving (.*) of chunks took (.*)ms',
 #                                       'to_call'  : [ ] },
 #            'claim finished' : r'Total of ([\d]+) keystones in the game',
@@ -209,11 +212,10 @@ class Parser(threading.Thread):
 #            'item fell off' : self.match_prefix + r'WRN Entity Item_([\d]+) \(EntityItem\) ' + \
 #                                       r'fell off the world, id=([\d]+) pos=' + self.match_string_pos + r'$',
 #                                       'to_call'  : [ ] },
-            'chat message (pre A14)' : self.match_string_date + r' INF GMSG: (.*: .*)$',
-            'chat message' : self.match_string_date + r' INF Chat: (.*: .*)$',
-            # 0 - 6. date
-            # 7. message
+
 #                                       'to_call'  : [ self.advise_deprecation_chat ] },
+#            'gg executing' : self.match_prefix + r'INF Executing command \'gg (.*)\' from client ([\d]+)$',
+#                                       'to_call'  : [ self.admin_command_mod ] },          
 #            'gt command executing' : self.match_string_date + \
 #                                       r' INF Executing command \'gt\' by Telnet from ' + \
 #                                       self.match_string_ip + ':([\d]+)',
@@ -223,14 +225,14 @@ class Parser(threading.Thread):
 
             'header  0' : r'^\*\*\* Connected with 7DTD server\.$',
 
-            'header  1' : r'^\*\*\* Server version: Alpha [\d]+\.[\d]+ \(.*\) Compatibility Version: Alpha [\d]+\.[\d]+.*$',
+            'header  1' : r'^\*\*\* Server version: Alpha [\d\.]+ \(.*\) Compatibility Version: Alpha [\d\.]+.*$',
             'header  2' : r'^\*\*\* Dedicated server only build$',
             'header  3' : r'^Server IP:   ' + self.match_string_ip + r'$',
             'header server ip any' : r'^Server IP:   Any$',
             'header  4' : r'^Server port: [\d]+$',
             'header  5' : r'^Max players: [\d]+$',
-            'header  6' : r'^Game mode:   GameModeSurvivalMP$',
-            'header  7' : r'^World:       Random Gen$',
+            'header  6' : r'^Game mode:   GameModeSurvival$',
+            'header  7' : r'^World:       New Cosena Valley$',
             'header  8' : r'Game name:   (.*)$',
             'header  9' : r'^Difficulty:  [\d]+$',
             'header 10' : r'Press \'help\' to get a list of all commands\. Press \'exit\' to end session.',
@@ -246,7 +248,8 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ self.framework.world_state.update_inventory ] },
             'IOException readline' : self.match_prefix + r'ERR IOException in ReadLine: Read failure$',
             'ERR telnet' : self.match_prefix + r'ERR ReadLine for TelnetClientReceive_.*: Read failure$',
-            'IOException telnet' : self.match_prefix + r'ERR IOException in ReadLine for TelnetClientReceive_.*: Read failure$',
+            'IOException telnet Read' : self.match_prefix + r'ERR IOException in ReadLine for TelnetClientReceive_.*: Read failure$',
+            'IOException telnet Write' : self.match_prefix + r'ERR IOException in ReadLine for TelnetClientReceive_.*: Write failure$',
             'IOException sharing' : r'IOException: Sharing violation on path .*',
 #            'item dropped' : r'^Dropped item$',
 #                                       'to_call'  : [ ] },
@@ -255,8 +258,6 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'kicking player' : self.match_prefix + r'INF Kicking player: .*$',
 #                                       'to_call'  : [ ] },
-#            'gg executing' : self.match_prefix + r'INF Executing command \'gg (.*)\' from client ([\d]+)$',
-#                                       'to_call'  : [ self.admin_command_mod ] },
 #            'le command executing' : self.match_string_date + \
 #                                       r' INF Executing command \'le\' by Telnet from ' + \
 #                                       self.match_string_ip + ':([\d]+)',
@@ -389,6 +390,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'socket exception' : self.match_prefix + r'SocketException: An established connection was aborted by the software in your host machine.',
 #                                       'to_call'  : [ ] },
+            'socket exception reset': r'^SocketException: Connection reset by peer$',            
 #            'spawn feral horde' : self.match_prefix + r'INF Spawning Feral Horde\.$',
 #                                       'to_call'  : [ ] },
 #            'spawn night horde' : r'^' + self.match_string_date + \
@@ -436,7 +438,7 @@ class Parser(threading.Thread):
 #            'telnet conn block' : self.match_prefix + r'INF Telnet connection closed for too many login attempts: ' + self.match_string_ip + ':[\d]+$',
 #                                       'to_call'  : [ ] },
             'telnet conn from' : self.match_prefix + r'INF Telnet connection from: ' + self.match_string_ip + ':[\d]+$',
-            'telnet thread exit' : '^' + self.match_string_date + r' INF Exited thread TelnetClient[\w]+_' + self.match_string_ip + r':[\d]+$',
+            'telnet thread exit' : '^' + self.match_string_date + r' INF Exited thread TelnetClient[\w]*_' + self.match_string_ip + r':[\d]+$',
             'telnet thread start r' : '^' + self.match_string_date + r' INF Started thread TelnetClientReceive_' + self.match_string_ip + r':[\d]+$',
             'telnet thread start s' : '^' + self.match_string_date + r' INF Started thread TelnetClientSend_' + self.match_string_ip + r':[\d]+$',
             "telnet client send error" : self.match_prefix + r"ERR Error in TelnetClientSend_.*",
@@ -460,16 +462,13 @@ class Parser(threading.Thread):
             self.matchers [ key ] = re.compile ( self.telnet_output_matchers [ key ] )
 
     def run ( self ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.logger.info(prefix + " ( )" )
-        
         while ( self.keep_running ):
             line = self.dequeue ( )
             if line [ "text" ]  == "":
                 continue
-            self.logger.debug(prefix + " line = {}".format ( line ) )
+            self.logger.debug("line = {}".format ( line ) )
             if type ( line [ "text" ] ) != str:
-                self.logger.debug(prefix + " type ( line [ 'text' ] ) = {}".format ( type ( line [ "text" ] ) ) )
+                self.logger.debug("type(line['text']) = {}".format(type(line["text"])))
                 try:
                     line [ "text" ] = bytes ( line [ "text" ] )
                 except Exception as e:

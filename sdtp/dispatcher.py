@@ -26,7 +26,7 @@ class Dispatcher(threading.Thread):
         if key not in list ( self.callback_registry.keys ( ) ):
             return
         for callback in self.callback_registry [ key ]:
-            self.logger.info("Dispatcher calling {} for key '{}' and match_groups {}.".format ( callback.__name__, key, match_groups ) ) 
+            self.logger.debug("Dispatcher calling {} for key '{}' and match_groups {}.".format ( callback.__name__, key, match_groups ) ) 
             try:
                 callback ( match_groups )
             except Exception as e:
