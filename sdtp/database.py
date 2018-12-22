@@ -43,8 +43,11 @@ class Database(threading.Thread):
         self.logger.debug("table = {}".format(table))
         self.enqueue(self.__delete, [table, conditions, callback], {"pass_along": pass_along})
         
+    def update(self, table, record, callback, pass_along = {}):
+        self.enqueue(self.__update, [table, record, callback], {"pass_along": pass_along})
+
     def update_lp(self, steamid, values, callback, pass_along = {}):
-        self.enqueue(self.__update_lp, [steamid, values, callback],{"pass_along": pass_along})
+        self.enqueue(self.__update_lp, [steamid, values, callback], {"pass_along": pass_along})
 
     # /API
         
@@ -158,11 +161,31 @@ class Database(threading.Thread):
         self.logger.debug("Trying callback." )
         callback ( retval, **pass_along )
         
+    def __update(self, table, record_dict, callback, pass_along):
+        self.logger.info("Updating record_dict '{}' of table {}.".format(record_dict, table))
+        session = self.get_session()
+        query = session.query(table)
+        query = query.filter(table.aid == record_dict["aid"])
+        results = query.all()
+        if len(results) != 1:
+            self.logger.error("update called on multiple query results = {}".format(results))
+            self.let_session(session)
+            return
+        statement = update(table).where(table.aid == record_dict["aid"]).\
+                    values(record_dict)
+        result = session.execute(statement)
+        self.let_session(session)
+        if callback == print:
+            self.logger.debug("Ignoring 'print' callback.")
+            return
+        self.logger.debug("Trying callback.")
+        callback(**pass_along)
+        
     def __update_lp(self, steamid, values, callback, pass_along):
         self.logger.debug("Updating lp_table record for '{}'.".format(steamid))
         session = self.get_session()
         query = session.query(lp_table)
-        query.filter(lp_table.steamid == values["steamid"])
+        query = query.filter(lp_table.steamid == values["steamid"])
         results = query.all()
         if len(results) != 1:
             self.logger.error("update_lp called with query results = {}".format(results))
@@ -189,7 +212,7 @@ class Database(threading.Thread):
                    ping = values["ping"])
         result = session.execute(statement)
         self.let_session(session)
-        self.logger.info("result of update: {}".format(result))
+        self.logger.debug("result of update: {}".format(result))
         if callback == print:
             self.logger.debug("Ignoring 'print' callback.")
             return

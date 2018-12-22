@@ -38,15 +38,18 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'AI scout-trig fin' : self.match_prefix + r'INF AIDirector: Scout-Triggered Horde Finished \(all mobs spawned\).$',
 #                                       'to_call'  : [ ] },
+            'AI target wait': self.match_prefix + r'INF AIDirector: Find target wait [\d]+ hours',
             'AI wanderer' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' was spawned and is moving towards pitstop.$',
 #            'AI wander finish' : self.match_prefix + r'INF AIDirector: Wandering Horde Spawn Finished \(all mobs spawned\)\.$',
 #                                       'to_call'  : [ ] },
+            'AI wander horde': self.match_prefix + r'INF AIDirector: Spawning wandering horde$',
             'AI wanderer player' : self.match_prefix + r'INF AIDirector: Spawning wandering horde moving towards player \'\[type=EntityPlayer, name=.*, id=[\d]+\]\'$',
             'AI wander remove' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control.$',
             'AI wander stop' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' has wandered long enough and is going to endstop now.$',
             'AI wander trouble' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' reached pitstop and will wander around for awhile looking for trouble.$',
 #            'allowing player' : self.match_prefix + r'INF Allowing player with id [\d]+$',
 #                                       'to_call'  : [ ] },
+            'animator gotostate': r'Calling Animator.GotoState on Synchronize layer',
 #            'behaviour' : r'The referenced script on this Behaviour is missing!$',
 #                                       'to_call'  : [ ] },
 #            'biome animal' : self.match_prefix + r'INF BiomeSpawnManager spawned ' + \
@@ -316,8 +319,7 @@ class Parser(threading.Thread):
             
             'mem output' : r'[0-9]{4}-[0-9]{2}-[0-9]{2}.* INF Time: ([0-9]+.[0-9]+)m FPS: ([0-9]+.[0-9]+) Heap: ([0-9]+.[0-9]+)MB Max: ([0-9]+.[0-9]+)MB Chunks: ([0-9]+) CGO: ([0-9]+) Ply: ([0-9]+) Zom: (.*) Ent: ([\d]+) \(([\d]+)\) Items: ([0-9]+)',
             
-#            'message player' : r'Message to player ".*" sent with sender "Server"',
-#                                       'to_call'  : [ ] },
+            'message player' : r'Message to player ".*" sent with sender "Server"',
             'NCS reader exited thread': self.match_prefix + r'INF Exited thread NCS_Reader_[\d]+_[\d]+',
             'NCS writer exited thread': self.match_prefix + r'INF Exited thread NCS_Writer_[\d]+_[\d]+',
 #            'not found' : r'^Playername or entity ID not found.$',
@@ -366,7 +368,7 @@ class Parser(threading.Thread):
 #            'player req spawn' : self.match_prefix + r'INF RequestToSpawnPlayer: [\d]+, ' + \
 #                                       r'.*, [\d]+$',
 #                                       'to_call'  : [ ] },
-            "player spawned in the world": self.match_prefix + r'PlayerSpawnedInWorld (reason: Died, position: ' + self.match_string_pos + r'): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'\'.',
+            "player spawned in the world": self.match_prefix + r'PlayerSpawnedInWorld (reason: Died, position: ' + self.match_string_pos + r'): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'pm executing' : r'^' + self.match_string_date + r' INF Executing command' + \
 #                                       r' \'pm (.*) (.*)\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ self.command_pm_executing_parser ] },
@@ -385,6 +387,7 @@ class Parser(threading.Thread):
 #                                       r' INF Executing command \'say ".*"\' by Telnet from ' + \
 #                                       self.match_string_ip + ':([\d]+)',
 #                                       'to_call'  : [ ] },
+            'sideshave hair': self.match_prefix + r'INF Alt slots does not contain female_sideshave_hair!$',
             "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'sleeperHordeStageGS2\', class .*\'\.',
             "server disconnect" : self.match_string_date + r"INF Disconnect",
 #                                       'to_call'  : [ ] },
@@ -445,6 +448,7 @@ class Parser(threading.Thread):
             'telnet thread exit' : '^' + self.match_string_date + r' INF Exited thread TelnetClient[\w]*_' + self.match_string_ip + r':[\d]+$',
             'telnet thread start r' : '^' + self.match_string_date + r' INF Started thread TelnetClientReceive_' + self.match_string_ip + r':[\d]+$',
             'telnet thread start s' : '^' + self.match_string_date + r' INF Started thread TelnetClientSend_' + self.match_string_ip + r':[\d]+$',
+            'telnet thread started' : '^' + self.match_string_date + r' INF Started thread TelnetClient_' + self.match_string_ip + r':[\d]+$',
             "telnet client send error" : self.match_prefix + r"ERR Error in TelnetClientSend_.*",
 #            'token length' : self.match_prefix + r'INF Token length: [\d]+$',
 #                                       'to_call'  : [ ] },

@@ -6,7 +6,7 @@ import sdtp
 def main():
     logging.basicConfig(filename="sdtp.log", level = logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info("sdtp - Seven Days To Py")
+    logger.info("*********** sdtp - Seven Days To Py ***********")
     controller = sdtp.Controller()
     controller.start()
     try:
