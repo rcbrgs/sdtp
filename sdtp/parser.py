@@ -44,7 +44,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
             'AI wander horde': self.match_prefix + r'INF AIDirector: Spawning wandering horde$',
             'AI wanderer player' : self.match_prefix + r'INF AIDirector: Spawning wandering horde moving towards player \'\[type=EntityPlayer, name=.*, id=[\d]+\]\'$',
-            'AI wander remove' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control.$',
+            'AI wander remove' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control\.$',
             'AI wander stop' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' has wandered long enough and is going to endstop now.$',
             'AI wander trouble' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' reached pitstop and will wander around for awhile looking for trouble.$',
 #            'allowing player' : self.match_prefix + r'INF Allowing player with id [\d]+$',
@@ -139,7 +139,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ self.framework.world_state.buffer_claimstones ] },
 #            'claim stone' : r'\(([-+]*[\d]*), ([-+]*[\d]*), ([-+]*[\d]*)\)$',
 #                                       'to_call'  : [ self.framework.world_state.buffer_claimstones ] },
-            "existing connection closed" : r"SocketException: An existing connection was forcibly closed by the remote host.",
+            'cm executing command': self.match_prefix + r'INF Client [\d]+/.* executing client side command: cm',
 #            'couldnt RPC' : r'^Couldn\'t send RPC function \'RPC_RawData\'$',
 #                                       'to_call'  : [ ] },
 #            'created new player' : self.match_prefix + r'INF Created new player entry for' + \
@@ -156,7 +156,7 @@ class Parser(threading.Thread):
 #                                       r' Status: UserAuthenticated GUID: [\d]+ ReqKick: [\w]+ Message:.*$',
 #                                       'to_call'  : [ ] },
             "EAC Cerberus" : self.match_prefix + r"WRN \[EAC\] Log: \[Cerberus\] Connection attempt to the back-end failed! Reconnecting in 60 seconds\.\.",
-            'EAC Cerberus disconnect': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\] \[Info\] \[Cerberus\] \[Backend\] Disconnected.',
+            'EAC Cerberus disconnect': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Cerberus\] \[Backend\] Disconnected\.',
             'EAC free user' : self.match_prefix+ r'INF \[EAC\] FreeUser: EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'EAC kicking player' : self.match_prefix + r'Kicking player: Kicked by EAC. ' + \
 #                                       r'Please check if you started the game with AntiCheat protection ' + \
@@ -195,6 +195,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'executing version' : self.match_prefix + r'INF Executing command \'version\' from client [\d]+$',
 #                                       'to_call'  : [ ] },
+            "existing connection closed" : r"SocketException: An existing connection was forcibly closed by the remote host.",
 #            'failed set triangles' : r'Failed setting triangles. Some indices are referencing out of bounds vertices. IndexCount: [\d]+, VertexCount: [\d]+$',
 #                                       'to_call'  : [ ] },
 #            'failed extract' : r'Failed to extract collision data: Submesh [\d]+ uses unsupported primitive type "Unknown type". Please use either "TriangleStrip" or "Triangles". Mesh asset path "" Mesh name ""$',
@@ -281,6 +282,7 @@ class Parser(threading.Thread):
 #                                       r'ck\), pos=' + self.match_string_pos + r', rot=' + self.match_string_pos + \
 #                                       r', lifetime=(.*), remote=([\w])+, dead=([\w]+),$',
 #                                       'to_call'  : [ ] },
+            'LiteNetLib client disconnect': self.match_prefix + r'INF NET: LiteNetLib: Client disconnect from: ' + self.match_string_ip + r':[\d]+ \(RemoteConnectionClose\)',
             'LiteNetLib received from unknown': self.match_prefix + r'INF NET: LiteNetLib: Received package from an unknown client: ' + self.match_string_ip + r':[\d]+',
 #            'lkp output' : r'[\d]+\. (.*), id=([\d]+), steamid=([\d]+), online=([\w]+), ip=(.*), playtime=([\d]+) m, seen=' + self.match_string_date_simple + '$',
 #                                       'to_call'  : [ self.framework.server.lkp_output_parser ] },
@@ -327,8 +329,7 @@ class Parser(threading.Thread):
             "password incorrect" : r"^Password incorrect, please enter password:$",
 #            'player created' : self.match_prefix + r'INF Created player with id=([\d]+)$',
 #                                       'to_call'  : [ self.framework.game_events.player_created ] },
-#            'player joined' : self.match_prefix + 'INF GMSG: .* joined the game',
-#                                       'to_call'  : [ ] },
+            'player joined' : self.match_prefix + 'INF GMSG: Player \'.*\' joined the game',
 #            'player kicked' : self.match_prefix + r'INF Executing command \'kick [\d]+\'' + \
 #                                       r' by Telnet from ' + self.match_string_ip + ':[\d]+$',
 #                                       'to_call'  : [ ] },
@@ -336,8 +337,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'playername not found' : r'^Playername or entity/steamid id not found$',
 #                                       'to_call'  : [ ] },
-#            'player offline' : self.match_prefix + r'INF Player set to offline: [\d]+$',
-#                                       'to_call'  : [ ] },
+            'player offline' : self.match_prefix + r'INF Player set to offline: [\d]+$',
 #            'player online' : self.match_prefix + r'INF Player set to online' + \
 #                                       r': ([\d]+)$',
 #                                       #'to_call'  : [ self.framework.server.set_steamid_online ] },
@@ -368,7 +368,7 @@ class Parser(threading.Thread):
 #            'player req spawn' : self.match_prefix + r'INF RequestToSpawnPlayer: [\d]+, ' + \
 #                                       r'.*, [\d]+$',
 #                                       'to_call'  : [ ] },
-            "player spawned in the world": self.match_prefix + r'PlayerSpawnedInWorld (reason: (.*), position: ' + self.match_string_pos + r'): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
+            "player spawned in the world": self.match_prefix + r'INF PlayerSpawnedInWorld \(reason: (.*), position: ' + self.match_string_pos + r'\): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'pm executing' : r'^' + self.match_string_date + r' INF Executing command' + \
 #                                       r' \'pm (.*) (.*)\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ self.command_pm_executing_parser ] },
@@ -379,8 +379,7 @@ class Parser(threading.Thread):
 
             'removing entity' : self.match_prefix + r'INF Removing observed entity [\d]+',
 
-#            'request to enter' : self.match_prefix + r'INF RequestToEnterGame: [\d]+/.*$',
-#                                       'to_call'  : [ ] },
+            'request to enter' : self.match_prefix + r'INF RequestToEnterGame: [\d]+/.*$',
 #            'saveworld' : r'^' + self.match_string_date + r' INF Executing ' + \
 #                                       r'command \'saveworld\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #            'say executing' : self.match_string_date + \

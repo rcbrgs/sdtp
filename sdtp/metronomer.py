@@ -22,6 +22,7 @@ class Metronomer(threading.Thread):
                 latest_lp = now
                 if self.controller.telnet.ready:
                     self.controller.telnet.write ( "lp" )
+                    self.controller.world_state.get_online_players()
 
     def stop ( self ):
         self.keep_running = False

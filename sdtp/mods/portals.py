@@ -50,32 +50,32 @@ class Portals(threading.Thread):
             if match:
                 self.list_portals(match_group[10])
             return
-        self.logger.info("Input from {} matches regex.".format(match_group[10]))
+        self.logger.debug("Input from {} matches regex.".format(match_group[10]))
         possible_player_name = match_group[10]
         possible_portal_name = match.groups()[0]
-        self.logger.info("'{}' used portal command with argument '{}'.".format (possible_player_name, possible_portal_name))
+        self.logger.debug("'{}' used portal command with argument '{}'.".format (possible_player_name, possible_portal_name))
 
-        self.logger.info("Checking for public portals." )
+        self.logger.debug("Checking for public portals." )
         if self.check_for_public_portal_use(possible_player_name, possible_portal_name):
             return
 
-        self.logger.info("Checking for deletions.")
+        self.logger.debug("Checking for deletions.")
         if possible_portal_name [ -1 ] == "-":
             self.delete_portal ( possible_player_name, possible_portal_name [ : -1 ] )
             return
 
-        self.logger.info("Checking for additions.")
+        self.logger.debug("Checking for additions.")
         if possible_portal_name [ -1 ] == "+":
             self.delete_portal ( possible_player_name, possible_portal_name [ : -1 ] )
             self.add_portal ( possible_player_name, possible_portal_name [ : -1 ] )
             return
 
-        self.logger.info("Checking for toggling public/non-public portal.")
+        self.logger.debug("Checking for toggling public/non-public portal.")
         if possible_portal_name [ -1 ] == "*":
             self.toggle_portal_public(possible_player_name, possible_portal_name[:-1])
             return
 
-        self.logger.info("Teleporting if portal exist.")
+        self.logger.debug("Teleporting if portal exist.")
         self.teleport_to_portal(possible_player_name, possible_portal_name)
 
     def teleport_to_portal(self, possible_player_name, possible_portal_name):
@@ -104,15 +104,15 @@ class Portals(threading.Thread):
             self.logger.error("Portal name not in portal table!")
             return
         portal = answer[0]
-        self.logger.info("teleporting player to portal '{}'.".format ( portal["name"]) )
+        self.logger.debug("teleporting player to portal '{}'.".format ( portal["name"]) )
         self.controller.telnet.write ( 'pm {} "Teleporting you to {}."'.format (
             player["steamid"], portal["name"] ) )
         teleport_string = 'tele {} {} {} {}'.format ( player["steamid"], int ( float ( portal["longitude"] ) ), int ( float ( portal["height"] ) ), int ( float ( portal["latitude"] ) ) )
         self.controller.telnet.write ( teleport_string )
-        self.logger.info(teleport_string)
+        self.logger.debug(teleport_string)
 
     def check_for_public_portal_use ( self, player_name, possible_portal_name ):
-        self.logger.info(
+        self.logger.debug(
             "player_name = {}, possible_portal_name = {}".format (
                 player_name, possible_portal_name ) )
         self.controller.database.consult (
@@ -121,14 +121,14 @@ class Portals(threading.Thread):
               ( PortalsTable.public, "==", True ) ],
             self.check_for_public_portal_use_2,
             {"player_name": player_name})
-        self.logger.info("Consult request sent.")
+        self.logger.debug("Consult request sent.")
 
     def check_for_public_portal_use_2(self, answer, player_name):
         self.logger.debug("answer = {}".format ( answer ) )
         if len ( answer ) != 1:
             return False
         portal = answer [ 0 ]
-        self.logger.info("portal = {}".format ( portal ) )
+        self.logger.debug("portal = {}".format ( portal ) )
         player_query = self.controller.database.consult (
             lp_table, [ ( lp_table.name, "==", player_name ) ],
             self.check_for_public_portal_use_3,
@@ -136,18 +136,18 @@ class Portals(threading.Thread):
 
     def check_for_public_portal_use_3(self, answer, portal):
         player_lp = answer [ 0 ]
-        self.logger.info("player_lp = {}".format ( player_lp ) )
+        self.logger.debug("player_lp = {}".format ( player_lp ) )
         self.controller.telnet.write ( 'pm {} "Teleporting you to {}."'.format ( player_lp["steamid"], portal["name"] ) )
         teleport_string = 'tele {} {} {} {}'.format ( player_lp["steamid"],
                                                       int ( float ( portal["longitude"] ) ),
                                                       int ( float ( portal["height"] ) ),
                                                       int ( float ( portal["latitude"] ) ) )
         self.controller.telnet.write ( teleport_string )
-        self.logger.info(teleport_string)
+        self.logger.debug(teleport_string)
         return True
 
     def delete_portal(self, possible_player_name, possible_portal_name):
-        self.logger.info("Deleting portal {} from {}.".format(
+        self.logger.debug("Deleting portal {} from {}.".format(
             possible_portal_name, possible_player_name))
         self.controller.database.consult(
             lp_table,
@@ -157,7 +157,7 @@ class Portals(threading.Thread):
         
     def delete_portal_2(self, answer, possible_portal_name):
         if len(answer) != 1:
-            self.logger.info("Player name not in lp_table.")
+            self.logger.debug("Player name not in lp_table.")
             return
         player = answer[0]
         self.controller.database.consult(
@@ -172,7 +172,7 @@ class Portals(threading.Thread):
             self.logger.error("Unable to find portal to delete." )
             return
         portal = answer[0]
-        self.logger.info("Deleting portal '{}'.".format ( portal["name"] ) )
+        self.logger.debug("Deleting portal '{}'.".format ( portal["name"] ) )
         self.controller.telnet.write('pm {} "Deleted portal {}."'.format ( player["steamid"], portal["name"]))
         self.controller.database.delete(
             PortalsTable,
@@ -192,7 +192,7 @@ class Portals(threading.Thread):
         if len(answer) != 1:
             self.logger.error("Unable to find player name. Answer = {}.".format(answer))
         player = answer[0]
-        self.logger.info("Creating portal from position of player: {}.".format(player))
+        self.logger.debug("Creating portal from position of player: {}.".format(player))
         self.controller.database.add_all(
             PortalsTable,
             [PortalsTable(
@@ -217,7 +217,7 @@ class Portals(threading.Thread):
             self.logger.error("While listing portals could not find player on db.")
             return
         player = answer[0]
-        self.logger.info("Listing portals for player {}.".format(player["name"]))
+        self.logger.debug("Listing portals for player {}.".format(player["name"]))
         self.controller.database.consult(
             PortalsTable,
             [(PortalsTable.steamid, "==", player["steamid"])],
@@ -226,10 +226,10 @@ class Portals(threading.Thread):
 
     def list_portals_3(self, answer, player):
         if len(answer) == 0:
-            self.logger.info("Player has no portals." )
+            self.logger.debug("Player has no portals." )
             self.controller.telnet.write ( 'pm {} "You do not have portals set."'.format ( player_lp.steamid ) )
         else:
-            self.logger.info("listing player portals." )
+            self.logger.debug("listing player portals." )
             for portal in answer:
                 try:
                     portal_string += ", " + portal["name"]
@@ -238,7 +238,7 @@ class Portals(threading.Thread):
                 if portal["public"]:
                     portal_string += "*"
             portals_string = 'pm {} "Your portals are: {}"'.format ( player["steamid"], portal_string )
-            self.logger.info("" + portals_string )
+            self.logger.debug("" + portals_string )
             self.controller.telnet.write ( portals_string )
 
     def toggle_portal_public(self, possible_player_name, possible_portal_name):
@@ -250,7 +250,7 @@ class Portals(threading.Thread):
         
     def toggle_portal_public_2(self, answer, possible_portal_name):
         if len(answer) != 1:
-            self.logger.info("Player name not in lp_table.")
+            self.logger.debug("Player name not in lp_table.")
             return
         player = answer[0]
         self.controller.database.consult(
@@ -265,7 +265,7 @@ class Portals(threading.Thread):
             self.logger.error("Unable to find portal to delete." )
             return
         portal = answer[0]
-        self.logger.info("Portal is currently public? '{}'.".format ( portal["public"] ) )
+        self.logger.debug("Portal is currently public? '{}'.".format ( portal["public"] ) )
         self.controller.telnet.write('pm {} "Toggling portal {}."'.format(player["steamid"], portal["name"]))
         self.controller.database.update(
             PortalsTable,

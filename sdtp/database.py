@@ -15,6 +15,7 @@ import time
 
 Base = declarative_base ( )
 from sdtp.lp_table import lp_table
+from sdtp.mods.chat_translator_table import ChatTranslatorTable
 from sdtp.mods.portals_tables import PortalsTable
 
 class Database(threading.Thread):
@@ -101,6 +102,8 @@ class Database(threading.Thread):
         self.logger.debug("create_tables()")
         self.lp_table = lp_table()
         self.lp_table.create(self.engine)
+        self.chat_translation = ChatTranslatorTable()
+        self.chat_translation.create(self.engine)
         self.portals = PortalsTable ( )
         self.portals.create(self.engine)
         global Base

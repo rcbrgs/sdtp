@@ -14,7 +14,8 @@ class WorldState(threading.Thread):
         self.controller = controller
         self.keep_running = True
         self.logger = logging.getLogger(__name__)
-        
+
+        self.online_players = []
         self.online_players_count = 100000
         self.latest_nonzero_players = time.time ( )
         self.server_empty = False
@@ -118,3 +119,13 @@ class WorldState(threading.Thread):
         else:
             self.server_empty = False
             self.latest_nonzero_players = time.time ( )
+
+    def get_online_players(self):
+        self.controller.database.consult(
+            lp_table,
+            [],
+            self.get_online_players_2)
+
+    def get_online_players_2(self, answer):
+        self.online_players = answer
+        self.logger.debug("{} players online now.".format(len(self.online_players)))
