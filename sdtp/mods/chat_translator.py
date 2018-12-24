@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#------------------------------------------------------------------------------80
 
 import googletrans
 import logging
@@ -34,8 +35,10 @@ class ChatTranslator(threading.Thread):
     ##############
 
     def setup(self):
-        self.controller.dispatcher.register_callback("chat message", self.parse_chat_message)
-        self.controller.dispatcher.register_callback("chat message", self.check_for_commands)
+        self.controller.dispatcher.register_callback(
+            "chat message", self.parse_chat_message)
+        self.controller.dispatcher.register_callback(
+            "chat message", self.check_for_commands)
         self.translator = googletrans.Translator()
         self.known_languages = ["en",
                                 "es",
@@ -46,8 +49,10 @@ class ChatTranslator(threading.Thread):
                                 "zh"]
 
     def tear_down(self):
-        self.controller.dispatcher.deregister_callback("chat message", self.parse_chat_message)
-        self.controller.dispatcher.deregister_callback("chat message", self.check_for_commands)
+        self.controller.dispatcher.deregister_callback(
+            "chat message", self.parse_chat_message)
+        self.controller.dispatcher.deregister_callback(
+            "chat message", self.check_for_commands)
         
     def parse_chat_message(self, match_groups):
         reconstructed_message = "[{}] {}: {}".format(
@@ -85,7 +90,7 @@ class ChatTranslator(threading.Thread):
         matcher = re.compile(r"^/translate[\w]*(.*)$")
         match = matcher.search(match_groups[11])
         if not match:
-            self.logger.info("No match for command regex: {}". format(match_groups[11]))
+            self.logger.debug("No match for command regex: {}". format(match_groups[11]))
             return
         command = match.groups()[0].strip()
         self.controller.database.consult(
@@ -111,6 +116,9 @@ class ChatTranslator(threading.Thread):
             return
         if command[-1] == "*":
             self.set_target_language(player, command[:-1])
+            return
+        if command == "help":
+            self.print_help_message(player)
             return
 
     def list_languages(self, player):
@@ -229,3 +237,17 @@ class ChatTranslator(threading.Thread):
             print)
         self.controller.telnet.write('pm {} "Your target language for translations in now {}."'.format(
             player["steamid"], language))
+
+    def print_help_message(self, player):
+        text = "/translate will list your current configuration."
+        self.controller.telnet.write(
+            'pm {} "{}"'.format(player["steamid"], text))
+        text = "/translate <language code> will toggle if you know a language."
+        self.controller.telnet.write(
+            'pm {} "{}"'.format(player["steamid"], text))
+        text = "/translate * will enable or disable translations."
+        self.controller.telnet.write(
+            'pm {} "{}"'.format(player["steamid"], text))
+        text = "/translate <language code>* will set the language to translate to."
+        self.controller.telnet.write(
+            'pm {} "{}"'.format(player["steamid"], text))

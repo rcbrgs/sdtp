@@ -175,7 +175,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'EAC unregister' : self.match_prefix + r'INF \[EAC\] Log: User unregistered. GUID: [\d]+$',
 #                                       'to_call'  : [ ] },
-            'EAC server unregister client': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\] \[Info\] \[UnregisterClient\] Client: 0x2 PlayerGUID: [\d]+',
+            'EAC server unregister client': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[UnregisterClient\] Client: 0x[\d]+ PlayerGUID: [\d]+',
 #            'empty line' : r'^$',
 #                                       'to_call'  : [ ] },
 #            'ERROR' : r'\*\*\* ERROR: unknown command \'(.*)\'',
@@ -242,6 +242,7 @@ class Parser(threading.Thread):
             'header  8' : r'Game name:   (.*)$',
             'header  9' : r'^Difficulty:  [\d]+$',
             'header 10' : r'Press \'help\' to get a list of all commands\. Press \'exit\' to end session.',
+            'help command executing': self.match_prefix + r'INF Executing command \'help\' from client [\d]+',
 #            'icon nof found' : self.match_prefix + r'INF Web:IconHandler:FileNotFound: ".*"$',
 #                                       'to_call'  : [ ] },
 #            'static not found' : self.match_prefix + r'INF Web:Static:FileNotFound: ".*" @ ".*"$',
@@ -368,7 +369,7 @@ class Parser(threading.Thread):
 #            'player req spawn' : self.match_prefix + r'INF RequestToSpawnPlayer: [\d]+, ' + \
 #                                       r'.*, [\d]+$',
 #                                       'to_call'  : [ ] },
-            "player spawned in the world": self.match_prefix + r'INF PlayerSpawnedInWorld \(reason: (.*), position: ' + self.match_string_pos + r'\): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
+            "player spawned in the world": self.match_prefix + r'INF PlayerSpawnedInWorld \(reason: (.*), position: ' + self.match_string_pos_unparenthesized + r'\): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'pm executing' : r'^' + self.match_string_date + r' INF Executing command' + \
 #                                       r' \'pm (.*) (.*)\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ self.command_pm_executing_parser ] },
