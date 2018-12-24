@@ -104,7 +104,7 @@ class ChatTranslator(threading.Thread):
             self.logger.error("Player name not unique in db.")
             return
         player = answer[0]
-        self.logger.info("Parsing command '{}'.".format(command))
+        self.logger.debug("Parsing command '{}'.".format(command))
         if command == "":
             self.list_languages(player)
             return

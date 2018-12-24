@@ -165,7 +165,7 @@ class Database(threading.Thread):
         callback ( retval, **pass_along )
         
     def __update(self, table, record_dict, callback, pass_along):
-        self.logger.info("Updating record_dict '{}' of table {}.".format(record_dict, table))
+        self.logger.debug("Updating record_dict '{}' of table {}.".format(record_dict, table))
         session = self.get_session()
         query = session.query(table)
         query = query.filter(table.aid == record_dict["aid"])

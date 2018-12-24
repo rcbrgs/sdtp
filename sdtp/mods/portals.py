@@ -97,14 +97,14 @@ class Portals(threading.Thread):
             return
         portal = answer[0]
         
+        self.logger.info("Teleporting if portal is owned by player.")
+        if portal["steamid"] == player["steamid"]:
+            self.teleport_to_portal(player, portal)
+            return
+
         self.logger.info("Checking for public portals." )
         if self.check_for_public_portal_use(portal):
             self.teleport_player_to_portal(player, portal)
-            return
-
-        self.logger.info("Teleporting if portal is private to owner.")
-        if portal["steamid"] == player["steamid"]:
-            self.teleport_to_portal(player, portal)
             return
 
     def check_for_command_4(self, player, argument):
@@ -134,6 +134,11 @@ class Portals(threading.Thread):
         if argument[-1] == "*":
             self.toggle_portal_public(player, portal)
             return
+
+        # Adding an existing portal (moving):
+        if argument[-1] == "+":
+            self.delete_portal(player, portal)
+            self.check_for_command_6(player, argument)
 
     def check_for_command_6(self, player, argument):        
         self.logger.debug("Checking for additions.")
@@ -236,7 +241,7 @@ class Portals(threading.Thread):
                 public = public)],
             print)
         self.controller.telnet.write('pm {} "Portal {} created."'.format(
-            player["steamid"], possible_portal_name))
+            player["steamid"], portal_name))
 
     def toggle_portal_public(self, player, portal):
         if player["steamid"] != portal["steamid"]:
