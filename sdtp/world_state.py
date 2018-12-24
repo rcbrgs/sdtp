@@ -100,8 +100,9 @@ class WorldState(threading.Thread):
             entry [ "ip" ] = match_group [ 16 ]
             entry [ "ping" ] = match_group [ 17 ]
             self.logger.debug("entry after: {}".format(entry))
-            self.controller.database.update_lp (
-                entry["steamid"], entry,
+            self.controller.database.update(
+                lp_table,
+                entry,
                 print )
             self.logger.debug("added entry." )
         self.logger.debug("returning." )

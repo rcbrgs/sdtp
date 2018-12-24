@@ -27,6 +27,7 @@ class Database(threading.Thread):
         
         self.ready = False
         self.engine = None
+        self.lock = False
         self.metadata = None
         self.queue = queue.Queue ( )
         self.start()
@@ -77,6 +78,13 @@ class Database(threading.Thread):
             return
         self.logger.debug("Attempting to execute a task." )
         task = self.queue.get ( )
+        count = 0
+        while self.lock:
+            time.sleep(0.1)
+            count += 1
+            if count > 100:
+                self.logger.warning(".execute() unsetting lock forcefully.")
+                self.lock = False
         task [ "method" ] ( *task [ "arguments" ], **task [ "keyword_arguments" ] )
 
     def stop ( self ):
@@ -156,8 +164,8 @@ class Database(threading.Thread):
         retval = [ ]
         for entry in results:
             retval.append ( entry.get_dictionary ( ) )
-        self.let_session ( session )
         query.delete()
+        self.let_session ( session )
         if callback == print:
             self.logger.debug("Ignoring 'print' callback." )
             return
@@ -176,46 +184,12 @@ class Database(threading.Thread):
             return
         statement = update(table).where(table.aid == record_dict["aid"]).\
                     values(record_dict)
-        result = session.execute(statement)
+        try:
+            result = session.execute(statement)
+        except Exception as e:
+            self.logger.error("Exception while executing statement: {}.".format(e))
+            raise e
         self.let_session(session)
-        if callback == print:
-            self.logger.debug("Ignoring 'print' callback.")
-            return
-        self.logger.debug("Trying callback.")
-        callback(**pass_along)
-        
-    def __update_lp(self, steamid, values, callback, pass_along):
-        self.logger.debug("Updating lp_table record for '{}'.".format(steamid))
-        session = self.get_session()
-        query = session.query(lp_table)
-        query = query.filter(lp_table.steamid == values["steamid"])
-        results = query.all()
-        if len(results) != 1:
-            self.logger.error("update_lp called with query results = {}".format(results))
-            self.let_session(session)
-            return
-        statement = update(lp_table).where(lp_table.steamid == values["steamid"]).\
-            values(player_id = values["player_id"],
-                   name = values["name"],
-                   longitude = values["longitude"],
-                   height = values["height"],
-                   latitude = values["latitude"],
-                   rotation_height = values["rotation_height"],
-                   rotation_longitude = values["rotation_longitude"],
-                   rotation_latitude = values["rotation_latitude"],
-                   remote = values["remote"],
-                   health = values["health"],
-                   deaths = values["deaths"],
-                   zombies = values["zombies"],
-                   players = values["players"],
-                   score = values["score"],
-                   level = values["level"],
-                   steamid = values["steamid"],
-                   ip = values["ip"],
-                   ping = values["ping"])
-        result = session.execute(statement)
-        self.let_session(session)
-        self.logger.debug("result of update: {}".format(result))
         if callback == print:
             self.logger.debug("Ignoring 'print' callback.")
             return
@@ -223,6 +197,14 @@ class Database(threading.Thread):
         callback(**pass_along)
         
     def get_session ( self ):
+        self.logger.debug(".get_session() with self.lock = {}".format(self.lock))
+        count = 0
+        while self.lock:
+            time.sleep(0.1)
+            count += 1
+            if count > 100:
+                self.log.error("DB locked for over 10 seconds. Forcefully releasing lock.")
+                self.lock = False
         session = sessionmaker ( bind = self.engine )
         return session ( )
 
@@ -235,3 +217,5 @@ class Database(threading.Thread):
             session.rollback ( )
             self.let_session ( session )
         session.close ( )
+        time.sleep(0.1)
+        self.lock = False

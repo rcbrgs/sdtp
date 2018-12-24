@@ -27,6 +27,7 @@ class Parser(threading.Thread):
         self.telnet_output_matchers = {
             'adding observed entity' : self.match_prefix + r'INF Adding observed entity: [\d]+, ' + self.match_string_pos + r', [\d]+$',
 #            'AI air drop paths' : self.match_prefix + r'INF AIAirDrop: Computed flight paths for 1 aircraft$',
+            'AI find wandering horde targets end': self.match_prefix + r'INF AIDirector: FindWanderingHordeTargets end y < 0',
 #            'AI night horde' : self.match_prefix + r'INF AIDirector: Night Horde Spawn Finished \(all mobs spawned\).$',
 #            'AI no good spot' : self.match_prefix + r'INF AIDirector: Could not find a valid position to spawn wandering horde \(trying again in 1 hour\)$',
 #            'AI scout horde' : self.match_prefix + r'INF AIDirector: scout horde zombie \'\[type=EntityZombie, name=spiderzombie, id=[\d]+\]\' was spawned and is moving towards point of interest\.$',
