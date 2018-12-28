@@ -14,8 +14,11 @@ import threading
 import time
 
 Base = declarative_base ( )
+from sdtp.friendships_table import FriendshipsTable
+from sdtp.lkp_table import lkp_table
 from sdtp.lp_table import lp_table
 from sdtp.mods.chat_translator_table import ChatTranslatorTable
+from sdtp.mods.llp_table import llp_table
 from sdtp.mods.portals_tables import PortalsTable
 
 class Database(threading.Thread):
@@ -32,7 +35,37 @@ class Database(threading.Thread):
         self.queue = queue.Queue ( )
         self.start()
 
-    # API
+    # blocking API
+    def blocking_consult(self, table, conditions):
+        self.get_lock()
+        session = self.get_session ( )
+        query = session.query(table)
+        for condition in conditions:
+            if condition[1] == "==":
+                query = query.filter(condition[0] == condition[2])
+        results = query.all()
+        self.logger.debug("results = {}".format ( results ) )
+        retval = [ ]
+        for entry in results:
+            retval.append(entry.get_dictionary())
+        self.let_session(session)
+        self.let_lock()       
+        return retval
+
+    def get_lock(self):
+        count = 0
+        while self.lock:
+            time.sleep(0.1)
+            count += 1
+            if count > 100:
+                self.logger.warning(".get_lock() grabbing lock forcefully.")
+                break
+        self.lock = True
+
+    def let_lock(self):
+        self.lock = False
+        
+    # non-blocking API
     def add_all ( self, table, records, callback ):
         self.logger.debug("table = {}".format ( table ) )
         self.enqueue ( self.__add_all, [ table, records, callback ] )
@@ -44,12 +77,9 @@ class Database(threading.Thread):
     def delete(self, table, conditions, callback, pass_along = {}):
         self.logger.debug("table = {}".format(table))
         self.enqueue(self.__delete, [table, conditions, callback], {"pass_along": pass_along})
-        
+
     def update(self, table, record, callback, pass_along = {}):
         self.enqueue(self.__update, [table, record, callback], {"pass_along": pass_along})
-
-    def update_lp(self, steamid, values, callback, pass_along = {}):
-        self.enqueue(self.__update_lp, [steamid, values, callback], {"pass_along": pass_along})
 
     # /API
         
@@ -79,13 +109,9 @@ class Database(threading.Thread):
         self.logger.debug("Attempting to execute a task." )
         task = self.queue.get ( )
         count = 0
-        while self.lock:
-            time.sleep(0.1)
-            count += 1
-            if count > 100:
-                self.logger.warning(".execute() unsetting lock forcefully.")
-                self.lock = False
-        task [ "method" ] ( *task [ "arguments" ], **task [ "keyword_arguments" ] )
+        self.get_lock()
+        task["method"](*task["arguments"], **task["keyword_arguments"])
+        self.let_lock()
 
     def stop ( self ):
         self.keep_running = False
@@ -108,11 +134,17 @@ class Database(threading.Thread):
 
     def create_tables(self):
         self.logger.debug("create_tables()")
+        self.friendships_table = FriendshipsTable()
+        self.friendships_table.create(self.engine)
+        self.lkp_table = lkp_table()
+        self.lkp_table.create(self.engine)
         self.lp_table = lp_table()
         self.lp_table.create(self.engine)
         self.chat_translation = ChatTranslatorTable()
         self.chat_translation.create(self.engine)
-        self.portals = PortalsTable ( )
+        self.llp_table = llp_table()
+        self.llp_table.create(self.engine)
+        self.portals = PortalsTable()
         self.portals.create(self.engine)
         global Base
         Base.metadata.create_all(self.engine)
@@ -170,7 +202,7 @@ class Database(threading.Thread):
             self.logger.debug("Ignoring 'print' callback." )
             return
         self.logger.debug("Trying callback." )
-        callback ( retval, **pass_along )
+        callback ( retval, **pass_along )       
         
     def __update(self, table, record_dict, callback, pass_along):
         self.logger.debug("Updating record_dict '{}' of table {}.".format(record_dict, table))
@@ -197,25 +229,16 @@ class Database(threading.Thread):
         callback(**pass_along)
         
     def get_session ( self ):
-        self.logger.debug(".get_session() with self.lock = {}".format(self.lock))
-        count = 0
-        while self.lock:
-            time.sleep(0.1)
-            count += 1
-            if count > 100:
-                self.log.error("DB locked for over 10 seconds. Forcefully releasing lock.")
-                self.lock = False
-        session = sessionmaker ( bind = self.engine )
-        return session ( )
+        session = sessionmaker(bind = self.engine)
+        return session()
 
     def let_session ( self, session ):
         try:
-            session.commit ( )
+            session.commit()
         except Exception as e:
-            self.logger.debug("exception during commit: {}".format ( e ) )
-            time.sleep ( 1 )
-            session.rollback ( )
-            self.let_session ( session )
-        session.close ( )
+            self.logger.debug("Exception during commit: {}".format ( e ) )
+            time.sleep(1)
+            session.rollback()
+            self.let_session(session)
+        session.close()
         time.sleep(0.1)
-        self.lock = False

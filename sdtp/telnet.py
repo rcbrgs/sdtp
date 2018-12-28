@@ -24,6 +24,7 @@ class TelnetClient(threading.Thread):
                                  re.compile ( b'^Day [\d]+, [\d]{2}:[\d]{2} ' ),
                                  re.compile ( b'Total of [\d]+ in the game' ) ]
         self.telnet = None
+        self.write_lock = False
 
     def run(self):
         self.controller.dispatcher.register_callback(
@@ -180,11 +181,19 @@ class TelnetClient(threading.Thread):
             return
         return line
 
-    def write ( self, input_msg ):
+    def write ( self, input_msg, lock_after_write = False ):
+        count = 0
+        while self.write_lock:
+            time.sleep(0.1)
+            count += 1
+            if count > 100:
+                self.logger.warning("Forcefully releasing write lock.")
+                self.write_lock = False
         if self.connectivity_level == 0:
             self.logger.debug("Ignoring attempt to write  with level 0 connectivity." )
             return
 
+        self.logger.debug(input_msg)
         if self.connectivity_level == 1:
             self.logger.debug("Writing with level 1 connectivity.")
         self.logger.debug("Type(input_msg) == {}".format(type(input_msg)))
@@ -199,4 +208,7 @@ class TelnetClient(threading.Thread):
         except Exception as e:
             self.logger.error("telnet.write had exception: {}".format(e))
             return
+        if lock_after_write:
+            self.write_lock = True
+            self.logger.debug("Write locked.")
         self.logger.debug("Message written.")

@@ -1,6 +1,8 @@
 from .config import Config
 from .database import Database
 from .dispatcher import Dispatcher
+from .friendships import Friendships
+from .help import Help
 from .metronomer import Metronomer
 from .parser import Parser
 from .telnet import TelnetClient
@@ -9,6 +11,7 @@ from .world_state import WorldState
 #from .mods.challenge import challenge
 from .mods.chat_logger import ChatLogger
 from .mods.chat_translator import ChatTranslator
+from .mods.claim_alarm import ClaimAlarm
 #from .mods.forbidden_countries import forbidden_countries
 #from .mods.ping_limiter import ping_limiter
 from .mods.portals import Portals
@@ -33,18 +36,22 @@ class Controller(threading.Thread):
         self.config = None
         self.auto_updater = None
         self.dispatcher = None
+        self.friendships = None
+        self.help = None
         self.metronomer = None
         self.parser = None
         self.telnet = None
         self.database = None
         self.world_state = None
 
+        self.chat_logger = None
         self.chat_translator = None
-        self.challenge = None
-        self.forbidden_countries = None
-        self.ping_limiter = None
+        #self.challenge = None
+        self.claim_alarm = None
+        #self.forbidden_countries = None
+        #self.ping_limiter = None
         self.portals = None
-        self.server_reboots = None
+        #self.server_reboots = None
 
     def run ( self ):
         self.config = Config ( self )
@@ -63,8 +70,14 @@ class Controller(threading.Thread):
         self.telnet.start()
         self.database = Database ( self )
         #self.database.start()
+        self.help = Help(self)
+        self.help.start()
+        self.friendships = Friendships(self)
+        self.friendships.start()
         self.world_state = WorldState ( self )
         self.components = [ self.dispatcher,
+                            self.friendships,
+                            self.help,
                             self.metronomer,
                             self.parser,
                             self.telnet,
@@ -73,6 +86,7 @@ class Controller(threading.Thread):
         #self.challenge = challenge ( self )
         self.chat_logger = ChatLogger(self)
         self.chat_translator = ChatTranslator(self)
+        self.claim_alarm = ClaimAlarm(self)
         #self.forbidden_countries = forbidden_countries ( self )
         #self.forbidden_countries.start ( )
         #self.ping_limiter = ping_limiter ( self )
@@ -82,6 +96,7 @@ class Controller(threading.Thread):
         self.mods = [ #self.challenge,
             self.chat_logger,
             self.chat_translator,
+            self.claim_alarm,
                       #self.forbidden_countries,
                       #self.ping_limiter,
                       self.portals,
@@ -100,11 +115,14 @@ class Controller(threading.Thread):
                 self.stop()
                 break
 
-        self.telnet.write ( 'say "{}"'.format ( self.config.values [ "sdtp_greetings" ] ) )
+        self.telnet.write(
+            'say "{}"'.format(self.config.values["sdtp_greetings"]))
         # poll for input / events
         self.keep_running = True
-        while ( self.keep_running ):
-            time.sleep ( 1 )
+        while(self.keep_running):
+            time.sleep(1)
+            self.components_check()
+            self.mods_check()
         self.config.save_configuration_file ( )
         if ( self.telnet_ongoing ):
             self.telnet.close_connection ( )
@@ -114,12 +132,14 @@ class Controller(threading.Thread):
         self.logger.info("Shutdown of sdtp initiated.")
         self.telnet.write ( 'say "{}"'.format ( self.config.values [ "sdtp_goodbye" ] ) )
         for mod in self.mods:
-            self.logger.debug("controller.stop: calling mod.stop in {}.".format ( mod.__class__ ) )
+            self.logger.info("controller.stop: calling mod.stop in {}.".format ( mod.__class__ ) )
             mod.stop ( )
         for mod in self.mods:
             while ( mod.is_alive ( ) ):
                 self.logger.debug("controller.stop: Waiting on mod {} to stop.".format(mod.__class__))
                 time.sleep ( 0.1 )
+        self.friendships.stop()
+        self.help.stop()
         self.world_state.stop ( )
         self.metronomer.stop ( )
         self.database.stop ( )
@@ -135,8 +155,9 @@ class Controller(threading.Thread):
                 time.sleep ( 0.1 )
                 count += 1
                 if count == 100:
-                    self.logger.warning("Calling terminate on component.")
-                    component.terminate()
+                    self.logger.warning("Ignoring component {} stop.".format(
+                        component.__class__))
+                    break
         self.dispatcher.stop ( )
         while ( self.dispatcher.is_alive ( ) ):
             self.logger.debug("controller.stop: Waiting on dispatcher to stop.")
@@ -157,3 +178,15 @@ class Controller(threading.Thread):
             return
         self.telnet_ongoing = False
         self.telnet.close_connection ( )
+
+    def components_check(self):
+        for component in self.components:
+            if not component.is_alive():
+                self.logger.error("Component not alive: {}.".format(
+                    component))
+
+
+    def mods_check(self):
+        for mod in self.mods:
+            if not mod.is_alive():
+                self.logger.error("Mod is not alive: {}.".format(mod))

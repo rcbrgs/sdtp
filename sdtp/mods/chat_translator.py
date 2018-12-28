@@ -35,6 +35,12 @@ class ChatTranslator(threading.Thread):
     ##############
 
     def setup(self):
+        self.help = {
+            "translate": "will list your current configuration.",
+            "translate <language code>": "will toggle if you know a language.",
+            "translate *": "will enable or disable translations.",
+            "translate <language code>*": "will set the language to translate to."}
+        self.controller.help.registered_commands["translate"] = self.help
         self.controller.dispatcher.register_callback(
             "chat message", self.parse_chat_message)
         self.controller.dispatcher.register_callback(

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#------------------------------------------------------------------------------8081
 
 import inspect
 import logging
@@ -18,21 +19,25 @@ class Parser(threading.Thread):
         self.match_string_date = r'([0-9]{4})-([0-9]{2})-([0-9]{2}).+([0-9]{2}):([0-9]{2}):([0-9]{2}) ([+-]*[0-9]+\.[0-9]+)' # 7 groups
         self.match_string_date_simple = r'([\d]{4})-([\d]{2})-([\d]{2}) ([\d]{2}):([\d]{2})' # 5 groups
         self.match_string_ip = r'([\d]+\.[\d]+\.[\d]+\.[\d]+)' # 1 group
-        self.match_string_pos = r'\(([-+]*[\d]*\.[\d]), ([-+]*[\d]*\.[\d]), ([-+]*[\d]*\.[\d])\)'
-        self.match_string_pos_unparenthesized = r'([-+]*[\d]*\.[\d]), ([-+]*[\d]*\.[\d]), ([-+]*[\d]*\.[\d])'
+        self.match_string_pos = r'\(([-+\d\.]*), ([-+\d\.]*), ([-+\d\.]*)\)'
+        self.match_string_pos_unparenthesized = r'([-+\d\.]*), ([-+\d\.]*), ([-+\d\.]*)'
         self.match_prefix = r'^' + self.match_string_date + r' '
         self.matchers = { }
         self.queue = [ ]
         self.queue_lock = None
         self.telnet_output_matchers = {
             'adding observed entity' : self.match_prefix + r'INF Adding observed entity: [\d]+, ' + self.match_string_pos + r', [\d]+$',
-#            'AI air drop paths' : self.match_prefix + r'INF AIAirDrop: Computed flight paths for 1 aircraft$',
+            'AI air drop paths': self.match_prefix + r'INF AIAirDrop: Computed flight paths for 1 aircraft\.$',
+            'AIAirDrop spawned aircraft': self.match_prefix + r'INF AIAirDrop: Spawned aircraft at \(' + self.match_string_pos + r'\), heading \(\([-+\d\.]*, [-+\d\.]*\)\)',
+            'AIAirDrop spawned supply crate' : self.match_prefix + r'INF AIAirDrop: Spawned supply crate at ' + self.match_string_pos + r', plane is at ' + self.match_string_pos,
+            'AIAirDrop waiting chunk locations': self.match_prefix + r'INF AIAirDrop: Waiting for supply crate chunk locations to load...',
             'AI find wandering horde targets end': self.match_prefix + r'INF AIDirector: FindWanderingHordeTargets end y < 0',
 #            'AI night horde' : self.match_prefix + r'INF AIDirector: Night Horde Spawn Finished \(all mobs spawned\).$',
 #            'AI no good spot' : self.match_prefix + r'INF AIDirector: Could not find a valid position to spawn wandering horde \(trying again in 1 hour\)$',
+            'AIDirector removed from control': self.match_prefix + r'INF AIDirector: Wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' removed from control',
 #            'AI scout horde' : self.match_prefix + r'INF AIDirector: scout horde zombie \'\[type=EntityZombie, name=spiderzombie, id=[\d]+\]\' was spawned and is moving towards point of interest\.$',
 
-            'AI scouts' : self.match_prefix + r'INF AIDirector: Spawning scouts @ \(' + self.match_string_pos + r'\) heading towards \(' + self.match_string_pos + r'\)$',
+            'AIDirector spawning scouts': self.match_prefix + r'INF AIDirector: Spawning scouts at ' + self.match_string_pos + r' heading towards ' + self.match_string_pos,
 #            'AI scout fail' : self.match_prefix + r'INF AIDirector: Scout spawning failed, FindHordeTargets\(\) returned false!',
             'AI Director Scout Horde Spawn Finished' : self.match_prefix + r'INF AIDirector: Scout Horde Spawn Finished \(all mobs spawned\)\.$',
 #            'AI scout remove' : self.match_prefix + r'INF AIDirector: scout horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control.$',
@@ -41,15 +46,14 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
             'AI target wait': self.match_prefix + r'INF AIDirector: Find target wait [\d]+ hours',
             'AI wanderer' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' was spawned and is moving towards pitstop.$',
-#            'AI wander finish' : self.match_prefix + r'INF AIDirector: Wandering Horde Spawn Finished \(all mobs spawned\)\.$',
+            'AI wander finish' : self.match_prefix + r'INF AIDirector: Wandering horde spawner finished$',
 #                                       'to_call'  : [ ] },
             'AI wander horde': self.match_prefix + r'INF AIDirector: Spawning wandering horde$',
             'AI wanderer player' : self.match_prefix + r'INF AIDirector: Spawning wandering horde moving towards player \'\[type=EntityPlayer, name=.*, id=[\d]+\]\'$',
             'AI wander remove' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control\.$',
             'AI wander stop' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' has wandered long enough and is going to endstop now.$',
             'AI wander trouble' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' reached pitstop and will wander around for awhile looking for trouble.$',
-#            'allowing player' : self.match_prefix + r'INF Allowing player with id [\d]+$',
-#                                       'to_call'  : [ ] },
+            'allowing player' : self.match_prefix + r'INF Allowing player with id [\d]+$',
             'animator gotostate': r'Calling Animator.GotoState on Synchronize layer',
 #            'behaviour' : r'The referenced script on this Behaviour is missing!$',
 #                                       'to_call'  : [ ] },
@@ -128,29 +132,26 @@ class Parser(threading.Thread):
 #                                       r'=[\d]+ XZ=[+-]*[\d]+/[+-]*[\d]+ ' + \
 #                                       r'ZombiesWastelandNight_Night: c=[\d]+/r=[\d]+ ZombiesWasteland_Day: c=[\d]+/r=[\d]+$',
 #                                       'to_call'  : [ ] },
+            'blood moon party': self.match_string_date + r'INF BloodMoonParty: SpawnZombie grp [\d]+ feralHordeStageGS64 (count [\d]+, numToSpawn [\d]+, maxAlive [\d]+), cnt [\d]+ zombieMoe, at player [\d]+, day/time [\d]+ [\d]+:[\d]+',
             'chat message (pre A14)': self.match_string_date + r' INF GMSG: (.*: .*)$',
             'chat message (pre A17)': self.match_string_date + r' INF Chat: (.*: .*)$',
             'chat message': self.match_string_date + r' INF Chat \(from \'(.*)\', entity id \'([+-]*[\d]+)\', to \'(.*)\'\): \'(.*)\': (.*)',
 #            'chunks saved' : r'.* INF Saving (.*) of chunks took (.*)ms',
 #                                       'to_call'  : [ ] },
-#            'claim finished' : r'Total of ([\d]+) keystones in the game',
-#                                       'to_call'  : [ self.framework.world_state.buffer_claimstones ] },
-#            'claim player' : r'Player ".* \(([\d]+)\)" owns ([\d]+) ' + \
-#                                       r'keystones \(protected: [\w]+, current hardness multiplier: [\d]+\)',
-#                                       'to_call'  : [ self.framework.world_state.buffer_claimstones ] },
-#            'claim stone' : r'\(([-+]*[\d]*), ([-+]*[\d]*), ([-+]*[\d]*)\)$',
-#                                       'to_call'  : [ self.framework.world_state.buffer_claimstones ] },
+            'claim finished' : r'Total of ([\d]+) keystones in the game',
+            'claim player' : r'Player ".* \(([\d]+)\)" owns ([\d]+) keystones \(protected: [\w]+, current hardness multiplier: [\d]+\)',
+            'claim stone' : r'\(([-+]*[\d]*), ([-+]*[\d]*), ([-+]*[\d]*)\)$',
+            'client ip': self.match_prefix + r'INF Client IP: ' + self.match_string_ip + r'$',
             'cm executing command': self.match_prefix + r'INF Client [\d]+/.* executing client side command: cm',
 #            'couldnt RPC' : r'^Couldn\'t send RPC function \'RPC_RawData\'$',
 #                                       'to_call'  : [ ] },
-#            'created new player' : self.match_prefix + r'INF Created new player entry for' + \
-#                                       r' ID: [\d]+$',
-#                                       'to_call'  : [ ] },
+            'created new player' : self.match_prefix + r'INF Created new player entry for ID: [\d]+$',
 #            'deny match' : r'(.*) INF Player (.*) denied: ' + \
 #                                       r'(.*) has been banned until (.*)',
 #                                       'to_call'  : [ self.framework.game_events.player_denied ] },
 #            'denying command' : self.match_prefix + r'INF Denying command \'gg (.*)\' from client (.*)$',
 #                                       'to_call'  : [ self.framework.server.console_command ] },
+            'EAC auth success': self.match_prefix + r'INF EAC authentication successful, allowing user: EntityID=[-+\d]*, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'EAC backend conn' : self.match_prefix + r'INF \[EAC\] Log: Backend connection established\.$',
 #                                       'to_call'  : [ ] },
 #            'EAC callback' : self.match_prefix + r'INF \[EAC\] UserStatusHandler callback.'+\
@@ -158,6 +159,9 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
             "EAC Cerberus" : self.match_prefix + r"WRN \[EAC\] Log: \[Cerberus\] Connection attempt to the back-end failed! Reconnecting in 60 seconds\.\.",
             'EAC Cerberus disconnect': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Cerberus\] \[Backend\] Disconnected\.',
+            'EAC client auth local': self.match_prefix + r'INF \[EAC\] UserStatusHandler callback\. Status: ClientAuthenticatedLocal ReqKick: False Message: Client authenticated',
+            'EAC client auth remote': self.match_prefix + r'INF \[EAC\] UserStatusHandler callback\. Status: ClientAuthenticatedRemote ReqKick: False Message: Client authenticated remotely',
+            'EAC connection established': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Cerberus\] \[Backend\] Connection established\.$',
             'EAC free user' : self.match_prefix+ r'INF \[EAC\] FreeUser: EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'EAC kicking player' : self.match_prefix + r'Kicking player: Kicked by EAC. ' + \
 #                                       r'Please check if you started the game with AntiCheat protection ' + \
@@ -167,16 +171,20 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'EAC log dconn' : self.match_prefix + r'INF \[EAC\] Log: User without EAC connection: [\d]+. User status: Disconnected$',
 #                                       'to_call'  : [ ] },
-#            'EAC Auth' : self.match_prefix + r'INF \[Steamworks\.NET\] Authenticating player: [\w]+ SteamId: [\d]+ TicketLen: [\d]+ Result: k_EBeginAuthSessionResultOK$',
-#                                       'to_call'  : [ ] },
 #            'EAC package' : self.match_prefix + r'ERR \[Steamworks\.NET\] NET: Could not send package to client [\d]+$',
 #                                       'to_call'  : [ ] },
+            'EAC queue client auth': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[QueueClientUpdate\] Client: 0x.+ Session: [\d]+ Status: Client Authenticated Message: Client authenticated\.$',
+            'EAC queue client update': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[QueueClientUpdate\] Client: 0x.+ Session: [\d]+ Status: Client Authenticated Remotely Message: Client authenticated remotely\.',
 #            'EAC status change' : self.match_prefix + r'INF \[EAC\] Log: User status changed' + \
 #                                       r': [\d]+. Status: Authenticated Message: N/A$',
 #                                       'to_call'  : [ ] },
+            'EAC register client': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Register Client\] Success \([\d]+/[\d]+\)\. Client: 0x.+',
+            'EAC registering user' : self.match_prefix + r'INF \[EAC\] Registering user: EntityID=[-+]*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'$',
+            'EAC registering with': self.match_prefix + r'INF Steam authentication successful, registering with EAC: EntityID=[-+\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'EAC unregister' : self.match_prefix + r'INF \[EAC\] Log: User unregistered. GUID: [\d]+$',
 #                                       'to_call'  : [ ] },
-            'EAC server unregister client': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[UnregisterClient\] Client: 0x[\d]+ PlayerGUID: [\d]+',
+            'EAC server register client': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[RegisterClient\] Client: 0x.+ PlayerGUID: [\d]+ PlayerIP: ' + self.match_string_ip + r' OwnerGUID: [\d]+ PlayerName: .*$',
+            'EAC server unregister client': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[UnregisterClient\] Client: 0x.+ PlayerGUID: [\d]+',
 #            'empty line' : r'^$',
 #                                       'to_call'  : [ ] },
 #            'ERROR' : r'\*\*\* ERROR: unknown command \'(.*)\'',
@@ -227,9 +235,7 @@ class Parser(threading.Thread):
 #                                       r' INF Executing command \'gt\' by Telnet from ' + \
 #                                       self.match_string_ip + ':([\d]+)',
 #                                       'to_call'  : [ self.framework.server.update_server_time ] },
-#            'gt command output' : r'Day ([0-9]+), ([0-9]{2}):([0-9]{2})',
-#                                       'to_call'  : [ self.framework.world_state.process_gt ] },
-
+            'gt command output' : r'Day ([0-9]+), ([0-9]{2}):([0-9]{2})',
             'header  0' : r'^\*\*\* Connected with 7DTD server\.$',
 
             'header  1' : r'^\*\*\* Server version: Alpha [\d\.]+ \(.*\) Compatibility Version: Alpha [\d\.]+.*$',
@@ -245,7 +251,7 @@ class Parser(threading.Thread):
             'header 10' : r'Press \'help\' to get a list of all commands\. Press \'exit\' to end session.',
             'help command executing': self.match_prefix + r'INF Executing command \'help\' from client [\d]+',
 #            'icon nof found' : self.match_prefix + r'INF Web:IconHandler:FileNotFound: ".*"$',
-#                                       'to_call'  : [ ] },
+            'IconHandler loaded': self.match_prefix + r'INF Web:IconHandler: Icons loaded - [\d]+ ms',
 #            'static not found' : self.match_prefix + r'INF Web:Static:FileNotFound: ".*" @ ".*"$',
 #                                       'to_call'  : [ ] },
 #            'instantiate' : self.match_prefix + r'WRN InstantiateEntities: ignoring [\d]+ as it is already added\.$',
@@ -285,6 +291,8 @@ class Parser(threading.Thread):
 #                                       r', lifetime=(.*), remote=([\w])+, dead=([\w]+),$',
 #                                       'to_call'  : [ ] },
             'LiteNetLib client disconnect': self.match_prefix + r'INF NET: LiteNetLib: Client disconnect from: ' + self.match_string_ip + r':[\d]+ \(RemoteConnectionClose\)',
+            'LiteNetLib connect from': self.match_prefix + r'INF NET: LiteNetLib: Connect from: ' + self.match_string_ip + r':[\d]+$',
+            'LiteNetLib DisconnectPeerCalled': self.match_prefix + r'INF NET: LiteNetLib: Client disconnect from: ' + self.match_string_ip + r':[\d]+ \(DisconnectPeerCalled\)',
             'LiteNetLib received from unknown': self.match_prefix + r'INF NET: LiteNetLib: Received package from an unknown client: ' + self.match_string_ip + r':[\d]+',
 #            'lkp output' : r'[\d]+\. (.*), id=([\d]+), steamid=([\d]+), online=([\w]+), ip=(.*), playtime=([\d]+) m, seen=' + self.match_string_date_simple + '$',
 #                                       'to_call'  : [ self.framework.server.lkp_output_parser ] },
@@ -326,12 +334,13 @@ class Parser(threading.Thread):
             'message player' : r'Message to player ".*" sent with sender "Server"',
             'NCS reader exited thread': self.match_prefix + r'INF Exited thread NCS_Reader_[\d]+_[\d]+',
             'NCS writer exited thread': self.match_prefix + r'INF Exited thread NCS_Writer_[\d]+_[\d]+',
+            'NCS reader started thread': self.match_prefix + r'INF Started thread NCS_Reader_[\d]+_[\d]+',
+            'NCS writer started thread': self.match_prefix + r'INF Started thread NCS_Writer_[\d]+_[\d]+',
 #            'not found' : r'^Playername or entity ID not found.$',
 #                                       'to_call'  : [ ] },
             "password incorrect" : r"^Password incorrect, please enter password:$",
-#            'player created' : self.match_prefix + r'INF Created player with id=([\d]+)$',
-#                                       'to_call'  : [ self.framework.game_events.player_created ] },
-            'player joined' : self.match_prefix + 'INF GMSG: Player \'.*\' joined the game',
+            'player created' : self.match_prefix + r'INF Created player with id=([\d]+)$',
+            'player joined' : self.match_prefix + 'INF GMSG: Player \'(.*)\' joined the game',
 #            'player kicked' : self.match_prefix + r'INF Executing command \'kick [\d]+\'' + \
 #                                       r' by Telnet from ' + self.match_string_ip + ':[\d]+$',
 #                                       'to_call'  : [ ] },
@@ -340,45 +349,28 @@ class Parser(threading.Thread):
 #            'playername not found' : r'^Playername or entity/steamid id not found$',
 #                                       'to_call'  : [ ] },
             'player offline' : self.match_prefix + r'INF Player set to offline: [\d]+$',
-#            'player online' : self.match_prefix + r'INF Player set to online' + \
-#                                       r': ([\d]+)$',
-#                                       #'to_call'  : [ self.framework.server.set_steamid_online ] },
-#                                       'to_call'  : [ self.framework.game_events.player_connected ] },
-#            'player connected' : self.match_prefix + r'INF Player connected, entityid=[\d]+, ' +\
-#                                       r'name=.*, steamid=[\d]+, ip=' + self.match_string_ip + r'$',
-#                                       'to_call'  : [ ] },
+            'player online' : self.match_prefix + r'INF Player set to online: ([\d]+)$',
+            'player connected' : self.match_prefix + r'INF Player connected, entityid=[\d]+, name=.*, steamid=[\d]+, steamOwner=[\d]+, ip=' + self.match_string_ip + r'$',
             'player disconnected' : self.match_prefix + r'INF Player disconnected: EntityID=-*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'$',
             'player disconnected after': self.match_prefix + r'INF Player .* disconnected after [\d]+\.[\d] minutes$',
-#            'player disconn error' : self.match_prefix + r'ERR DisconnectClient: Player ' + \
-#                                       r'[\d]+ not found$',
-#                                       'to_call'  : [ ] },
+            'player disconn error' : self.match_prefix + r'ERR DisconnectClient: Player [\d]+ not found$',
 #            'player dconn NET' : self.match_prefix + r'INF \[NET\] Player disconnected: ' + \
 #                                       r'EntityID=' + \
 #                                       r'-*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'$',
 #                                       'to_call'  : [ ] },
-#            'player dconn NET2' : self.match_prefix + r'INF \[NET\] PlayerDisconnected ' + \
-#                                       r'EntityID=' + \
-#                                       r'-*[\d]+, PlayerID=\'([\d]+)\', OwnerID=\'[\d]+\', PlayerName=\'(.*)\'$',
-#                                       'to_call'  : [ self.framework.game_events.player_disconnected ] },
+            'player dconn NET2' : self.match_prefix + r'INF \[NET\] PlayerDisconnected EntityID=-*[\d]+, PlayerID=\'([\d]+)\', OwnerID=\'[\d]+\', PlayerName=\'(.*)\'$',
             'player died' : self.match_prefix + r'INF GMSG: Player (.*) died$',
 #            'player kill' : self.match_prefix + r'INF GMSG: Player (.*)' + \
 #                                       r' eliminated Player (.*)',
 #                                       'to_call'  : [ self.framework.game_events.player_kill ] },
-            'player left' : self.match_prefix + r'INF GMSG: (.*) left the game$',
-#            'player login' : self.match_prefix + r'INF PlayerLogin: .*/Alpha 11\.6$',
-#                                       'to_call'  : [ ] },
-#            'player req spawn' : self.match_prefix + r'INF RequestToSpawnPlayer: [\d]+, ' + \
-#                                       r'.*, [\d]+$',
-#                                       'to_call'  : [ ] },
+            'player left' : self.match_prefix + r'INF GMSG: Player \'(.*)\' left the game$',
+            'player login' : self.match_prefix + r'INF PlayerLogin: .*/Alpha 17$',
+            'player req spawn' : self.match_prefix + r'INF RequestToSpawnPlayer: [\d]+, .*, [\d]+$',
             "player spawned in the world": self.match_prefix + r'INF PlayerSpawnedInWorld \(reason: (.*), position: ' + self.match_string_pos_unparenthesized + r'\): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'pm executing' : r'^' + self.match_string_date + r' INF Executing command' + \
 #                                       r' \'pm (.*) (.*)\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ self.command_pm_executing_parser ] },
             'pools clearing': self.match_prefix + r'INF Clearing all pools',
-#            'registering player' : self.match_prefix + r'INF \[EAC\] Registering user: id=[\d]+,'+\
-#                                       r' owner=[\d]+$',
-#                                       'to_call'  : [ ] },
-
             'removing entity' : self.match_prefix + r'INF Removing observed entity [\d]+',
 
             'request to enter' : self.match_prefix + r'INF RequestToEnterGame: [\d]+/.*$',
@@ -388,8 +380,11 @@ class Parser(threading.Thread):
 #                                       r' INF Executing command \'say ".*"\' by Telnet from ' + \
 #                                       self.match_string_ip + ':([\d]+)',
 #                                       'to_call'  : [ ] },
+            'sending world done': self.match_prefix + r'INF Sending world to EntityID=[+-]*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\' done$',
+            'sending world starting': self.match_prefix + r'INF Starting to send world to EntityID=[+-]*[\d], PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'\.\.\.',
             'sideshave hair': self.match_prefix + r'INF Alt slots does not contain female_sideshave_hair!$',
-            "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'sleeperHordeStageGS2\', class .*',
+            'SleeperVolume restoring': self.match_prefix + r'INF [\d\.]+ SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Restoring at ' + self.match_string_pos_unparenthesized + r' \'.*\'',
+            "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'.*\', class .*',
             "server disconnect" : self.match_string_date + r"INF Disconnect",
 #                                       'to_call'  : [ ] },
 #            'si command executing' : self.match_string_date + \
@@ -412,26 +407,24 @@ class Parser(threading.Thread):
 #            'spawn output' : r'^Spawned [\w\d]+$',
 #                                       'to_call'  : [ ] },
             'spider spawn horde' : self.match_prefix + r'INF Spider scout spawned a zombie horde!$',
-#            'steam auth ()' : self.match_prefix + r'INF \[Steamworks.NET\] Auth\.' + \
-#                                       r'AuthenticateUser\(\)$',
-#                                       'to_call'  : [ ] },
+            'StartGame done': self.match_prefix + r'INF StartGame done',
 #            'steam auth' : self.match_prefix + r'INF \[Steamworks\.NET\] Authent' + \
 #                                       r'icating player: .* SteamId: [\d]+ TicketLen: [\d]+ Result: ' + \
 #                                       r'k_EBeginAuthSessionResultOK$',
 #                                       'to_call'  : [ ] },
-#            'steam auth callback' : self.match_prefix + r'INF \[Steamworks.NET\] ' + \
-#                                       r'Authentication callback\. ID: [\d]+, owner: [\d]+, result: .*$',
+            'steam auth callback' : self.match_prefix + r'INF \[Steamworks.NET\] Authentication callback\. ID: [\d]+, owner: [\d]+, result: .*$',
 #                                       'to_call'  : [ ] },
+            'steam auth failed': self.match_prefix + r'Kicking player (Steam auth failed: k_EAuthSessionResponseUserNotConnectedToSteam): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'steam drop client' : self.match_prefix + r'INF \[Steamworks\.NET\] NET: Dropping client: [\d]+$',
 #                                       'to_call'  : [ ] },
-#            'steam kick' : self.match_prefix + r'INF \[Steamworks\.NET\] Kick player for invalid login: [\d]+ .*$',
-#                                       'to_call'  : [ ] },
-#            'steam player connect' : self.match_prefix + r'INF \[NET\] PlayerConnected ' + \
-#                                       r'EntityID=-1, PlayerID=\'\', OwnerID=\'\', PlayerName=\'\'$',
-#                                       'to_call'  : [ ] },
-#            'supply crate' : self.match_prefix + r'INF AIAirDrop: Spawned supply ' + \
-#                                       r'crate @ \(' + self.match_string_pos + r'\)$',
-#                                       'to_call'  : [ ] },
+            'steam kick' : self.match_prefix + r'INF \[Steamworks\.NET\] Kick player for invalid login: [\d]+ .*$',
+            'steam player connect' : self.match_prefix + r'INF \[NET\] PlayerConnected EntityID=-1, PlayerID=\'\', OwnerID=\'\', PlayerName=\'\'$',
+            'SteamWorks.NET Auth' : self.match_prefix + r'INF \[Steamworks\.NET\] Authenticating player: [\w]+ SteamId: [\d]+ TicketLen: [\d]+ Result: k_EBeginAuthSessionResultOK$',
+            'steamworks.NET auth ()' : self.match_prefix + r'INF \[Steamworks.NET\] Auth\.AuthenticateUser\(\)$',
+            'Steamworks.NET GameServer.Init success': self.match_prefix + r'INF \[Steamworks\.NET\] GameServer.Init successful',
+            'Steamworks.NET GameServer.Logon success': self.match_prefix + r'INF \[Steamworks\.NET\] GameServer\.LogOn successful, SteamID=[\d]+$',
+            'Steamworks.NET server public': self.match_prefix + r'INF \[Steamworks\.NET\] Making server public',
+            'steamworks.NET not connected': self.match_prefix + r'INF \[Steamworks\.NET\] Authentication callback. ID: [\d]+, owner: [\d]+, result: k_EAuthSessionResponseUserNotConnectedToSteam',
 #            'supply plane' : r'[\d]+\. id=[\d]+, GameObject (EntitySupplyPlane), pos=' +\
 #                                       self.match_string_pos + r', rot=' + self.match_string_pos + \
 #                                       r', lifetime=float.Max, remote=False, dead=False,$',
@@ -461,6 +454,8 @@ class Parser(threading.Thread):
 #            'version' : r'^' + self.match_string_date + r' INF Executing ' + \
 #                                       r'command \'version\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ ] },
+            'Web.HandleRequest Error': self.match_prefix + r'INF Error in Web\.HandleRequest\(\): Remote host closed connection: The socket has been shut down',
+            'Webserver started': self.match_prefix + r'INF Started Webserver on [\d]+$',
 #            'exception sharing' : r'IOException: Sharing violation on path .*',
 #                                       'to_call'  : [ self.framework.quiet_listener ] },
         }
@@ -545,5 +540,4 @@ class Parser(threading.Thread):
     def unlock_queue ( self ):
         callee = inspect.stack ( ) [ 1 ] [ 0 ].f_code.co_name
         self.queue_lock = None
-        #self.logger.debug("{:s} unlocked the parser queue.".format ( callee ) )
-        
+        self.logger.debug("{:s} unlocked the parser queue.".format ( callee ) )

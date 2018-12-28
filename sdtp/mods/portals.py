@@ -8,6 +8,8 @@ import sys
 import threading
 import time
 
+import sdtp
+
 class Portals(threading.Thread):
     def __init__ ( self, controller ):
         super ( self.__class__, self ).__init__ ( )
@@ -18,6 +20,15 @@ class Portals(threading.Thread):
         self.start ( )
 
     def run(self):
+        self.help = {
+            "go": "will list your portals.",
+            "go public": "will list public portals.",
+            "go <portal name>": "teleports you to <portal name>.",
+            "go <portal name>+": "will add your current location as a portal.",
+            "go <portal name>-": "will remove that portal.",
+            "go <portal name>*": "will toggle if the portal is public.",
+            "go <player>": "will teleport you to player location if you are friends."}
+        self.controller.help.registered_commands["go"] = self.help
         self.controller.dispatcher.register_callback(
             "chat message", self.check_for_command)
         count = 0
@@ -48,14 +59,14 @@ class Portals(threading.Thread):
             return
         self.logger.debug("Input from {} matches regex.".format(match_group[10]))
         command = match.groups()[0].strip()
-        self.logger.info("Command = {}".format(command))
+        self.logger.debug("Command = {}".format(command))
         possible_player_name = match_group[10]
         argument = match.groups()[0].strip()
-        self.logger.info("'{}' used portal command with argument '{}'.".format (
+        self.logger.debug("'{}' used portal command with argument '{}'.".format (
             possible_player_name, argument))
         self.controller.database.consult(
-            lp_table,
-            [(lp_table.name, "==", possible_player_name)],
+            sdtp.lkp_table.lkp_table,
+            [(sdtp.lkp_table.lkp_table.name, "==", possible_player_name)],
             self.check_for_command_2,
             {"argument": argument})
 
@@ -70,12 +81,12 @@ class Portals(threading.Thread):
             self.list_portals(player)
             return
 
-        self.logger.info("Checking for help usage.")
+        self.logger.debug("Checking for help usage.")
         if argument == "help":
             self.print_help_message(player)
             return
         
-        self.logger.info("Checking for public portal listing.")
+        self.logger.debug("Checking for public portal listing.")
         if argument == "public":
             self.list_public_portals(player)
             return        
@@ -84,9 +95,9 @@ class Portals(threading.Thread):
             portal_name = argument[:-1]
         else:
             portal_name = argument
-        self.logger.info("Portal name is {}.".format(portal_name))
+        self.logger.debug("Portal name is {}.".format(portal_name))
         
-        self.logger.info("Searching DB for portal with name '{}' from player {}.".format(portal_name, player["name"]))
+        self.logger.debug("Searching DB for portal with name '{}' from player {}.".format(portal_name, player["name"]))
         self.controller.database.consult(
             PortalsTable,
             [(PortalsTable.name, "==", portal_name),
@@ -103,7 +114,7 @@ class Portals(threading.Thread):
             return
         portal = answer[0]
         
-        self.logger.info("Checking for deletions.")
+        self.logger.debug("Checking for deletions.")
         if argument[-1] == "-":
             self.delete_portal(player, portal)
             return
@@ -128,8 +139,33 @@ class Portals(threading.Thread):
             self.add_portal(player, argument[:-1])
             return
         else:
-            self.logger.info("Checking for public portals.")
+            self.logger.debug("Checking for public portals.")
             self.check_for_public_portal_use(player, portal_name)
+
+        self.logger.info("Checking for player to player teleport.")
+        self.controller.database.consult(
+            sdtp.lkp_table.lkp_table,
+            [(sdtp.lkp_table.lkp_table.name, "==", portal_name)],
+            self.check_for_command_5,
+            {"argument": argument, "player": player, "portal_name": portal_name})
+        
+    def check_for_command_5(self, db_answer, argument, player, portal_name):
+        if len(db_answer) == 1:
+            possible_friend = db_answer[0]
+            friendships = self.controller.database.get_records(
+                sdtp.friendships_table.FriendshipsTable,
+                [(sdtp.friendships_table.FriendshipsTable.player_steamid, "==",
+                  possible_friend["steamid"]),
+                 (sdtp.friendships_table.FriendshipsTable.friend_steamid, "==",
+                  player["steamid"])])
+            if len(friendships) == 1:
+                self.controller.telnet.write('pm {} "Teleporting you to {}."'.format(player["steamid"], possible_friend["name"]))
+                self.controller.telnet.write("tele {} {} {} {}".format(
+                    player["steamid"], int(possible_friend["longitude"]),
+                    int(possible_friend["height"]), int(possible_friend["latitude"])))
+                return
+            self.controller.telnet.write('pm {} "You are not {}\'s friend."'.format(player["steamid"], possible_friend["name"]))
+            return
         
         # Portal is missing.
         self.controller.telnet.write('pm {} "Portal {} does not exist."'.format(
@@ -138,7 +174,7 @@ class Portals(threading.Thread):
     # Commands
         
     def list_portals(self, player):
-        self.logger.debug(
+        self.logger.info(
             "Listing portals for player {}.".format(player["name"]))
         self.controller.database.consult(
             PortalsTable,
@@ -165,6 +201,7 @@ class Portals(threading.Thread):
             self.controller.telnet.write(portals_string)
 
     def print_help_message(self, player):
+        self.logger.info("Printing help to {}.".format(player["name"]))
         text = "/go will list your portals."
         self.controller.telnet.write(
             'pm {} "{}"'.format(player["steamid"], text))
@@ -185,8 +222,8 @@ class Portals(threading.Thread):
             'pm {} "{}"'.format(player["steamid"], text))
             
     def teleport_player_to_portal(self, player, portal):
-        self.logger.debug(
-            "teleporting player to portal '{}'.".format ( portal["name"]) )
+        self.logger.info(
+            "Teleporting {} to {}.".format(player["name"], portal["name"]))
         self.controller.telnet.write ( 'pm {} "Teleporting you to {}."'.format (
             player["steamid"], portal["name"] ) )
         teleport_string = 'tele {} {} {} {}'.format(
@@ -209,6 +246,7 @@ class Portals(threading.Thread):
         if len(answer) != 1:
             return
         portal = answer[0]
+        self.logger.info("Public portal use detected.")
         self.teleport_player_to_portal(player, portal)
         return
 
@@ -229,7 +267,7 @@ class Portals(threading.Thread):
 
     def add_portal(self, player, portal_name, public = False):
         # check no portal has name
-        self.logger.debug("Creating portal from position of player: {}.".format(
+        self.logger.info("Creating portal from position of {}.".format(
             player["name"]))
         self.controller.database.add_all(
             PortalsTable,
@@ -250,7 +288,7 @@ class Portals(threading.Thread):
             self.controller.telnet.write('pm {} "You can only toggle portals you own."'.format(player["steamid"]))
             return
 
-        self.logger.info("Is there another public portal with this name?")
+        self.logger.debug("Is there another public portal with this name?")
         self.controller.database.consult(
             PortalsTable,
             [(PortalsTable.name, "==", portal["name"]),
@@ -269,6 +307,8 @@ class Portals(threading.Thread):
                 return
         
         self.logger.debug("Portal is currently public? '{}'.".format ( portal["public"] ) )
+        self.logger.info("Toggling portal {} from {}.".format(
+            portal["name"], player["name"]))
         self.controller.telnet.write('pm {} "Toggling portal {}."'.format(player["steamid"], portal["name"]))
         self.controller.database.update(
             PortalsTable,
@@ -282,7 +322,7 @@ class Portals(threading.Thread):
             print)
 
     def list_public_portals(self, player):
-        self.logger.info("Checking public portals for player {}.".format(
+        self.logger.info("Listing public portals for player {}.".format(
             player["name"]))
         self.controller.database.consult(
             PortalsTable,
@@ -291,7 +331,7 @@ class Portals(threading.Thread):
             {"player": player})
 
     def list_public_portals_2(self, answer, player):
-        self.logger.info("Found {} public portals to list to player {}.".format(
+        self.logger.debug("Found {} public portals to list to player {}.".format(
             len(answer), player["steamid"]))
         for portal in answer:
             try:
