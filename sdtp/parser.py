@@ -19,6 +19,7 @@ class Parser(threading.Thread):
         self.match_string_date = r'([0-9]{4})-([0-9]{2})-([0-9]{2}).+([0-9]{2}):([0-9]{2}):([0-9]{2}) ([+-]*[0-9]+\.[0-9]+)' # 7 groups
         self.match_string_date_simple = r'([\d]{4})-([\d]{2})-([\d]{2}) ([\d]{2}):([\d]{2})' # 5 groups
         self.match_string_ip = r'([\d]+\.[\d]+\.[\d]+\.[\d]+)' # 1 group
+        self.match_string_ip_port = r'([\d]+\.[\d]+\.[\d]+\.[\d]+):([\d]+)' # 2 groups
         self.match_string_pos = r'\(([-+\d\.]*), ([-+\d\.]*), ([-+\d\.]*)\)'
         self.match_string_pos_unparenthesized = r'([-+\d\.]*), ([-+\d\.]*), ([-+\d\.]*)'
         self.match_prefix = r'^' + self.match_string_date + r' '
@@ -44,6 +45,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'AI scout-trig fin' : self.match_prefix + r'INF AIDirector: Scout-Triggered Horde Finished \(all mobs spawned\).$',
 #                                       'to_call'  : [ ] },
+            'AIDirector spawned wandering horde': self.match_prefix + r'INF AIDirector: Spawned wandering horde \(group .*, zombie \[type=.*, name=.*, id=[\d]+\]\)',
             'AI target wait': self.match_prefix + r'INF AIDirector: Find target wait [\d]+ hours',
             'AI wanderer' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' was spawned and is moving towards pitstop.$',
             'AI wander finish' : self.match_prefix + r'INF AIDirector: Wandering horde spawner finished$',
@@ -132,7 +134,8 @@ class Parser(threading.Thread):
 #                                       r'=[\d]+ XZ=[+-]*[\d]+/[+-]*[\d]+ ' + \
 #                                       r'ZombiesWastelandNight_Night: c=[\d]+/r=[\d]+ ZombiesWasteland_Day: c=[\d]+/r=[\d]+$',
 #                                       'to_call'  : [ ] },
-            'blood moon party': self.match_string_date + r'INF BloodMoonParty: SpawnZombie grp [\d]+ feralHordeStageGS64 (count [\d]+, numToSpawn [\d]+, maxAlive [\d]+), cnt [\d]+ zombieMoe, at player [\d]+, day/time [\d]+ [\d]+:[\d]+',
+            #2018-12-29T11:06:32 94913.707 INF BloodMoonParty: SpawnZombie grp 1 feralHordeStageGS97 (count 28, numToSpawn 39, maxAlive 33), cnt 8 zombieBoe, at player 171, day/time 50 03:06
+            'blood moon party': self.match_string_date + r'INF BloodMoonParty: SpawnZombie grp [\d]+ feralHordeStageGS[\d]+ \(count [\d]+, numToSpawn [\d]+, maxAlive [\d]+\), cnt [\d]+ .*, at player [\d]+, day/time [\d]+ [\d]+:[\d]+$',
             'chat message (pre A14)': self.match_string_date + r' INF GMSG: (.*: .*)$',
             'chat message (pre A17)': self.match_string_date + r' INF Chat: (.*: .*)$',
             'chat message': self.match_string_date + r' INF Chat \(from \'(.*)\', entity id \'([+-]*[\d]+)\', to \'(.*)\'\): \'(.*)\': (.*)',
@@ -227,8 +230,8 @@ class Parser(threading.Thread):
 #            'item fell off' : self.match_prefix + r'WRN Entity Item_([\d]+) \(EntityItem\) ' + \
 #                                       r'fell off the world, id=([\d]+) pos=' + self.match_string_pos + r'$',
 #                                       'to_call'  : [ ] },
-
 #                                       'to_call'  : [ self.advise_deprecation_chat ] },
+            'found': self.match_prefix + r'INF found$',
 #            'gg executing' : self.match_prefix + r'INF Executing command \'gg (.*)\' from client ([\d]+)$',
 #                                       'to_call'  : [ self.admin_command_mod ] },          
 #            'gt command executing' : self.match_string_date + \
@@ -263,7 +266,8 @@ class Parser(threading.Thread):
             'IOException readline' : self.match_prefix + r'ERR IOException in ReadLine: Read failure$',
             'ERR telnet' : self.match_prefix + r'ERR ReadLine for TelnetClientReceive_.*: Read failure$',
             'IOException telnet Read' : self.match_prefix + r'ERR IOException in ReadLine for TelnetClientReceive_.*: Read failure$',
-            'IOException telnet Write' : self.match_prefix + r'ERR IOException in ReadLine for TelnetClientReceive_.*: Write failure$',
+            'IOException TelnetClient Write' : self.match_prefix + r'ERR IOException in ReadLine for TelnetClient_' + self.match_string_ip_port + r': Write failure$',
+            'IOException TelnetClientReceive Write' : self.match_prefix + r'ERR IOException in ReadLine for TelnetClientReceive_.*: Write failure$',
             'IOException sharing' : r'IOException: Sharing violation on path .*',
 #            'item dropped' : r'^Dropped item$',
 #                                       'to_call'  : [ ] },
@@ -301,6 +305,8 @@ class Parser(threading.Thread):
 #            'llp executing' : r'^' + self.match_string_date + r' INF Executing ' + \
 #                                       r'command \'llp\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ ] },
+            'load permissions file at': self.match_prefix + r'INF Loading permissions file at \'.*\'',
+            'load permissions file done': self.match_prefix + r'INF Loading permissions file done\.$',
 #            'loglevel executing' : r'^' + self.match_string_date + r' INF Executing ' + \
 #                                       r'command \'loglevel [\w]{3} [\w]+\' by Telnet from ' + \
 #                                       self.match_string_ip + r':[\d]+$',
@@ -425,6 +431,7 @@ class Parser(threading.Thread):
             'Steamworks.NET GameServer.Logon success': self.match_prefix + r'INF \[Steamworks\.NET\] GameServer\.LogOn successful, SteamID=[\d]+$',
             'Steamworks.NET server public': self.match_prefix + r'INF \[Steamworks\.NET\] Making server public',
             'steamworks.NET not connected': self.match_prefix + r'INF \[Steamworks\.NET\] Authentication callback. ID: [\d]+, owner: [\d]+, result: k_EAuthSessionResponseUserNotConnectedToSteam',
+            'sunrise': self.match_prefix + r'INF \(Sunrise\) Blood moon is over!',
 #            'supply plane' : r'[\d]+\. id=[\d]+, GameObject (EntitySupplyPlane), pos=' +\
 #                                       self.match_string_pos + r', rot=' + self.match_string_pos + \
 #                                       r', lifetime=float.Max, remote=False, dead=False,$',
@@ -433,9 +440,7 @@ class Parser(threading.Thread):
 #            'wave spawn' : r'^' + self.match_string_date + r' INF Spawning this wave:' +\
 #                                       r' ([\d]+)',
 #                                       'to_call'  : [ ] },
-#            'wave start' : r'^' + self.match_string_date + r' INF Start a new wave ' + \
-#                                       r'\'[\w]+\'\. timeout=[\d]+s$',
-#                                       'to_call'  : [ ] },
+            'wave start' : r'^' + self.match_string_date + r' INF Start a new wave \'[\w]+\'\. timeout=[\d]+s, worldtime=[\d]+$',
 #            'telnet conn block' : self.match_prefix + r'INF Telnet connection closed for too many login attempts: ' + self.match_string_ip + ':[\d]+$',
 #                                       'to_call'  : [ ] },
             'telnet conn from' : self.match_prefix + r'INF Telnet connection from: ' + self.match_string_ip + ':[\d]+$',
@@ -456,6 +461,8 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
             'Web.HandleRequest Error': self.match_prefix + r'INF Error in Web\.HandleRequest\(\): Remote host closed connection: The socket has been shut down',
             'Webserver started': self.match_prefix + r'INF Started Webserver on [\d]+$',
+            'world chunks preparing': self.match_prefix + r'INF Preparing World chunks for clients',
+            'world chunks size': self.match_prefix + r'INF World chunks size: [\d]+ ., chunk count: [\d]+',
 #            'exception sharing' : r'IOException: Sharing violation on path .*',
 #                                       'to_call'  : [ self.framework.quiet_listener ] },
         }
@@ -466,13 +473,15 @@ class Parser(threading.Thread):
             self.matchers [ key ] = re.compile ( self.telnet_output_matchers [ key ] )
 
     def run ( self ):
+        self.logger.info("Start.")
         while ( self.keep_running ):
             line = self.dequeue ( )
             if line [ "text" ]  == "":
                 continue
             self.logger.debug("line = {}".format ( line ) )
             if type ( line [ "text" ] ) != str:
-                self.logger.debug("type(line['text']) = {}".format(type(line["text"])))
+                self.logger.debug(
+                    "type(line['text']) = {}".format(type(line["text"])))
                 try:
                     line [ "text" ] = bytes ( line [ "text" ] )
                 except Exception as e:
@@ -497,6 +506,7 @@ class Parser(threading.Thread):
 
     def stop ( self ):
         self.keep_running = False
+        self.logger.info("Stop.")
 
     # API
 
@@ -509,7 +519,7 @@ class Parser(threading.Thread):
     # \API
 
     def dequeue ( self ):
-        while ( not self.controller.telnet_ongoing ):
+        while(not self.controller.telnet.ready):
             if not self.keep_running:
                 return { 'text' : "", "timestamp" : time.time ( ) }
             time.sleep ( 1 )

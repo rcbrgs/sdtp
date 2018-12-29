@@ -20,6 +20,7 @@ class Portals(threading.Thread):
         self.start ( )
 
     def run(self):
+        self.logger.info("Start.")
         self.help = {
             "go": "will list your portals.",
             "go public": "will list public portals.",
@@ -41,6 +42,7 @@ class Portals(threading.Thread):
             "chat message", self.check_for_command)
 
     def stop ( self ):
+        self.logger.info("Stop.")
         self.keep_running = False
 
     # Mod specific
@@ -75,7 +77,7 @@ class Portals(threading.Thread):
             self.logger.error("DB entry for player name is not unique.")
             return
         player = answer[0]
-
+        
         self.logger.debug("Checking for list command.")
         if argument == "":
             self.list_portals(player)
@@ -142,7 +144,7 @@ class Portals(threading.Thread):
             self.logger.debug("Checking for public portals.")
             self.check_for_public_portal_use(player, portal_name)
 
-        self.logger.info("Checking for player to player teleport.")
+        self.logger.debug("Checking for player to player teleport.")
         self.controller.database.consult(
             sdtp.lkp_table.lkp_table,
             [(sdtp.lkp_table.lkp_table.name, "==", portal_name)],
@@ -152,7 +154,7 @@ class Portals(threading.Thread):
     def check_for_command_5(self, db_answer, argument, player, portal_name):
         if len(db_answer) == 1:
             possible_friend = db_answer[0]
-            friendships = self.controller.database.get_records(
+            friendships = self.controller.database.blocking_consult(
                 sdtp.friendships_table.FriendshipsTable,
                 [(sdtp.friendships_table.FriendshipsTable.player_steamid, "==",
                   possible_friend["steamid"]),

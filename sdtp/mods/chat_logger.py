@@ -15,6 +15,7 @@ class ChatLogger(threading.Thread):
         self.start ( )
 
     def run ( self ):
+        self.logger.info("Start.")
         if not self.controller.config.values["mod_chat_logger_enable"]:
             return
         self.setup()
@@ -23,6 +24,7 @@ class ChatLogger(threading.Thread):
         self.tear_down()
             
     def stop ( self ):
+        self.logger.info("Stop.")
         self.keep_running = False
 
     # Mod specific

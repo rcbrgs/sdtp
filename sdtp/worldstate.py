@@ -25,7 +25,7 @@ class WorldState(threading.Thread):
 
     # Thread control
     def run ( self ):
-        self.logger.debug("world_state.run ( )" )
+        self.logger.info("Start.")
         self.register_callbacks ( )
         while ( self.keep_running ):
             time.sleep ( 0.1 )
@@ -33,8 +33,8 @@ class WorldState(threading.Thread):
         self.logger.debug("world_state.run returning" )
 
     def stop ( self ):
-        self.logger.debug("{}.stop ( )".format ( self.__class__ ) )
         self.keep_running = False
+        self.logger.info("Stop.")
 
     # Component-specific
     ####################

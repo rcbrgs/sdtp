@@ -7,6 +7,7 @@ import threading
 import time
 
 import sdtp
+from sdtp.lkp_table import lkp_table
 
 class Friendships(threading.Thread):
     def __init__(self, controller):
@@ -16,6 +17,7 @@ class Friendships(threading.Thread):
         self.logger = logging.getLogger(__name__)
 
     def run(self):
+        self.logger.info("Start.")
         self.setup()
         while(self.keep_running):
             time.sleep(0.1)
@@ -23,6 +25,7 @@ class Friendships(threading.Thread):
             
     def stop ( self ):
         self.keep_running = False
+        self.logger.info("Stop.")
 
     def setup(self):
         self.help = {
@@ -43,7 +46,7 @@ class Friendships(threading.Thread):
 
     def check_for_command(self, match_groups):
         self.logger.debug("check_for_command({})".format(match_groups))
-        matcher = re.compile("/friend[\w]*(.*)$")
+        matcher = re.compile("^/friend[\w]*(.*)$")
         matches = matcher.search(match_groups[11])
         if not matches:
             self.logger.debug("No command detected.")
@@ -127,9 +130,9 @@ class Friendships(threading.Thread):
 
     def list_player_friends_2(self, db_answer, player):
         for friendship in db_answer:
-            friend = self.controller.database.get_records(
-                sdtp.lkp_table.lkp_table,
-                [(sdtp.lkp_table.lkp_table.steamid, "==", friendship["friend_steamid"])])[0]
+            friend = self.controller.database.blocking_consult(
+                lkp_table,
+                [(lkp_table.steamid, "==", friendship["friend_steamid"])])[0]
             try:
                 response += ", {}".format(friend["name"])
             except:

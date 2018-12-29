@@ -5,8 +5,8 @@ from .friendships import Friendships
 from .help import Help
 from .metronomer import Metronomer
 from .parser import Parser
-from .telnet import TelnetClient
-from .world_state import WorldState
+from .telnet import Telnet
+from .worldstate import WorldState
 
 #from .mods.challenge import challenge
 from .mods.chat_logger import ChatLogger
@@ -17,24 +17,25 @@ from .mods.claim_alarm import ClaimAlarm
 from .mods.portals import Portals
 #from .mods.server_reboots import server_reboots
 
+import importlib
 import json
 import logging
 import os
-import sdtp
 import sys
 import threading
 import time
+
+import sdtp
 
 class Controller(threading.Thread):
 
     def __init__ ( self ):
         super(self.__class__, self).__init__ ( )
-        self.keep_running = False
-        self.telnet_ongoing = False
+        self.keep_running = True
         self.logger = logging.getLogger(__name__)
-        
+
+        # Components
         self.config = None
-        self.auto_updater = None
         self.dispatcher = None
         self.friendships = None
         self.help = None
@@ -42,18 +43,30 @@ class Controller(threading.Thread):
         self.parser = None
         self.telnet = None
         self.database = None
-        self.world_state = None
+        self.worldstate = None
 
-        self.chat_logger = None
-        self.chat_translator = None
+        # Mods
+        self.chatlogger = None
+        self.chattranslator = None
         #self.challenge = None
-        self.claim_alarm = None
+        self.claimalarm = None
         #self.forbidden_countries = None
         #self.ping_limiter = None
         self.portals = None
         #self.server_reboots = None
 
     def run ( self ):
+        self.setup()
+        # poll for input / events
+        while(self.keep_running):
+            time.sleep(1)
+            self.components_check()
+            self.mods_check()
+        self.tear_down()
+        self.logger.debug("run() exiting.")
+
+    def setup(self):
+        # Components
         self.config = Config ( self )
         self.config.load_configuration_file ( )
         self.logger.debug("controller.run: dispatcher")
@@ -62,19 +75,21 @@ class Controller(threading.Thread):
         self.logger.debug("controller.run: metronomer")
         self.metronomer = Metronomer ( self )
         self.metronomer.start ( )
+        self.logger.debug("controller.run: telnet")
+        self.telnet = Telnet(self)
+        self.telnet.start()
         self.logger.debug("controller.run: parser")
         self.parser = Parser ( self )
         self.parser.start ( )
-        self.logger.debug("controller.run: telnet")
-        self.telnet = TelnetClient(self)
-        self.telnet.start()
         self.database = Database ( self )
-        #self.database.start()
+        self.database.start()
         self.help = Help(self)
         self.help.start()
         self.friendships = Friendships(self)
         self.friendships.start()
-        self.world_state = WorldState ( self )
+        self.worldstate = WorldState ( self )
+
+        # Mods
         self.components = [ self.dispatcher,
                             self.friendships,
                             self.help,
@@ -82,76 +97,64 @@ class Controller(threading.Thread):
                             self.parser,
                             self.telnet,
                             self.database,
-                            self.world_state ]
+                            self.worldstate ]
         #self.challenge = challenge ( self )
-        self.chat_logger = ChatLogger(self)
-        self.chat_translator = ChatTranslator(self)
-        self.claim_alarm = ClaimAlarm(self)
+        self.chatlogger = ChatLogger(self)
+        self.chattranslator = ChatTranslator(self)
+        self.claimalarm = ClaimAlarm(self)
         #self.forbidden_countries = forbidden_countries ( self )
         #self.forbidden_countries.start ( )
         #self.ping_limiter = ping_limiter ( self )
         self.portals = Portals(self)
         #self.portals.debug.connect ( self.debug )
         #self.server_reboots = server_reboots ( self )
-        self.mods = [ #self.challenge,
-            self.chat_logger,
-            self.chat_translator,
-            self.claim_alarm,
-                      #self.forbidden_countries,
-                      #self.ping_limiter,
-                      self.portals,
-                      #self.server_reboots ]
-            ]
-        if ( self.config.values [ 'auto_connect' ] ):
-            self.logger.debug("Automatically initiating connection.")
-            self.telnet.open_connection ( )
-            
-        count = 1
-        while not self.telnet.ready:
-            time.sleep(0.1)
-            count += 1
-            if count > 100:
-                self.logger.error("Telnet never gets ready.")
-                self.stop()
-                break
-
+        self.mods = [
+            #self.challenge,
+            self.chatlogger,
+            self.chattranslator,
+            self.claimalarm,
+            #self.forbidden_countries,
+            #self.ping_limiter,
+            self.portals,
+            #self.server_reboots ]
+        ]
+        
         self.telnet.write(
-            'say "{}"'.format(self.config.values["sdtp_greetings"]))
-        # poll for input / events
-        self.keep_running = True
-        while(self.keep_running):
-            time.sleep(1)
-            self.components_check()
-            self.mods_check()
-        self.config.save_configuration_file ( )
-        if ( self.telnet_ongoing ):
-            self.telnet.close_connection ( )
-        self.logger.debug("controller.run exiting." )
-
+            'say "{}"'.format(self.config.values["sdtp_greetings"]))        
+        
     def stop ( self ):
-        self.logger.info("Shutdown of sdtp initiated.")
-        self.telnet.write ( 'say "{}"'.format ( self.config.values [ "sdtp_goodbye" ] ) )
+        self.logger.info("sdtp shutdown initiated.")
+        self.keep_running = False
+
+    def tear_down(self):
+        self.telnet.write(
+            'say "{}"'.format(self.config.values["sdtp_goodbye"]))
         for mod in self.mods:
-            self.logger.info("controller.stop: calling mod.stop in {}.".format ( mod.__class__ ) )
-            mod.stop ( )
+            self.logger.debug(
+                "controller.stop: calling mod.stop in {}.".format(mod.__class__))
+            mod.stop()
         for mod in self.mods:
-            while ( mod.is_alive ( ) ):
-                self.logger.debug("controller.stop: Waiting on mod {} to stop.".format(mod.__class__))
-                time.sleep ( 0.1 )
+            while (mod.is_alive()):
+                self.logger.debug(
+                    "controller.stop: Waiting on mod {} to stop.".format(
+                        mod.__class__))
+                time.sleep(0.1)
+        self.config.save_configuration_file()
         self.friendships.stop()
         self.help.stop()
-        self.world_state.stop ( )
-        self.metronomer.stop ( )
-        self.database.stop ( )
-        self.telnet.stop ( )
-        self.parser.stop ( )
+        self.worldstate.stop()
+        self.metronomer.stop()
+        self.database.stop()
+        self.parser.stop()
+        self.telnet.stop()
         for component in self.components:
             if component == self.dispatcher:
                 continue
             count = 0
-            while ( component.is_alive ( ) ):
+            while(component.is_alive()):
                 if count == 0:
-                    self.logger.debug("controller.stop: Waiting on component {} to stop.".format(component.__class__))
+                    self.logger.debug("Waiting on component {} to stop.".format(
+                        component.__class__))
                 time.sleep ( 0.1 )
                 count += 1
                 if count == 100:
@@ -161,32 +164,38 @@ class Controller(threading.Thread):
         self.dispatcher.stop ( )
         while ( self.dispatcher.is_alive ( ) ):
             self.logger.debug("controller.stop: Waiting on dispatcher to stop.")
-            time.sleep ( 0.1 )
-        if self.keep_running:
-            self.keep_running = False
-
-    def connect_telnet(self):
-        self.logger.debug("Telnet connection requested from user.")
-        if ( self.telnet_ongoing ):
-            self.logger.debug("Ignoring request for telnet connection since one is already ongoing.")
-            return
-        self.telnet.open_connection ( )
-
-    def disconnect_telnet(self):
-        self.logger.debug("Telnet disconnection requested from user.")
-        if ( not self.telnet_ongoing ):
-            return
-        self.telnet_ongoing = False
-        self.telnet.close_connection ( )
+            time.sleep ( 0.1 )       
 
     def components_check(self):
         for component in self.components:
             if not component.is_alive():
                 self.logger.error("Component not alive: {}.".format(
-                    component))
-
+                    component.__class__.__name__))
+                self.components.remove(component)
+                self.logger.info("Component re-start: {}.".format(
+                    component.__class__.__name__))
+                class_name = component.__class__.__name__
+                module_name = "sdtp." + class_name.lower()
+                module = importlib.import_module(module_name)
+                class_reference = getattr(module, class_name)
+                setattr(self, class_name.lower(), class_reference(self))
+                object = getattr(self, class_name.lower())
+                object.start()
+                self.components.append(object)
 
     def mods_check(self):
         for mod in self.mods:
             if not mod.is_alive():
-                self.logger.error("Mod is not alive: {}.".format(mod))
+                self.logger.error("Mod is not alive: {}.".format(
+                    mod.__class__.__name__))
+                self.mods.remove(mod)
+                self.logger.info("Mod re-start: {}.".format(
+                    mod.__class__.__name__))
+                class_name = mod.__class__.__name__
+                module_name = "sdtp.mods." + class_name.lower()
+                module = importlib.import_module(module_name)
+                class_reference = getattr(module, class_name)
+                setattr(self, class_name.lower(), class_reference(self))
+                object = getattr(self, class_name.lower())
+                object.start()
+                self.components.append(object)

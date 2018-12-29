@@ -7,6 +7,7 @@ import re
 import threading
 import time
 
+from sdtp.lkp_table import lkp_table
 from sdtp.lp_table import lp_table
 from sdtp.mods.chat_translator_table import ChatTranslatorTable
 
@@ -21,6 +22,7 @@ class ChatTranslator(threading.Thread):
         self.start ( )
 
     def run(self):
+        self.logger.info("Start.")
         if not self.controller.config.values["mod_chat_translator_enable"]:
             return
         self.setup()
@@ -29,6 +31,7 @@ class ChatTranslator(threading.Thread):
         self.tear_down()
             
     def stop ( self ):
+        self.logger.info("Stop.")
         self.keep_running = False
 
     # Mod specific
@@ -100,8 +103,8 @@ class ChatTranslator(threading.Thread):
             return
         command = match.groups()[0].strip()
         self.controller.database.consult(
-            lp_table,
-            [(lp_table.name, "==", match_groups[10])],
+            lkp_table,
+            [(lkp_table.name, "==", match_groups[10])],
             self.check_for_commands_2,
             {"command": command})
 
@@ -198,6 +201,9 @@ class ChatTranslator(threading.Thread):
                     languages_known = language,
                     target_language = language)],
                 print)
+            self.controller.telnet.write('pm {} "Language {} added to your database. Also, translations have been enabled to this target language."'.format(
+                player["steamid"], language))
+            return
         if len(answer) == 1:
             self.logger.info("Updating db entry.")
             db_entry = answer[0]
@@ -216,6 +222,7 @@ class ChatTranslator(threading.Thread):
                 ChatTranslatorTable,
                 db_entry,
                 print)
+            return
         if len(answer) > 1:
             self.logger.error("Entry not unique in db.")
             return

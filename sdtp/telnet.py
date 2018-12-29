@@ -8,7 +8,7 @@ import telnetlib
 import time
 import threading
 
-class TelnetClient(threading.Thread):
+class Telnet(threading.Thread):
     def __init__(self, controller):
         super(self.__class__, self).__init__()
         self.controller = controller
@@ -16,7 +16,6 @@ class TelnetClient(threading.Thread):
         self.logger = logging.getLogger(__name__)
 
         self.ready = False
-        self.auto_connect = False
         self.connectivity_level = 0
         self.latest_handshake = 0
         self.ongoing_handshake = False
@@ -27,6 +26,7 @@ class TelnetClient(threading.Thread):
         self.write_lock = False
 
     def run(self):
+        self.logger.info("Start.")
         self.controller.dispatcher.register_callback(
             "password incorrect", self.close_connection_wrapper)
         while (self.keep_running):
@@ -50,6 +50,7 @@ class TelnetClient(threading.Thread):
 
     def stop ( self ):
         self.keep_running = False
+        self.logger.info("Stop.")
 
     # Connection methods
     def check_connection ( self ):

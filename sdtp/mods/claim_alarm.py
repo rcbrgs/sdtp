@@ -24,6 +24,7 @@ class ClaimAlarm(threading.Thread):
         self.start ( )
 
     def run(self):
+        self.logger.info("Start.")
         if not self.controller.config.values["mod_claim_alarm_enable"]:
             return
         self.setup()
@@ -32,6 +33,7 @@ class ClaimAlarm(threading.Thread):
         self.tear_down()
             
     def stop ( self ):
+        self.logger.info("Stop.")
         self.keep_running = False
 
     # Mod specific
@@ -132,7 +134,7 @@ class ClaimAlarm(threading.Thread):
                 'pm {} "{} {}"'.format(player["steamid"], key, self.help[key]))
 
     def check_for_presences(self):
-        players = self.controller.world_state.online_players
+        players = self.controller.worldstate.online_players
         self.controller.database.consult(
             llp_table,
             [],
@@ -163,8 +165,8 @@ class ClaimAlarm(threading.Thread):
             self.logger.error("DB entry non unique.")
             return
         claim_player = db_answer[0]
-        self.logger.info("{} is inside {}'s claim.".format(player["name"],
-                                                           claim_player["name"]))
+        self.logger.debug("{} is inside {}'s claim.".format(
+            player["name"], claim_player["name"]))
         self.controller.database.consult(
             FriendshipsTable,
             [(FriendshipsTable.player_steamid, "==", claim_player["steamid"]),

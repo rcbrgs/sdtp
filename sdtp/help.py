@@ -19,6 +19,7 @@ class Help(threading.Thread):
         self.registered_commands = {}
         
     def run(self):
+        self.logger.info("Start.")
         self.setup()
         while(self.keep_running):
             time.sleep(0.1)
@@ -26,6 +27,7 @@ class Help(threading.Thread):
             
     def stop ( self ):
         self.keep_running = False
+        self.logger.info("Stop.")
 
     def setup(self):
         # register help items in help component.

@@ -15,6 +15,7 @@ class Dispatcher(threading.Thread):
         self.callback_registry = { }
 
     def run ( self ):
+        self.logger.info("Start.")
         while ( self.keep_running ):
             time.sleep ( 1 )
 

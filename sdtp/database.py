@@ -33,7 +33,7 @@ class Database(threading.Thread):
         self.lock = False
         self.metadata = None
         self.queue = queue.Queue ( )
-        self.start()
+        #self.start()
 
     # blocking API
     def blocking_consult(self, table, conditions):
@@ -84,6 +84,7 @@ class Database(threading.Thread):
     # /API
         
     def run ( self ):
+        self.logger.info("Start.")
         self.create_engine()
         self.create_tables()
         self.ready = True
@@ -115,6 +116,7 @@ class Database(threading.Thread):
 
     def stop ( self ):
         self.keep_running = False
+        self.logger.info("Stop.")
 
     def create_engine(self):
         self.logger.debug("create_engine()")
@@ -211,7 +213,8 @@ class Database(threading.Thread):
         query = query.filter(table.aid == record_dict["aid"])
         results = query.all()
         if len(results) != 1:
-            self.logger.error("update called on multiple query results = {}".format(results))
+            self.logger.error("update for {} had results = {}".format(
+                record_dict, results))
             self.let_session(session)
             return
         statement = update(table).where(table.aid == record_dict["aid"]).\
@@ -237,8 +240,7 @@ class Database(threading.Thread):
             session.commit()
         except Exception as e:
             self.logger.debug("Exception during commit: {}".format ( e ) )
-            time.sleep(1)
             session.rollback()
             self.let_session(session)
+            return
         session.close()
-        time.sleep(0.1)
