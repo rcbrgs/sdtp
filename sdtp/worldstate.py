@@ -18,6 +18,7 @@ class WorldState(threading.Thread):
 
         self.online_players = []
         self.online_players_count = 100000
+        self.latest_day = 0
         self.latest_hour = 0
         self.latest_nonzero_players = time.time ( )
         self.server_empty = False
@@ -222,10 +223,16 @@ class WorldState(threading.Thread):
         self.logger.debug("{} players online now.".format(len(self.online_players)))
 
     def log_time_of_day(self, match_group):
-        self.day = match_group[0]
-        self.hour = match_group[1]
-        self.minute = match_group[2]
+        self.day = int(match_group[0])
+        self.hour = int(match_group[1])
+        self.minute = int(match_group[2])
+        if self.day != self.latest_day:
+            self.latest_day = self.day
+            self.controller.dispatcher.call_registered_callbacks(
+                "new day", [self.day, self.hour, self.minute])
         if self.hour != self.latest_hour:
             self.latest_hour = self.hour
-            self.logger.info("Day {} {}:{}".format(
+            self.logger.info("Day {} {:02}:{:02}".format(
                 self.day, self.hour, self.minute))
+            self.controller.dispatcher.call_registered_callbacks(
+                "new hour", [self.day, self.hour, self.minute])

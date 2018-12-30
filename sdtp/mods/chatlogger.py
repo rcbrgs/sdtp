@@ -16,7 +16,7 @@ class ChatLogger(threading.Thread):
 
     def run ( self ):
         self.logger.info("Start.")
-        if not self.controller.config.values["mod_chat_logger_enable"]:
+        if not self.controller.config.values["mod_chatlogger_enable"]:
             return
         self.setup()
         while ( self.keep_running ):
@@ -40,6 +40,6 @@ class ChatLogger(threading.Thread):
         reconstructed_message = "[{}] {}: {}".format(
             match_groups[9], match_groups[10], match_groups[11])
         self.logger.info(" " + reconstructed_message)
-        self.chat_file = open(self.controller.config.values["mod_chat_logger_file_path"], "a+")
+        self.chat_file = open(self.controller.config.values["mod_chatlogger_file_path"], "a+")
         self.chat_file.write(reconstructed_message + "\n")
         self.chat_file.close()

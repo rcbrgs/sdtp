@@ -25,7 +25,7 @@ class ClaimAlarm(threading.Thread):
 
     def run(self):
         self.logger.info("Start.")
-        if not self.controller.config.values["mod_claim_alarm_enable"]:
+        if not self.controller.config.values["mod_claimalarm_enable"]:
             return
         self.setup()
         while ( self.keep_running ):
@@ -147,8 +147,8 @@ class ClaimAlarm(threading.Thread):
         for player in players:
             for claim in claims:
                 self.logger.debug("Checking if {} at {}, {} is inside claim {}, {}".format(player["name"], player["longitude"], player["latitude"], claim["longitude"], claim["latitude"]))
-                if abs(player["longitude"] - claim["longitude"]) < self.controller.config.values["mod_claim_alarm_distance"]:
-                    if abs(player["latitude"] - claim["latitude"]) < self.controller.config.values["mod_claim_alarm_distance"]:
+                if abs(player["longitude"] - claim["longitude"]) < self.controller.config.values["mod_claimalarm_distance"]:
+                    if abs(player["latitude"] - claim["latitude"]) < self.controller.config.values["mod_claimalarm_distance"]:
                         if player["steamid"] == claim["steamid"]:
                             self.logger.debug("{} inside own claim.".format(
                                 player["name"]))

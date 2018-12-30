@@ -45,18 +45,20 @@ class Config(object):
             "latest_reboot" : 0,
             "server_empty_condition" : True,
             "server_reboots_widget_show" : False,
-            # mod chat_logger
-            "mod_chat_logger_enable": True,
-            "mod_chat_logger_file_path": "chat.txt",
+            # mod chatlogger
+            "mod_chatlogger_enable": True,
+            "mod_chatlogger_file_path": "chat.txt",
             # mod chat translator
-            "mod_chat_translator_enable": False,
+            "mod_chattranslator_enable": False,
             # mod claim alarm
-            "mod_claim_alarm_distance": 10,
-            "mod_claim_alarm_enable": False,
+            "mod_claimalarm_distance": 10,
+            "mod_claimalarm_enable": False,
             # mod portals
             "mod_portals_enable" : False,
             "mod_portals_max_portals_per_player" : 0,
             "mod_portals_teleport_cost" : 0,
+            # mod qol
+            "mod_qol_enable": False,
         }
         self.values["config_file"] = "{}_preconfig.json".format(self.values["app_name"])
         self.values["db_sqlite_file_path"] = "{}_default_db.sqlite".format(self.values["app_name"])

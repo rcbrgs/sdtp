@@ -67,7 +67,7 @@ class Help(threading.Thread):
                         self.registered_commands[argument][key]))
 
     def list_commands(self, player):
-        for command in self.registered_commands.keys():
+        for command in sorted(self.registered_commands.keys()):
             try:
                 response += ", {}".format(command)
             except:

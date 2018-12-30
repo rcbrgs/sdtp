@@ -8,7 +8,6 @@ import threading
 import time
 
 from sdtp.lkp_table import lkp_table
-from sdtp.lp_table import lp_table
 from sdtp.mods.chat_translator_table import ChatTranslatorTable
 
 class ChatTranslator(threading.Thread):
@@ -23,7 +22,7 @@ class ChatTranslator(threading.Thread):
 
     def run(self):
         self.logger.info("Start.")
-        if not self.controller.config.values["mod_chat_translator_enable"]:
+        if not self.controller.config.values["mod_chattranslator_enable"]:
             return
         self.setup()
         while ( self.keep_running ):
@@ -42,20 +41,14 @@ class ChatTranslator(threading.Thread):
             "translate": "will list your current configuration.",
             "translate <language code>": "will toggle if you know a language.",
             "translate *": "will enable or disable translations.",
-            "translate <language code>*": "will set the language to translate to."}
+            "translate <language code>*": "will set the language to translate to.",
+            "translate codes": "Will list the language codes known to the system."}
         self.controller.help.registered_commands["translate"] = self.help
         self.controller.dispatcher.register_callback(
             "chat message", self.parse_chat_message)
         self.controller.dispatcher.register_callback(
             "chat message", self.check_for_commands)
         self.translator = googletrans.Translator()
-        self.known_languages = ["en",
-                                "es",
-                                "fr",
-                                "ko",
-                                "pt",
-                                "ru",
-                                "zh"]
 
     def tear_down(self):
         self.controller.dispatcher.deregister_callback(
@@ -89,7 +82,8 @@ class ChatTranslator(threading.Thread):
             return
         if detect.lang in chat_translator["languages_known"]:
             return
-        translation = self.translator.translate(message, dest=chat_translator["target_language"])
+        translation = self.translator.translate(
+            message, dest=chat_translator["target_language"])
         self.logger.info("Translation to {}: {}".format(
             chat_translator["target_language"], translation))
         self.controller.telnet.write('pm {} "{}: {}"'.format(
@@ -99,7 +93,8 @@ class ChatTranslator(threading.Thread):
         matcher = re.compile(r"^/translate[\w]*(.*)$")
         match = matcher.search(match_groups[11])
         if not match:
-            self.logger.debug("No match for command regex: {}". format(match_groups[11]))
+            self.logger.debug(
+                "No match for command regex: {}". format(match_groups[11]))
             return
         command = match.groups()[0].strip()
         self.controller.database.consult(
@@ -120,7 +115,7 @@ class ChatTranslator(threading.Thread):
         if command == "*":
             self.toggle_enable_translations(player)              
             return
-        if command in self.known_languages:
+        if command in googletrans.LANGUAGES.keys():
             self.toggle_language(player, command)
             return
         if command[-1] == "*":
@@ -128,6 +123,9 @@ class ChatTranslator(threading.Thread):
             return
         if command == "help":
             self.print_help_message(player)
+            return
+        if command == "codes":
+            self.print_language_codes(player)
             return
 
     def list_languages(self, player):
@@ -228,7 +226,7 @@ class ChatTranslator(threading.Thread):
             return
         
     def set_target_language(self, player, language):
-        if language not in self.known_languages:
+        if language not in googletrans.LANGUAGES.keys():
             self.controller.telnet.write('pm {} "Language not known to system."'.format(player["steamid"]))
         self.controller.database.consult(
             ChatTranslatorTable,
@@ -264,3 +262,12 @@ class ChatTranslator(threading.Thread):
         text = "/translate <language code>* will set the language to translate to."
         self.controller.telnet.write(
             'pm {} "{}"'.format(player["steamid"], text))
+
+    def print_language_codes(self, player):
+        for key in googletrans.LANGUAGES.keys():
+            try:
+                response += ", {}:{}".format(key, googletrans.LANGUAGES[key])
+            except:
+                response = "{}:{}".format(key, googletrans.LANGUAGES[key])
+        self.controller.telnet.write('pm {} "{}"'.format(
+            player["steamid"], response))

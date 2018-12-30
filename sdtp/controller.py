@@ -9,12 +9,13 @@ from .telnet import Telnet
 from .worldstate import WorldState
 
 #from .mods.challenge import challenge
-from .mods.chat_logger import ChatLogger
-from .mods.chat_translator import ChatTranslator
-from .mods.claim_alarm import ClaimAlarm
+from .mods.chatlogger import ChatLogger
+from .mods.chattranslator import ChatTranslator
+from .mods.claimalarm import ClaimAlarm
 #from .mods.forbidden_countries import forbidden_countries
 #from .mods.ping_limiter import ping_limiter
 from .mods.portals import Portals
+from .mods.qol import Qol
 #from .mods.server_reboots import server_reboots
 
 import importlib
@@ -33,6 +34,8 @@ class Controller(threading.Thread):
         super(self.__class__, self).__init__ ( )
         self.keep_running = True
         self.logger = logging.getLogger(__name__)
+
+        self.lock = False
 
         # Components
         self.config = None
@@ -53,6 +56,7 @@ class Controller(threading.Thread):
         #self.forbidden_countries = None
         #self.ping_limiter = None
         self.portals = None
+        self.qol = None
         #self.server_reboots = None
 
     def run ( self ):
@@ -106,7 +110,8 @@ class Controller(threading.Thread):
         #self.forbidden_countries.start ( )
         #self.ping_limiter = ping_limiter ( self )
         self.portals = Portals(self)
-        #self.portals.debug.connect ( self.debug )
+        self.qol = Qol(self)
+        self.qol.start()
         #self.server_reboots = server_reboots ( self )
         self.mods = [
             #self.challenge,
@@ -116,6 +121,7 @@ class Controller(threading.Thread):
             #self.forbidden_countries,
             #self.ping_limiter,
             self.portals,
+            self.qol,
             #self.server_reboots ]
         ]
         
@@ -185,6 +191,11 @@ class Controller(threading.Thread):
 
     def mods_check(self):
         for mod in self.mods:
+            mod_enable_string = "mod_{}_enable".format(
+                mod.__class__.__name__.lower())
+            if not self.config.values[mod_enable_string]:
+                self.logger.debug("Mod is disabled.")
+                continue
             if not mod.is_alive():
                 self.logger.error("Mod is not alive: {}.".format(
                     mod.__class__.__name__))
@@ -198,4 +209,23 @@ class Controller(threading.Thread):
                 setattr(self, class_name.lower(), class_reference(self))
                 object = getattr(self, class_name.lower())
                 object.start()
-                self.components.append(object)
+                self.mods.append(object)
+
+    def get_lock(self, locker_object):
+        count = 0
+        while self.lock:
+            time.sleep(0.1)
+            count += 1
+            if count > 100:
+                self.logger.warning(
+                    ".get_lock({}) grabbing lock forcefully.".format(
+                        locker_object.__class__.__name__))
+                break
+        self.logger.debug(
+            ".get_lock({})".format(locker_object.__class__.__name__))
+        self.lock = True
+
+    def let_lock(self, locker_object):
+        self.logger.debug(
+            ".let_lock({})".format(locker_object.__class__.__name__))       
+        self.lock = False

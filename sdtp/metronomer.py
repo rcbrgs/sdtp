@@ -16,6 +16,7 @@ class Metronomer(threading.Thread):
 
     def run ( self ):
         self.logger.info("Start.")
+        self.setup()
         now = time.time ( )
         latest_gt = now - self.controller.config.values ["gt_interval"] + 5
         latest_lp = now - self.controller.config.values ["lp_interval"] + 5
@@ -32,6 +33,7 @@ class Metronomer(threading.Thread):
             if(now - latest_lp > self.controller.config.values["lp_interval"]):
                 latest_lp = now
                 self.controller.worldstate.get_online_players()
+                self.controller.get_lock(self)
                 self.controller.database.delete(lp_table, [], print)
                 if self.controller.telnet.ready:
                     self.controller.telnet.write("lp")
@@ -39,7 +41,19 @@ class Metronomer(threading.Thread):
                 latest_gt = now
                 if self.controller.telnet.ready:
                     self.controller.telnet.write ( "gt" )
+        self.tear_down()
 
     def stop ( self ):
         self.keep_running = False
         self.logger.info("Stop.")
+
+    def setup(self):
+        self.controller.dispatcher.register_callback(
+            "le/lp output footer", self.unlock_controller)
+
+    def tear_down(self):
+        self.controller.dispatcher.deregister_callback(
+            "le/lp output footer", self.unlock_controller)
+
+    def unlock_controller(self, match_groups):
+        self.controller.let_lock(self)
