@@ -37,7 +37,6 @@ class Config(object):
             "telnet_port" : 8081,
             "auto_connect" : False,
             
-            "enable_challenge" : False,
             "alarm_reboots_time" : -1,
             "enable_alarm_reboots" : False,
             "enable_frequency_reboots" : False,
@@ -45,6 +44,9 @@ class Config(object):
             "latest_reboot" : 0,
             "server_empty_condition" : True,
             "server_reboots_widget_show" : False,
+            # mod challenge
+            "mod_challenge_enable" : False,
+            "mod_challenge_round_interval": 15,
             # mod chatlogger
             "mod_chatlogger_enable": True,
             "mod_chatlogger_file_path": "chat.txt",

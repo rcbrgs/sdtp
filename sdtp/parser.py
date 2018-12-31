@@ -152,6 +152,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ self.framework.game_events.player_denied ] },
 #            'denying command' : self.match_prefix + r'INF Denying command \'gg (.*)\' from client (.*)$',
 #                                       'to_call'  : [ self.framework.server.console_command ] },
+            'dropped item': r'Dropped item',
             'EAC auth success': self.match_prefix + r'INF EAC authentication successful, allowing user: EntityID=[-+\d]*, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'EAC backend conn' : self.match_prefix + r'INF \[EAC\] Log: Backend connection established\.$',
 #                                       'to_call'  : [ ] },
@@ -363,7 +364,7 @@ class Parser(threading.Thread):
 #                                       r'-*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'$',
 #                                       'to_call'  : [ ] },
             'player dconn NET2' : self.match_prefix + r'INF \[NET\] PlayerDisconnected EntityID=-*[\d]+, PlayerID=\'([\d]+)\', OwnerID=\'[\d]+\', PlayerName=\'(.*)\'$',
-            'player died' : self.match_prefix + r'INF GMSG: Player (.*) died$',
+            'player died' : self.match_prefix + r'INF GMSG: Player \'(.*)\' died$',
 #            'player kill' : self.match_prefix + r'INF GMSG: Player (.*)' + \
 #                                       r' eliminated Player (.*)',
 #                                       'to_call'  : [ self.framework.game_events.player_kill ] },
@@ -390,7 +391,7 @@ class Parser(threading.Thread):
             'SleeperVolume restoring': self.match_prefix + r'INF [\d\.]+ SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Restoring at ' + self.match_string_pos_unparenthesized + r' \'.*\'',
             "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'.*\', class .*',
             "server disconnect" : self.match_string_date + r"INF Disconnect",
-#                                       'to_call'  : [ ] },
+            "server shutting down": self.match_prefix + r'INF Server shutting down!',
 #            'si command executing' : self.match_string_date + \
 #                                       r' INF Executing command \'si [\d]+\' by Telnet from ' + \
 #                                       self.match_string_ip + ':([\d]+)',

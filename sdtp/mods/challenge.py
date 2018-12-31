@@ -1,143 +1,179 @@
 # -*- coding: utf-8 -*-
+#------------------------------------------------------------------------------80
 
-from sdtp.lp_table import lp_table
-
-from PyQt4 import QtCore, QtGui
-#from PySide import QtCore
-from random import randint
+import logging
+import random
 import re
-import sys
+import threading
 import time
 
-class challenge ( QtCore.QThread ):
+from sdtp.lkp_table import lkp_table
+from sdtp.mods.llp_table import llp_table
 
-    def __init__ ( self, controller ):
-        super ( self.__class__, self ).__init__ ( )
+class Challenge(threading.Thread):
+    def __init__(self, controller):
+        super(self.__class__, self).__init__()
         self.controller = controller
         self.keep_running = True
+        self.logger = logging.getLogger(__name__)
 
-        self.abort = False
-        self.to_challenge = [ ]
-        self.start ( )
-
-    def run ( self ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "info", prefix + " ( )" )
-
-        self.cleanup_challenge ( )
-        while ( self.keep_running ):
-            time.sleep ( 0.1 )
-            if len ( self.to_challenge ) != 0:
-                self.do_challenge ( self.to_challenge.pop ( ) )
-
-        self.controller.log ( "info", prefix + " return." )
+    def run(self):
+        self.logger.info("Start.")
+        if not self.controller.config.values["mod_challenge_enable"]:
+            return
+        self.setup()
+        while(self.keep_running):
+            time.sleep(0.1)
+            self.run_challenges()
+        self.tear_down()
             
-    def stop ( self ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "info", prefix + " ( )" )
-
+    def stop(self):
+        self.logger.info("Stop.")
         self.keep_running = False
 
+    def setup(self):
+        self.help = {
+            "challenge": "toggles wether you are in the challenge or not."}
+        self.controller.help.registered_commands["challenge"] = self.help
+        self.ongoing_challenges = {}
+        self.controller.dispatcher.register_callback(
+            "chat message", self.check_for_commands)
+        self.controller.dispatcher.register_callback(
+            "player died", self.check_for_challenge_death)
+
+    def tear_down(self):
+        self.controller.dispatcher.deregister_callback(
+            "chat message", self.check_for_commands)
+        self.controller.dispatcher.deregister_callback(
+            "player died", self.check_for_challenge_death)
+
+    def check_for_commands(self, match_group):        
+        matcher = re.compile(r"^/challenge[\s]*(.*)$")
+        match = matcher.search(match_group[11])
+        if not match:
+            self.logger.debug("Regex did not match: {}".format(match_group[11]))
+            return
+        self.logger.debug("Input from {} matches regex.".format(match_group[10]))
+        possible_player_name = match_group[10]
+        argument = match.groups()[0].strip()
+        self.logger.debug(
+            "'{}' used challenge command with argument '{}'.".format (
+            possible_player_name, argument))
+        db_answer = self.controller.database.blocking_consult(
+            lkp_table,
+            [(lkp_table.name, "==", possible_player_name)])
+        if len(db_answer) != 1:
+            self.logger.error("DB entry for player name is not unique.")
+            return
+        player = db_answer[0]
+        
+        self.logger.debug("Checking for challenge command.")
+        if argument == "":
+            self.toggle_challenge(player)
+            return
+
+        self.logger.debug("Checking for help usage.")
+        if argument == "help":
+            self.print_help_message(player)
+            return
+
+    def print_help_message(self, player):
+        for key in self.help.keys():
+            self.controller.telnet.write('pm {} "{} {}"'.format(
+                player["steamid"], key, self.help[key]))
+        
     # Mod specific
     ##############
-
-    def abort_challenge ( self ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "info", prefix + " ( )" )
-
-        self.abort = True
     
-    def cleanup_challenge ( self ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "info", prefix + " ( )" )
-
-        self.to_challenge = [ ]
-        self.abort = False
-        self.challenger = None
-        self.turns = None
-        self.start = None
-        self.end = None
-
-    def get_player_deaths ( self, player_steamid ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "info", prefix + " ( )" )
-
-        session = self.controller.database.get_session ( )
-        query = session.query ( lp_table ).filter ( lp_table.steamid == str ( player_steamid ) )
-        if query.count ( ) == 0:
-            self.controller.log ( "error", prefix + " unable to find player." )
-            self.controller.database.let_session ( session )
-            self.cleanup_challenge ( )
+    def toggle_challenge(self, player):
+        if player["steamid"] in self.ongoing_challenges.keys():
+            self.remove_from_challenge(player)
             return
-        player_lp = query.one ( )       
-        player_deaths = player_lp.deaths
-        self.controller.database.let_session ( session )
-        self.controller.log ( "info", prefix + " player has {} deaths.".format ( player_deaths ) )
-        return player_deaths
+        self.ongoing_challenges[player["steamid"]] = {
+            "level": 0,
+            "latest_turn": time.time(),
+            "player_id": player["player_id"] }
+        self.random_teleport(player)
 
-    def give_supplies ( self, player_steamid ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "info", prefix + " ( )" )
-
-        self.controller.telnet.write ( 'give {} firstAidKit 1'.format ( player_steamid ) )
-        self.controller.telnet.write ( 'give {} clubSpiked 1 {}'.format ( player_steamid, self.turns ) )
-        self.controller.telnet.write ( 'give {} beer 1'.format ( player_steamid ) )
+    def remove_from_challenge(self, player):
+        self.controller.telnet.write('pm {} "Your challenge is over at level {}."'.format(player["steamid"], self.ongoing_challenges[player["steamid"]]["level"]))
+        del self.ongoing_challenges[player["steamid"]]
         
-    def run_challenge ( self, player_steamid ):
-        self.to_challenge.append ( player_steamid )
+    def run_challenges(self):
+        now = time.time()
+        for key in self.ongoing_challenges.keys():
+            entry = self.ongoing_challenges[key]
+            if now - entry["latest_turn"] > self.controller.config.values["mod_challenge_round_interval"]:
+                entry["latest_turn"] = now
+                entry["level"] += 1
+                self.challenge_round(
+                    self.ongoing_challenges[key]["player_id"],
+                    self.ongoing_challenges[key]["level"])
 
-    def do_challenge ( self, player_steamid ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.controller.log ( "info", prefix + " ( )" )
+    def challenge_round(self, player_id, level):
+        regular_zombies = [4, 7, 8, 11, 14, 17, 20, 24, 27, 30, 33, 36, 41, 44,
+                           46, 49, 50, 52, 54, 57, 58, 61, 64, 67, 70, 73, 76,
+                           78, 86, 88, 90, 92]
+        feral_zombies = [2, 5, 9, 12, 15, 18, 21, 25, 28, 31, 34, 37, 40, 42, 45,
+                         47, 51, 53, 55, 59, 62, 65, 68, 71, 74, 77, 79, 87]
+        radiated_zombies = [3, 6, 10, 13, 16, 19, 22, 26, 29, 32, 35, 38, 43, 48,
+                            56, 60, 66, 69, 72, 75]
+        if level < 5:
+            regulars = level
+            ferals = 0
+            radiated = 0
+        if level >= 5 and level < 10:
+            regulars = 2
+            ferals = 3
+            radiated = 0
+        if level >= 10 and level < 15:
+            regulars = 1
+            ferals = 3
+            radiated = 1
+        if level >= 30:
+            regulars = 1
+            ferals = 2
+            radiated = int(level / 10)
 
-        session = self.controller.database.get_session ( )
-        query = session.query ( lp_table ).filter ( lp_table.steamid == str ( player_steamid ) )
-        if query.count ( ) == 0:
-            self.controller.log ( "error", prefix + " unable to find player." )
-            self.controller.database.let_session ( session )
-            self.cleanup_challenge ( )
+        for zombie in range(regulars):
+            self.controller.telnet.write('se {} {}'.format(
+                player_id, random.choice(regular_zombies)))
+        for zombie in range(ferals):
+            self.controller.telnet.write('se {} {}'.format(
+                player_id, random.choice(feral_zombies)))
+        for zombie in range(radiated):
+            self.controller.telnet.write('se {} {}'.format(
+                player_id, random.choice(radiated_zombies)))
+
+    def check_for_challenge_death(self, match_groups):
+        name = match_groups[7]
+        self.logger.info("Trying to ascertain whether {} was in a challenge.".format(name))
+        db_answer = self.controller.database.blocking_consult(
+            lkp_table,
+            [(lkp_table.name, "==", name)])
+        if len(db_answer) != 1:
+            self.logger.error("Player entry not unique in DB.")
             return
-        player_lp = query.one ( )       
-        self.player_name = player_lp.name
-        self.player_id = player_lp.player_id
-        self.controller.database.let_session ( session )
-        
-        self.challenger = player_steamid
-        self.turns = 0
-        self.start = time.time ( )
-        self.end = None
+        player = db_answer[0]
+        if player["steamid"] in self.ongoing_challenges.keys():
+            self.remove_from_challenge(player)
 
-        player_deaths_at_start = self.get_player_deaths ( player_steamid )
-        player_deaths = player_deaths_at_start
-        
-        self.controller.telnet.write ( 'say "{} is being challenged!"'.format ( self.player_name ) )
-        while player_deaths == player_deaths_at_start and self.abort == False:
-            self.turns += 1
-            self.controller.telnet.write ( 'pm {} "Challenge level {}."'.format ( player_steamid, self.turns ) )
-            self.controller.log ( "info", prefix + " challenge: turn {}.".format ( self.turns ) )
-            if self.turns % 10 == 1:
-                self.teleport_player ( )
-                self.give_supplies ( player_steamid )
-            self.spawn_at_player ( )
-            time.sleep ( 10 + randint ( 0, 3 ) )
-            player_deaths = self.get_player_deaths ( player_steamid )
-        self.controller.telnet.write ( 'say "{} challenge ended at level {}!"'.format ( self.player_name, self.turns ) )
-            
-        self.end = time.time ( )
-        duration = self.end - self.start
-
-        self.controller.telnet.write ( "{} survived {} seconds!".format ( self.player_name, int ( self.end - self.start ) ) )
-
-        self.cleanup_challenge ( )
-                
-    def spawn_at_player ( self ):
-        for counter in range ( self.turns ):
-            zombie = randint ( 1, 20 )
-            self.controller.telnet.write ( "se {} {}".format ( self.player_id, zombie ) )
-            time.sleep ( 0.1 + zombie * 0.01 )
-
-    def teleport_player ( self ):
-        longitude = randint ( 0, 5000 )
-        latitude = randint ( 0, 5000 )
-        self.controller.telnet.write ( "tele {} {} -1 {}".format ( self.player_id, longitude, latitude ) )
-        time.sleep ( 1 )
+    def random_teleport(self, player):
+        longitude = random.randint(-2000, 2000)
+        latitude = random.randint(-2000, 2000)
+        self.logger.info("Checking for claims near {}, {}.".format(
+            longitude, latitude))
+        nearby_claims = False
+        claims = self.controller.database.blocking_consult(
+            llp_table,
+            [])
+        for claim in claims:
+            if abs(longitude - claim["longitude"]) < 100 and \
+               abs(latitude - claim["latitude"]) < 100:
+                self.logger.info("Too near claim at {}, {}.".format(
+                    claim["longitude"], claim["latitude"]))
+                return self.random_teleport(player)
+        self.logger.info("Teleporting player to {}, -1, {}.".format(
+            longitude, latitude))
+        self.controller.telnet.write("tele {} {} -1 {}".format(
+            player["steamid"], longitude, latitude))

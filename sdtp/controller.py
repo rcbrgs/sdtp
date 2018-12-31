@@ -8,7 +8,7 @@ from .parser import Parser
 from .telnet import Telnet
 from .worldstate import WorldState
 
-#from .mods.challenge import challenge
+from .mods.challenge import Challenge
 from .mods.chatlogger import ChatLogger
 from .mods.chattranslator import ChatTranslator
 from .mods.claimalarm import ClaimAlarm
@@ -30,7 +30,6 @@ import time
 import sdtp
 
 class Controller(threading.Thread):
-
     def __init__ ( self ):
         super(self.__class__, self).__init__ ( )
         self.keep_running = True
@@ -50,9 +49,9 @@ class Controller(threading.Thread):
         self.worldstate = None
 
         # Mods
+        self.challenge = None
         self.chatlogger = None
         self.chattranslator = None
-        #self.challenge = None
         self.claimalarm = None
         #self.forbidden_countries = None
         self.mostkills = None
@@ -104,7 +103,8 @@ class Controller(threading.Thread):
                             self.telnet,
                             self.database,
                             self.worldstate ]
-        #self.challenge = challenge ( self )
+        self.challenge = Challenge(self)
+        self.challenge.start()
         self.chatlogger = ChatLogger(self)
         self.chattranslator = ChatTranslator(self)
         self.claimalarm = ClaimAlarm(self)
@@ -118,7 +118,7 @@ class Controller(threading.Thread):
         self.qol.start()
         #self.server_reboots = server_reboots ( self )
         self.mods = [
-            #self.challenge,
+            self.challenge,
             self.chatlogger,
             self.chattranslator,
             self.claimalarm,
