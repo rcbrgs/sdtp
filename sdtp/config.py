@@ -53,6 +53,8 @@ class Config(object):
             # mod claim alarm
             "mod_claimalarm_distance": 10,
             "mod_claimalarm_enable": False,
+            # mod most kills
+            "mod_mostkills_enable": False,
             # mod portals
             "mod_portals_cooldown": 0,
             "mod_portals_enable" : False,
