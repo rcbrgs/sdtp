@@ -134,10 +134,8 @@ class Parser(threading.Thread):
 #                                       r'=[\d]+ XZ=[+-]*[\d]+/[+-]*[\d]+ ' + \
 #                                       r'ZombiesWastelandNight_Night: c=[\d]+/r=[\d]+ ZombiesWasteland_Day: c=[\d]+/r=[\d]+$',
 #                                       'to_call'  : [ ] },
-            #2018-12-29T11:06:32 94913.707 INF BloodMoonParty: SpawnZombie grp 1 feralHordeStageGS97 (count 28, numToSpawn 39, maxAlive 33), cnt 8 zombieBoe, at player 171, day/time 50 03:06
-            'blood moon party': self.match_string_date + r'INF BloodMoonParty: SpawnZombie grp [\d]+ feralHordeStageGS[\d]+ \(count [\d]+, numToSpawn [\d]+, maxAlive [\d]+\), cnt [\d]+ .*, at player [\d]+, day/time [\d]+ [\d]+:[\d]+$',
-            'chat message (pre A14)': self.match_string_date + r' INF GMSG: (.*: .*)$',
-            'chat message (pre A17)': self.match_string_date + r' INF Chat: (.*: .*)$',
+            'BlockSpawnEntity': self.match_prefix + r'INF BlockSpawnEntity:: Spawn New Trader\.',
+            'blood moon party': self.match_prefix + r'INF BloodMoonParty: SpawnZombie grp [\d]+ feralHordeStageGS[\d]+ \(count [\d]+, numToSpawn [\d]+, maxAlive [\d]+\), cnt [\d]+ .*, at player [\d]+, day/time [\d]+ [\d]+:[\d]+$',
             'chat message': self.match_string_date + r' INF Chat \(from \'(.*)\', entity id \'([+-]*[\d]+)\', to \'(.*)\'\): \'(.*)\': (.*)',
 #            'chunks saved' : r'.* INF Saving (.*) of chunks took (.*)ms',
 #                                       'to_call'  : [ ] },
@@ -410,8 +408,7 @@ class Parser(threading.Thread):
 
 #            'spawn ent wrong pos' : self.match_prefix + r'WRN Spawned entity with wrong pos: Item_([\d]+) \((EntityItem)\) id=([\d]+) pos=' + self.match_string_pos + r'$',
 #                                       'to_call'  : [ self.framework.world_state.buffer_shop_item ] },
-#            'spawn output' : r'^Spawned [\w\d]+$',
-#                                       'to_call'  : [ ] },
+            'spawn entity output' : r'^Spawned [\w]+$',
             'spider spawn horde' : self.match_prefix + r'INF Spider scout spawned a zombie horde!$',
             'StartGame done': self.match_prefix + r'INF StartGame done',
 #            'steam auth' : self.match_prefix + r'INF \[Steamworks\.NET\] Authent' + \

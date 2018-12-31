@@ -54,8 +54,9 @@ class Config(object):
             "mod_claimalarm_distance": 10,
             "mod_claimalarm_enable": False,
             # mod portals
+            "mod_portals_cooldown": 0,
             "mod_portals_enable" : False,
-            "mod_portals_max_portals_per_player" : 0,
+            "mod_portals_max_portals_per_player" : -1,
             "mod_portals_teleport_cost" : 0,
             # mod qol
             "mod_qol_enable": False,

@@ -17,6 +17,7 @@ class Portals(threading.Thread):
         self.keep_running = True
         self.logger = logging.getLogger(__name__)
 
+        self.cooldowns = {}
         self.start ( )
 
     def run(self):
@@ -161,6 +162,8 @@ class Portals(threading.Thread):
                  (sdtp.friendships_table.FriendshipsTable.friend_steamid, "==",
                   player["steamid"])])
             if len(friendships) == 1:
+                if self.check_for_cooldown(player):
+                    return
                 self.controller.telnet.write('pm {} "Teleporting you to {}."'.format(player["steamid"], possible_friend["name"]))
                 self.controller.telnet.write("tele {} {} {} {}".format(
                     player["steamid"], int(possible_friend["longitude"]),
@@ -224,6 +227,8 @@ class Portals(threading.Thread):
             'pm {} "{}"'.format(player["steamid"], text))
             
     def teleport_player_to_portal(self, player, portal):
+        if self.check_for_cooldown(player):
+            return
         self.logger.info(
             "Teleporting {} to {}.".format(player["name"], portal["name"]))
         self.controller.telnet.write ( 'pm {} "Teleporting you to {}."'.format (
@@ -268,7 +273,16 @@ class Portals(threading.Thread):
             print)
 
     def add_portal(self, player, portal_name, public = False):
-        # check no portal has name
+        # check player has portals left
+        if self.controller.config.values[
+                "mod_portals_max_portals_per_player"] > 0:
+            player_portals = self.controller.database.blocking_consult(
+                PortalsTable,
+                [(PortalsTable.steamid, "==", player["steamid"])])
+            if len(player_portals) >= self.controller.config.values[
+                    "mod_portals_max_portals_per_player"]:
+                self.controller.telnet.write('pm {} "You already have the maximum allowed portals set."'.format(player["steamid"]))
+                return
         self.logger.info("Creating portal from position of {}.".format(
             player["name"]))
         self.controller.database.add_all(
@@ -342,3 +356,12 @@ class Portals(threading.Thread):
                 response = "{}".format(portal["name"])
         self.controller.telnet.write('pm {} "Public portals are: {}."'.format(
             player["steamid"], response))
+
+    def check_for_cooldown(self, player):
+        now = time.time()
+        if player["steamid"] in self.cooldowns:
+            if now - self.cooldowns[player["steamid"]] < self.controller.config.values["mod_portals_cooldown"]:
+                self.controller.telnet.write('pm {} "Your portal use is in cooldown for another {} seconds."'.format(player["steamid"], int(self.controller.config.values["mod_portals_cooldown"] - now + self.cooldowns[player["steamid"]])))
+                return True
+        self.cooldowns[player["steamid"]] = now
+        return False

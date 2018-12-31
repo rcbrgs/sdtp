@@ -96,7 +96,7 @@ class Qol(threading.Thread):
             7 - int(today % 7)))
 
     def reset_daily_counts(self, match_groups):
-        self.logger.info(match_groups)
+        self.logger.debug(match_groups)
         self.animals_spawned_today = []
         self.gimmes_given_today = []
 
