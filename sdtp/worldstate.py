@@ -21,7 +21,6 @@ class WorldState(threading.Thread):
         self.online_players_changed = False
         self.latest_day = 0
         self.latest_hour = 0
-        self.latest_nonzero_players = time.time ( )
         self.server_empty = False
         self.start ( )
 
@@ -205,19 +204,18 @@ class WorldState(threading.Thread):
             self.logger.debug("added entry." )
         self.logger.debug("returning." )
 
-    def update_online_players_count ( self, match_group ):
+    def update_online_players_count(self, match_group):
+        self.logger.debug(match_group)
         count = int ( match_group [ 0 ] )
         self.online_players_count = count
         if count == 0:
-            if time.time ( ) - self.latest_nonzero_players > 300:
-                self.server_empty = True
-                return
+            self.controller.database.blocking_delete(lp_table, [])
+            self.server_empty = True
+            return
         else:
             self.server_empty = False
-            self.latest_nonzero_players = time.time ( )
             
-        answer = self.controller.database.blocking_consult(
-            lp_table, [])
+        answer = self.controller.database.blocking_consult(lp_table, [])
         if len(answer) != self.online_players_count:
             self.logger.debug(
                 "Number of online players does not match number of DB entries.")

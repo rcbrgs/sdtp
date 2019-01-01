@@ -23,6 +23,7 @@ class Config(object):
             "enable_ping_limiter" : False,
             "forbidden_countries" : [ "" ],
             "gt_interval": 5,
+            "interval_tick": 60,
             "latest_reboot" : 0,
             "llp_interval": 60,
             "log_file_name" : "sdtp.log",

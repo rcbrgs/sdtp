@@ -38,10 +38,6 @@ The recipe for configuration is: first, create a directory to contain the files 
     mkdir your_server_name
     cd your_server_name
 
-Then, activate your conda environment.
-
-    source activate sdtp
-
 Then, run sdtp; wait a few seconds and stop it with Ctrl+C.
 
     sdtp
@@ -56,3 +52,18 @@ After you selected mods to be enabled and the parameters values, save the file a
     sdtp
 
 Nothing will be printed in the screen, but you can see the log in sdtp.log in the same folder as you are running sdtp.
+
+Updating
+========
+
+Once in a while sdtp will be updated. When that happens, you should update your cloned repository, rebuild and re-run the mod. The instructions are:
+
+    cd sdtp
+    git pull
+    cd ..
+    python3 sdtp/setup.py install
+    
+    cd your_server_name
+    sdtp
+
+    

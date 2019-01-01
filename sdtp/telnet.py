@@ -98,6 +98,7 @@ class Telnet(threading.Thread):
         if time.time ( ) - self.latest_handshake < 10:
             self.logger.info("Sleeping 10 seconds before attempting to connect again." )
             time.sleep(10)
+        self.ongoing_handshake = True
         self.latest_handshake = time.time()
         try:
             self.telnet.open(self.controller.config.values['telnet_IP'],
@@ -125,15 +126,16 @@ class Telnet(threading.Thread):
             self.logger.error("Logon failed.")
             self.ongoing_handshake = False
             return
-        self.logger.debug("Telnet step 2 completed." )
+        self.logger.info("Telnet step 2 completed." )
         self.connectivity_level = 2
         self.ongoing_handshake = False
 
     def open_connection ( self ):
+        self.logger.debug("open_connection()")
         if self.ongoing_handshake:
-            self.logger.debug("Attempted connection during handshake, ignoring call.")
+            self.logger.info("Attempted connection during handshake, ignoring call.")
             return
-        self.ongoing_handshake = True
+        #self.ongoing_handshake = True
         if self.connectivity_level == 2:
             self.logger.debug("Attempted to re-open connection, ignoring call." )
             return
@@ -206,9 +208,13 @@ class Telnet(threading.Thread):
         self.logger.debug("Raw write")
         try:
             self.telnet.write(msg.encode("utf8", "replace"))
+        except BrokenPipeError:
+            self.logger.error("Broken pipe error.")
+            self.connectivity_level = 0
+            return
         except Exception as e:
             self.logger.error("telnet.write had exception: {}".format(e))
-            return
+            raise e
         if lock_after_write:
             self.write_lock = True
             self.logger.debug("Write locked.")

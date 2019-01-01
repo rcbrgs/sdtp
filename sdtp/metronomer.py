@@ -21,10 +21,11 @@ class Metronomer(threading.Thread):
         latest_gt = now - self.controller.config.values ["gt_interval"] + 5
         latest_lp = now - self.controller.config.values ["lp_interval"] + 5
         latest_llp = now - self.controller.config.values["llp_interval"] / 2
-        while ( self.keep_running ):
-            time.sleep ( 0.1 )
+        latest_tick = now - self.controller.config.values["interval_tick"] / 2
+        while(self.keep_running):
+            time.sleep(0.1)
             old = now
-            now = time.time ( )
+            now = time.time()
             if(now - latest_llp > self.controller.config.values["llp_interval"]):
                 latest_llp = now
                 if self.controller.telnet.ready:
@@ -37,10 +38,15 @@ class Metronomer(threading.Thread):
             if(now - latest_gt > self.controller.config.values["gt_interval"]):
                 latest_gt = now
                 if self.controller.telnet.ready:
-                    self.controller.telnet.write ( "gt" )
+                    self.controller.telnet.write("gt")
+            if(now - latest_tick > self.controller.config.values["interval_tick"]):
+                latest_tick = now
+                if self.controller.worldstate.server_empty:
+                    if self.controller.telnet.ready:
+                        self.controller.telnet.write('say "Tick"')
         self.tear_down()
 
-    def stop ( self ):
+    def stop(self):
         self.keep_running = False
         self.logger.info("Stop.")
 

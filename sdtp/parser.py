@@ -57,6 +57,7 @@ class Parser(threading.Thread):
             'AI wander trouble' : self.match_prefix + r'INF AIDirector: wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' reached pitstop and will wander around for awhile looking for trouble.$',
             'allowing player' : self.match_prefix + r'INF Allowing player with id [\d]+$',
             'animator gotostate': r'Calling Animator.GotoState on Synchronize layer',
+            'AstarManager': self.match_prefix + r'INF AstarManager Cleanup',
 #            'behaviour' : r'The referenced script on this Behaviour is missing!$',
 #                                       'to_call'  : [ ] },
 #            'biome animal' : self.match_prefix + r'INF BiomeSpawnManager spawned ' + \
@@ -137,6 +138,11 @@ class Parser(threading.Thread):
             'BlockSpawnEntity': self.match_prefix + r'INF BlockSpawnEntity:: Spawn New Trader\.',
             'blood moon party': self.match_prefix + r'INF BloodMoonParty: SpawnZombie grp [\d]+ feralHordeStageGS[\d]+ \(count [\d]+, numToSpawn [\d]+, maxAlive [\d]+\), cnt [\d]+ .*, at player [\d]+, day/time [\d]+ [\d]+:[\d]+$',
             'chat message': self.match_string_date + r' INF Chat \(from \'(.*)\', entity id \'([+-]*[\d]+)\', to \'(.*)\'\): \'(.*)\': (.*)',
+            'ChunkCalc': self.match_prefix + r'INF Exited thread ChunkCalc',
+            'GenerateChunks': self.match_prefix + r'INF Exited thread GenerateChunks$',
+            'ChunkRegeneration': self.match_prefix + r'INF Exited thread ChunkRegeneration',
+            'chunks needed': self.match_prefix + r'INF #[\d]+ chunks needed [\d]+ms$',
+            'SaveChunks': self.match_prefix + r'INF Exited thread SaveChunks .*',
 #            'chunks saved' : r'.* INF Saving (.*) of chunks took (.*)ms',
 #                                       'to_call'  : [ ] },
             'claim finished' : r'Total of ([\d]+) keystones in the game',
@@ -232,6 +238,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #                                       'to_call'  : [ self.advise_deprecation_chat ] },
             'found': self.match_prefix + r'INF found$',
+            'GamePrefs saved': self.match_prefix + r'INF Persistent GamePrefs saved',
 #            'gg executing' : self.match_prefix + r'INF Executing command \'gg (.*)\' from client ([\d]+)$',
 #                                       'to_call'  : [ self.admin_command_mod ] },          
 #            'gt command executing' : self.match_string_date + \
@@ -344,6 +351,7 @@ class Parser(threading.Thread):
             'NCS writer started thread': self.match_prefix + r'INF Started thread NCS_Writer_[\d]+_[\d]+',
 #            'not found' : r'^Playername or entity ID not found.$',
 #                                       'to_call'  : [ ] },
+            'NullReferenceException': self.match_prefix + r'NullReferenceException: Object reference not set to an instance of an object',
             "password incorrect" : r"^Password incorrect, please enter password:$",
             'player created' : self.match_prefix + r'INF Created player with id=([\d]+)$',
             'player joined' : self.match_prefix + 'INF GMSG: Player \'(.*)\' joined the game',
@@ -380,6 +388,7 @@ class Parser(threading.Thread):
             'removing entity' : self.match_prefix + r'INF Removing observed entity [\d]+',
 
             'request to enter' : self.match_prefix + r'INF RequestToEnterGame: [\d]+/.*$',
+            'running stability': r'^Running stability$',
 #            'saveworld' : r'^' + self.match_string_date + r' INF Executing ' + \
 #                                       r'command \'saveworld\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #            'say executing' : self.match_string_date + \
@@ -426,9 +435,11 @@ class Parser(threading.Thread):
             'steam player connect' : self.match_prefix + r'INF \[NET\] PlayerConnected EntityID=-1, PlayerID=\'\', OwnerID=\'\', PlayerName=\'\'$',
             'SteamWorks.NET Auth' : self.match_prefix + r'INF \[Steamworks\.NET\] Authenticating player: [\w]+ SteamId: [\d]+ TicketLen: [\d]+ Result: k_EBeginAuthSessionResultOK$',
             'steamworks.NET auth ()' : self.match_prefix + r'INF \[Steamworks.NET\] Auth\.AuthenticateUser\(\)$',
+            'Steamworks.NET exit lobby': self.match_prefix + r'INF \[Steamworks\.NET\] Exiting Lobby$',
             'Steamworks.NET GameServer.Init success': self.match_prefix + r'INF \[Steamworks\.NET\] GameServer.Init successful',
             'Steamworks.NET GameServer.Logon success': self.match_prefix + r'INF \[Steamworks\.NET\] GameServer\.LogOn successful, SteamID=[\d]+$',
             'Steamworks.NET server public': self.match_prefix + r'INF \[Steamworks\.NET\] Making server public',
+            'Steamworks.Net stop server': self.match_prefix + r'INF \[Steamworks\.NET\] Stopping server$',
             'steamworks.NET not connected': self.match_prefix + r'INF \[Steamworks\.NET\] Authentication callback. ID: [\d]+, owner: [\d]+, result: k_EAuthSessionResponseUserNotConnectedToSteam',
             'sunrise': self.match_prefix + r'INF \(Sunrise\) Blood moon is over!',
 #            'supply plane' : r'[\d]+\. id=[\d]+, GameObject (EntitySupplyPlane), pos=' +\
@@ -462,6 +473,8 @@ class Parser(threading.Thread):
             'Webserver started': self.match_prefix + r'INF Started Webserver on [\d]+$',
             'world chunks preparing': self.match_prefix + r'INF Preparing World chunks for clients',
             'world chunks size': self.match_prefix + r'INF World chunks size: [\d]+ ., chunk count: [\d]+',
+            'World.Cleanup': self.match_prefix + r'INF World.Cleanup',
+            'World.Unload': self.match_prefix + r'INF World.Unload',
 #            'exception sharing' : r'IOException: Sharing violation on path .*',
 #                                       'to_call'  : [ self.framework.quiet_listener ] },
         }
