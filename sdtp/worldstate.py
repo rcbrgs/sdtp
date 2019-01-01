@@ -18,6 +18,7 @@ class WorldState(threading.Thread):
 
         self.online_players = []
         self.online_players_count = 100000
+        self.online_players_changed = False
         self.latest_day = 0
         self.latest_hour = 0
         self.latest_nonzero_players = time.time ( )
@@ -68,9 +69,11 @@ class WorldState(threading.Thread):
 
     def player_connected(self, match_group):
         self.logger.info("Player {} connected.".format(match_group[7]))
+        self.online_players_changed = True
         
     def player_disconnected(self, match_group):
         self.logger.info("Player {} disconnected.".format(match_group[7]))
+        self.online_players_changed = True
         
     def update_lkp_table ( self, match_group ):
         self.logger.debug("({})".format (match_group))
@@ -137,6 +140,10 @@ class WorldState(threading.Thread):
 
     def update_lp_table ( self, match_group ):
         self.logger.debug("({})".format (match_group))
+        if self.online_players_changed:
+            self.controller.database.blocking_delete(
+                lp_table, [])
+            self.online_players_changed = False
         this_steamid = int ( match_group [ 15 ] ),
         self.controller.database.consult (
             lp_table, [ ( lp_table.steamid, "==", match_group [ 15 ] ) ],
@@ -199,9 +206,6 @@ class WorldState(threading.Thread):
         self.logger.debug("returning." )
 
     def update_online_players_count ( self, match_group ):
-        prefix = "{}.{}".format ( self.__class__.__name__, sys._getframe().f_code.co_name )
-        self.logger.debug(prefix + " ( {} )".format ( match_group ) )
-
         count = int ( match_group [ 0 ] )
         self.online_players_count = count
         if count == 0:
@@ -211,16 +215,25 @@ class WorldState(threading.Thread):
         else:
             self.server_empty = False
             self.latest_nonzero_players = time.time ( )
+            
+        answer = self.controller.database.blocking_consult(
+            lp_table, [])
+        if len(answer) != self.online_players_count:
+            self.logger.debug(
+                "Number of online players does not match number of DB entries.")
+            self.online_players_changed = True
 
     def get_online_players(self):
-        self.controller.database.consult(
+        answer = self.controller.database.blocking_consult(
             lp_table,
-            [],
-            self.get_online_players_2)
-
-    def get_online_players_2(self, answer):
+            [])
+        if len(answer) != self.online_players_count:
+            self.logger.warning(
+                "Number of online players {} does not match number of DB " \
+                "entries {}.".format(self.online_players_count, len(answer)))
         self.online_players = answer
         self.logger.debug("{} players online now.".format(len(self.online_players)))
+        return self.online_players
 
     def log_time_of_day(self, match_group):
         self.day = int(match_group[0])

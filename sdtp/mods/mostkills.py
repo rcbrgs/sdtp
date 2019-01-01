@@ -49,16 +49,25 @@ class MostKills(threading.Thread):
         self.logger.debug(match_groups)
         max_player, max_count = self.count_most_kills()
         if max_count > 0:
-            self.controller.telnet.write('say "{} killed the most zombies today."'.format(max_player["name"]))
-            self.controller.telnet.write('give {} ammo762mmBulletFMJSteel 50'.format(max_player["player_id"]))
+            self.controller.telnet.write(
+                'say "{} killed the most zombies today: {}."'.format(
+                    max_player["name"], max_count))
+            self.controller.telnet.write(
+                'give {} ammo762mmBulletFMJSteel 50'.format(
+                    max_player["player_id"]))
 
+        self.logger.debug("Resetting most kills counts.")
         self.yesterday_players = {}
-        players = self.controller.worldstate.online_players
+        players = self.controller.worldstate.get_online_players()
         for player in players:
             self.yesterday_players[player["steamid"]] = player
+            self.logger.debug("Adding {} to most kills count.".format(
+                player["name"]))
 
     def count_most_kills(self):
-        players = self.controller.worldstate.online_players
+        self.logger.debug("count_most_kills()")
+        players = self.controller.worldstate.get_online_players()
+        self.logger.debug("players = {}".format(players))
         max_player = None
         max_count = 0
         for player in players:
@@ -72,11 +81,18 @@ class MostKills(threading.Thread):
                     max_player = player
             else:
                 self.yesterday_players[player["steamid"]] = player
+                self.logger.debug("Adding {} to most kills count.".format(
+                    player["name"]))
+        self.logger.debug("max_player = {}".format(max_player))
         return (max_player, max_count)
 
     def announce_counts(self, match_groups):
+        self.logger.debug(match_groups)
         max_player, max_count = self.count_most_kills()
-        if int(match_groups[1]) != [4, 8, 12, 16, 20]:
+        if int(match_groups[1]) not in [4, 8, 12, 16, 20]:
             return
+        self.logger.info("Announcing most kills counts.")
         if max_count > 0:
-            self.controller.telnet.write('say "{} is the leader with {} zombies killed."'.format(max_player["name"], max_count))
+            self.controller.telnet.write('say "{} has the most ({}) zombies killed so far."'.format(max_player["name"], max_count))
+        else:
+            self.logger.info("No player has killed zombies yet today.")

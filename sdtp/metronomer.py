@@ -32,9 +32,6 @@ class Metronomer(threading.Thread):
                     # Lock will be released by mod claim_alarm.
             if(now - latest_lp > self.controller.config.values["lp_interval"]):
                 latest_lp = now
-                self.controller.worldstate.get_online_players()
-                self.controller.get_lock(self)
-                self.controller.database.delete(lp_table, [], print)
                 if self.controller.telnet.ready:
                     self.controller.telnet.write("lp")
             if(now - latest_gt > self.controller.config.values["gt_interval"]):
@@ -48,12 +45,7 @@ class Metronomer(threading.Thread):
         self.logger.info("Stop.")
 
     def setup(self):
-        self.controller.dispatcher.register_callback(
-            "le/lp output footer", self.unlock_controller)
+        pass
 
     def tear_down(self):
-        self.controller.dispatcher.deregister_callback(
-            "le/lp output footer", self.unlock_controller)
-
-    def unlock_controller(self, match_groups):
-        self.controller.let_lock(self)
+        pass

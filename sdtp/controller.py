@@ -35,8 +35,6 @@ class Controller(threading.Thread):
         self.keep_running = True
         self.logger = logging.getLogger(__name__)
 
-        self.lock = False
-
         # Components
         self.config = None
         self.dispatcher = None
@@ -215,22 +213,3 @@ class Controller(threading.Thread):
                 object = getattr(self, class_name.lower())
                 object.start()
                 self.mods.append(object)
-
-    def get_lock(self, locker_object):
-        count = 0
-        while self.lock:
-            time.sleep(0.1)
-            count += 1
-            if count > 100:
-                self.logger.warning(
-                    ".get_lock({}) grabbing lock forcefully.".format(
-                        locker_object.__class__.__name__))
-                break
-        self.logger.debug(
-            ".get_lock({})".format(locker_object.__class__.__name__))
-        self.lock = True
-
-    def let_lock(self, locker_object):
-        self.logger.debug(
-            ".let_lock({})".format(locker_object.__class__.__name__))       
-        self.lock = False

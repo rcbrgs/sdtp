@@ -52,6 +52,17 @@ class Database(threading.Thread):
         self.let_lock()       
         return retval
 
+    def blocking_delete(self, table, conditions):
+        self.get_lock()
+        session = self.get_session()
+        query = session.query(table)
+        for condition in conditions:
+            if condition[1] == "==":
+                query = query.filter(condition[0] == condition[2])
+        query.delete()
+        self.let_session(session)
+        self.let_lock()       
+
     def get_lock(self):
         count = 0
         while self.lock:

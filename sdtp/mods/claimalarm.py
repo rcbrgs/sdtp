@@ -179,7 +179,7 @@ class ClaimAlarm(threading.Thread):
             self.logger.info("{} inside friend {}'s claim.".format(
                 player["name"], claim_player["name"]))
             return
-        self.logger.info("{} is invading {}'s claim!".format(
+        self.logger.debug("{} is invading {}'s claim!".format(
             player["name"], claim_player["name"]))
         if claim["alarm_type"] == "me":
             self.controller.telnet.write('pm {} "{} is invading your claim at {}, {}!"'.format(claim_player["steamid"], player["name"], claim["longitude"], claim["latitude"]))

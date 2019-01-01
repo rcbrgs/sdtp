@@ -33,7 +33,7 @@ class Challenge(threading.Thread):
 
     def setup(self):
         self.help = {
-            "challenge": "toggles wether you are in the challenge or not."}
+            "challenge": "toggles wether you are in the challenge or not. In the challenge, you are teleported randomly and have to fight incresing hordes of zombies."}
         self.controller.help.registered_commands["challenge"] = self.help
         self.ongoing_challenges = {}
         self.controller.dispatcher.register_callback(

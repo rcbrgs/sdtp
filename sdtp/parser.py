@@ -152,7 +152,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ self.framework.game_events.player_denied ] },
 #            'denying command' : self.match_prefix + r'INF Denying command \'gg (.*)\' from client (.*)$',
 #                                       'to_call'  : [ self.framework.server.console_command ] },
-            'dropped item': r'Dropped item',
+            'dropped item': r'^Dropped item$',
             'EAC auth success': self.match_prefix + r'INF EAC authentication successful, allowing user: EntityID=[-+\d]*, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'EAC backend conn' : self.match_prefix + r'INF \[EAC\] Log: Backend connection established\.$',
 #                                       'to_call'  : [ ] },
