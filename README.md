@@ -7,6 +7,29 @@ It is the third iteration of an idea originally by Benjamin Keller, and develope
 
 It consists of a linux Python script that runs on the command-line. All interaction is done via the game chat.
 
+Installation
+============
+
+We highly recommend that you use a Python environment manager such as Anaconda (https://www.anaconda.com/) to run sdtp, and the commands we give here expect that.
+
+First, create a conda environment for sdtp:
+
+ conda create -n sdtp
+
+Then activate the environment:
+
+ source activate sdtp
+
+Now, clone the github repo for sdtp:
+
+ git clone https://github.com/rcbrgs/sdtp.git
+
+Finally, install sdtp in the conda environment:
+
+ python sdtp/setup.py install
+
+Notice: running the above command from the incorrect directory will give errors, because setup.py's is very picky concerning relative directories.
+
 Configuration
 =============
 
@@ -15,3 +38,27 @@ SDTP will save two files: one is a JSON file with the configuration parameters (
 When running for the first time, please configure your telnet connection. Once that is done, all functionalities should be available, and the app should be self-explanatory.
 
 A log file with all the info from SDTP is also saved on the same directory as the config and database files, and is named sdtp.log. It is advised to turn off the "debug" level of logging, or that file might grow by several hundred megabytes per day. If that happens, this file can be deleted safely.
+
+The recipe for configuration is: first, create a directory to contain the files from sdtp:
+
+ mkdir your_server_name
+ cd your_server_name
+
+Then, activate your conda environment.
+
+ source activate sdtp
+
+Then, run sdtp; wait a few seconds and stop it with Ctrl+C.
+
+ sdtp
+ ^C
+
+Now you will have a few files in the current folder. The configuration file is sdtp_preconfig.json, so go ahead and edit it:
+
+ emacs sdtp_preconfig.json
+
+After you selected mods to be enabled and the parameters values, save the file and run sdtp again:
+
+ sdtp
+
+Nothing will be printed in the screen, but you can see the log in sdtp.log in the same folder as you are running sdtp.

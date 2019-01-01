@@ -66,7 +66,7 @@ class ChatTranslator(threading.Thread):
             return
         detect = self.translator.detect(message)
         self.logger.info("Detected language: {}".format(detect.lang))
-        for player in self.controller.world_state.online_players:
+        for player in self.controller.worldstate.online_players:
             self.controller.database.consult(
                 ChatTranslatorTable,
                 [(ChatTranslatorTable.steamid, "==", player["steamid"])],
