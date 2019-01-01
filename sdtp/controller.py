@@ -18,7 +18,7 @@ from .mods.legfix import LegFix
 from .mods.mostkills import MostKills
 from .mods.portals import Portals
 from .mods.qol import Qol
-#from .mods.server_reboots import server_reboots
+from .mods.serverreboots import ServerReboots
 
 import importlib
 import json
@@ -58,7 +58,7 @@ class Controller(threading.Thread):
         #self.ping_limiter = None
         self.portals = None
         self.qol = None
-        #self.server_reboots = None
+        self.serverreboots = None
 
     def run ( self ):
         self.setup()
@@ -118,7 +118,8 @@ class Controller(threading.Thread):
         self.portals = Portals(self)
         self.qol = Qol(self)
         self.qol.start()
-        #self.server_reboots = server_reboots ( self )
+        self.serverreboots = ServerReboots(self)
+        self.serverreboots.start()
         self.mods = [
             self.challenge,
             self.chatlogger,
@@ -130,8 +131,7 @@ class Controller(threading.Thread):
             #self.ping_limiter,
             self.portals,
             self.qol,
-            #self.server_reboots ]
-        ]
+            self.serverreboots]
         
         self.telnet.write(
             'say "{}"'.format(self.config.values["sdtp_greetings"]))        

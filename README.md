@@ -10,23 +10,17 @@ It consists of a linux Python script that runs on the command-line. All interact
 Installation
 ============
 
-We highly recommend that you use a Python environment manager such as Anaconda (https://www.anaconda.com/) to run sdtp, and the commands we give here expect that.
+First, clone the github repo:
 
-First, create a conda environment for sdtp:
+    git clone https://github.com/rcbrgs/sdtp.git
 
- conda create -n sdtp
+Install all the libraries upon which sdtp depends. Which unfortunately change depending on your distribution. In a Fedora machine, these are:
 
-Then activate the environment:
+    sudo dnf install python3-sqlalchemy python3-googletrans 
 
- source activate sdtp
+Install sdtp in your system:
 
-Now, clone the github repo for sdtp:
-
- git clone https://github.com/rcbrgs/sdtp.git
-
-Finally, install sdtp in the conda environment:
-
- python sdtp/setup.py install
+    sudo python3 sdtp/setup.py install
 
 Notice: running the above command from the incorrect directory will give errors, because setup.py's is very picky concerning relative directories.
 
@@ -41,24 +35,24 @@ A log file with all the info from SDTP is also saved on the same directory as th
 
 The recipe for configuration is: first, create a directory to contain the files from sdtp:
 
- mkdir your_server_name
- cd your_server_name
+    mkdir your_server_name
+    cd your_server_name
 
 Then, activate your conda environment.
 
- source activate sdtp
+    source activate sdtp
 
 Then, run sdtp; wait a few seconds and stop it with Ctrl+C.
 
- sdtp
- ^C
+    sdtp
+    ^C
 
 Now you will have a few files in the current folder. The configuration file is sdtp_preconfig.json, so go ahead and edit it:
 
- emacs sdtp_preconfig.json
+    emacs sdtp_preconfig.json
 
 After you selected mods to be enabled and the parameters values, save the file and run sdtp again:
 
- sdtp
+    sdtp
 
 Nothing will be printed in the screen, but you can see the log in sdtp.log in the same folder as you are running sdtp.

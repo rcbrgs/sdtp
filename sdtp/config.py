@@ -23,6 +23,7 @@ class Config(object):
             "enable_ping_limiter" : False,
             "forbidden_countries" : [ "" ],
             "gt_interval": 5,
+            "latest_reboot" : 0,
             "llp_interval": 60,
             "log_file_name" : "sdtp.log",
             "log_file_path" : "",
@@ -36,14 +37,6 @@ class Config(object):
             "telnet_IP" : "127.0.0.1",
             "telnet_port" : 8081,
             "auto_connect" : False,
-            
-            "alarm_reboots_time" : -1,
-            "enable_alarm_reboots" : False,
-            "enable_frequency_reboots" : False,
-            "frequency_reboots_interval" : 24,
-            "latest_reboot" : 0,
-            "server_empty_condition" : True,
-            "server_reboots_widget_show" : False,
             # mod challenge
             "mod_challenge_distance": 1600,
             "mod_challenge_enable": False,
@@ -67,6 +60,10 @@ class Config(object):
             "mod_portals_teleport_cost" : 0,
             # mod qol
             "mod_qol_enable": False,
+            # mod server reboots
+            "mod_serverreboots_enable": False,
+            "mod_serverreboots_interval": 12,
+            "mod_serverreboots_empty_condition" : True,
         }
         self.values["config_file"] = "{}_preconfig.json".format(
             self.values["app_name"])
