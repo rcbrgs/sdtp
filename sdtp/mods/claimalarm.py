@@ -41,10 +41,10 @@ class ClaimAlarm(threading.Thread):
 
     def setup(self):
         self.help = {
-            "/alarm": "Prints your alarm configuration.",
-            "/alarm me": "Sets your alarm to PMs to you only.",
-            "/alarm friends": "Sets your alarm to PMs to you and your friends.",
-            "/alarm all": "Sets your alarm to a server-wide message."}
+            "alarm": "Prints your alarm configuration.",
+            "alarm me": "Sets your alarm to PMs to you only.",
+            "alarm friends": "Sets your alarm to PMs to you and your friends.",
+            "alarm all": "Sets your alarm to a server-wide message."}
         self.controller.help.registered_commands["alarm"] = self.help
         self.controller.dispatcher.register_callback(
             "chat message", self.check_for_commands)
