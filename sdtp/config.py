@@ -45,7 +45,8 @@ class Config(object):
             "server_empty_condition" : True,
             "server_reboots_widget_show" : False,
             # mod challenge
-            "mod_challenge_enable" : False,
+            "mod_challenge_distance": 1600,
+            "mod_challenge_enable": False,
             "mod_challenge_round_interval": 15,
             # mod chatlogger
             "mod_chatlogger_enable": True,
@@ -55,6 +56,8 @@ class Config(object):
             # mod claim alarm
             "mod_claimalarm_distance": 10,
             "mod_claimalarm_enable": False,
+            # mod leg fix
+            "mod_legfix_enable": False,
             # mod most kills
             "mod_mostkills_enable": False,
             # mod portals
@@ -65,8 +68,10 @@ class Config(object):
             # mod qol
             "mod_qol_enable": False,
         }
-        self.values["config_file"] = "{}_preconfig.json".format(self.values["app_name"])
-        self.values["db_sqlite_file_path"] = "{}_default_db.sqlite".format(self.values["app_name"])
+        self.values["config_file"] = "{}_preconfig.json".format(
+            self.values["app_name"])
+        self.values["db_sqlite_file_path"] = "{}_default_db.sqlite".format(
+            self.values["app_name"])
 
     def falsify ( self, key ):
         self.values [ key ] = False

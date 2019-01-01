@@ -159,8 +159,9 @@ class Challenge(threading.Thread):
             self.remove_from_challenge(player)
 
     def random_teleport(self, player):
-        longitude = random.randint(-2000, 2000)
-        latitude = random.randint(-2000, 2000)
+        distance = self.controller.config.values["mod_challenge_distance"]
+        longitude = random.randint(-distance, distance)
+        latitude = random.randint(-distance, distance)
         self.logger.info("Checking for claims near {}, {}.".format(
             longitude, latitude))
         nearby_claims = False

@@ -13,6 +13,7 @@ from .mods.chatlogger import ChatLogger
 from .mods.chattranslator import ChatTranslator
 from .mods.claimalarm import ClaimAlarm
 #from .mods.forbidden_countries import forbidden_countries
+from .mods.legfix import LegFix
 #from .mods.ping_limiter import ping_limiter
 from .mods.mostkills import MostKills
 from .mods.portals import Portals
@@ -52,6 +53,7 @@ class Controller(threading.Thread):
         self.chattranslator = None
         self.claimalarm = None
         #self.forbidden_countries = None
+        self.legfix = None
         self.mostkills = None
         #self.ping_limiter = None
         self.portals = None
@@ -108,6 +110,8 @@ class Controller(threading.Thread):
         self.claimalarm = ClaimAlarm(self)
         #self.forbidden_countries = forbidden_countries ( self )
         #self.forbidden_countries.start ( )
+        self.legfix = LegFix(self)
+        self.legfix.start()
         self.mostkills = MostKills(self)
         self.mostkills.start()
         #self.ping_limiter = ping_limiter ( self )
@@ -121,6 +125,7 @@ class Controller(threading.Thread):
             self.chattranslator,
             self.claimalarm,
             #self.forbidden_countries,
+            self.legfix,
             self.mostkills,
             #self.ping_limiter,
             self.portals,
