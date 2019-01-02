@@ -3,6 +3,8 @@
 
 import logging
 import re
+import signal
+import subprocess
 import threading
 import time
 
@@ -62,5 +64,17 @@ class BiomeLoadHang(threading.Thread):
         if time.time() - self.countdown_start >= self.controller.config.values[
                 "mod_biomeloadhang_countdown"]:
             self.controller.telnet.write("shutdown")
-            self.stop_countdown([])
             self.logger.warning("Load biome hangup detected, shutdown initiated.")
+            self.stop_countdown([])
+
+            if not self.controller.config.values["mod_biomeloadhang_kill"]:
+                return
+            self.logger.info("Attempting to kill a local server that won't shutdown.")
+            sleep(5)
+            process = subprocess.Popen(["ps", "aux"], stdout=subprocess.PIPE)
+            out, err = process.communicate()
+            for line in out.splitlines():
+                if "7DaysToDieServer" in line:
+                    pid = int(line.split(None, 1)[0])
+                    os.kill(pid, signal.SIGKILL)
+                    self.logger.warning("Sent a signal.SIGKILL to pid {}.".format(pid))

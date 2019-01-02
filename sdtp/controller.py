@@ -13,7 +13,7 @@ from .mods.challenge import Challenge
 from .mods.chatlogger import ChatLogger
 from .mods.chattranslator import ChatTranslator
 from .mods.claimalarm import ClaimAlarm
-#from .mods.forbidden_countries import forbidden_countries
+from .mods.forbiddencountries import ForbiddenCountries
 from .mods.legfix import LegFix
 #from .mods.ping_limiter import ping_limiter
 from .mods.mostkills import MostKills
@@ -54,7 +54,7 @@ class Controller(threading.Thread):
         self.chatlogger = None
         self.chattranslator = None
         self.claimalarm = None
-        #self.forbidden_countries = None
+        self.forbiddencountries = None
         self.legfix = None
         self.mostkills = None
         #self.ping_limiter = None
@@ -110,10 +110,11 @@ class Controller(threading.Thread):
         self.challenge = Challenge(self)
         self.challenge.start()
         self.chatlogger = ChatLogger(self)
+        self.chatlogger.start()
         self.chattranslator = ChatTranslator(self)
         self.claimalarm = ClaimAlarm(self)
-        #self.forbidden_countries = forbidden_countries ( self )
-        #self.forbidden_countries.start ( )
+        self.forbiddencountries = ForbiddenCountries(self)
+        self.forbiddencountries.start()
         self.legfix = LegFix(self)
         self.legfix.start()
         self.mostkills = MostKills(self)
@@ -130,7 +131,7 @@ class Controller(threading.Thread):
             self.chatlogger,
             self.chattranslator,
             self.claimalarm,
-            #self.forbidden_countries,
+            self.forbiddencountries,
             self.legfix,
             self.mostkills,
             #self.ping_limiter,

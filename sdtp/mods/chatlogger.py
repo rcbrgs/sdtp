@@ -12,7 +12,6 @@ class ChatLogger(threading.Thread):
         self.logger = logging.getLogger(__name__)
 
         self.abort = False
-        self.start ( )
 
     def run ( self ):
         self.logger.info("Start.")

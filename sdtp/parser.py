@@ -187,7 +187,7 @@ class Parser(threading.Thread):
 #                                       r': [\d]+. Status: Authenticated Message: N/A$',
 #                                       'to_call'  : [ ] },
             'EAC register client': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Register Client\] Success \([\d]+/[\d]+\)\. Client: 0x.+',
-            'EAC register event': self.match_prefix + r' INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Cerberus\] \[RegisterEvent\] EventID: [\w]+ EventName: \'.*\' Parameters: .*',
+            'EAC register event': self.match_prefix + r' INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Cerberus\] \[RegisterEvent\] EventID: .* EventName: \'.*\' Parameters: .*',
             'EAC registering user' : self.match_prefix + r'INF \[EAC\] Registering user: EntityID=[-+]*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'$',
             'EAC registering with': self.match_prefix + r'INF Steam authentication successful, registering with EAC: EntityID=[-+\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'EAC unregister' : self.match_prefix + r'INF \[EAC\] Log: User unregistered. GUID: [\d]+$',

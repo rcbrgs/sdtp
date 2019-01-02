@@ -19,9 +19,7 @@ class Config(object):
             "database_file_name" : "sdtp_sqlite.db",
             "db_engine" : "sqlite",
             "enable_lp" : True,
-            "enable_per_country_bans" : False,
             "enable_ping_limiter" : False,
-            "forbidden_countries" : [ "" ],
             "gt_interval": 5,
             "interval_tick": 60,
             "latest_reboot" : 0,
@@ -41,6 +39,7 @@ class Config(object):
             # mod biome load hang
             "mod_biomeloadhang_enable": False,
             "mod_biomeloadhang_countdown": 60,
+            "mod_biomeloadhang_kill": False,
             # mod challenge
             "mod_challenge_distance": 1600,
             "mod_challenge_enable": False,
@@ -53,6 +52,9 @@ class Config(object):
             # mod claim alarm
             "mod_claimalarm_distance": 10,
             "mod_claimalarm_enable": False,
+            # mod forbidden countries
+            "mod_forbiddencountries_enable": False,
+            "mod_forbiddencountries_banned_countries": ["ch", "ru"],
             # mod leg fix
             "mod_legfix_enable": False,
             # mod most kills
@@ -64,6 +66,9 @@ class Config(object):
             "mod_portals_teleport_cost" : 0,
             # mod qol
             "mod_qol_enable": False,
+            "mod_qol_number_animals": 1,
+            "mod_qol_gimme_gives": "food",
+            "mod_qol_gimme_cooldown": 15,
             # mod server reboots
             "mod_serverreboots_enable": False,
             "mod_serverreboots_interval": 12,

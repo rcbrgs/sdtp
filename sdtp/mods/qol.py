@@ -108,7 +108,8 @@ class Qol(threading.Thread):
             self.controller.telnet.write('pm {} "You already spawned your animals for today."'.format(player["steamid"]))
             return
         self.animals_spawned_today.append(player["steamid"])
-        for animal in [81, 82, 83, 84]:
+        for count in range(self.controller.config.values["mod_qol_number_animals"]):
+            animal = random.choice([81, 82, 83, 84])
             self.controller.telnet.write(
                 "se {} {}".format(player["player_id"], animal))
 
