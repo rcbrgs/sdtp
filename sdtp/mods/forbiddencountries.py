@@ -69,4 +69,4 @@ class ForbiddenCountries(threading.Thread):
             self.controller.telnet.write ( 'ban add {} 1 week "griefer IP block"'.format ( steamid ) )
             self.controller.telnet.write ( 'say "[SDTP] Player {} banned for 1 week, region: {}."'.format ( name, country ) )
         else:
-            self.logger.info("Player '{}', steamid {}, has IP {} from allowed region {}.".format ( name, steamid, ip, country ) )
+            self.logger.debug("Player '{}', steamid {}, has IP {} from allowed region {}.".format ( name, steamid, ip, country ) )

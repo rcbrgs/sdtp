@@ -70,6 +70,7 @@ class Config(object):
             "mod_qol_gimme_cooldown_minutes": 15,
             "mod_qol_gimme_quantity": 1,
             "mod_qol_gimme_what": "food",
+            "mod_qol_greeting": "[00FFFF]Ah! Fresh meat to feed my hungry zombies!",
             # mod server reboots
             "mod_serverreboots_enable": False,
             "mod_serverreboots_interval": 12,

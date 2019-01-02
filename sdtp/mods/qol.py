@@ -45,12 +45,16 @@ class Qol(threading.Thread):
             "chat message", self.check_for_commands)
         self.controller.dispatcher.register_callback(
             "new day", self.reset_daily_counts)
+        self.controller.dispatcher.register_callback(
+            "player joined", self.announce_player_connected)
 
     def tear_down(self):
         self.controller.dispatcher.deregister_callback(
             "chat message", self.check_for_commands)
         self.controller.dispatcher.deregister_callback(
             "new day", self.reset_daily_counts)
+        self.controller.dispatcher.register_callback(
+            "player connected", self.announce_player_connected)
         
     def check_for_commands(self, match_groups):
         self.logger.debug("match_groups = {}".format(match_groups))
@@ -173,3 +177,15 @@ class Qol(threading.Thread):
             
         self.controller.telnet.write(
             "give {} {} {}".format(player["player_id"], prize, self.controller.config.values["mod_qol_gimme_quantity"]))
+
+    def announce_player_connected(self, match_groups):
+        self.logger.debug(match_groups)
+        db = self.controller.database.blocking_consult(
+            lkp_table, [(lkp_table.name, "==", match_groups[7])])
+        if len(db) != 1:
+            self.logger.error("Player db entry non unique.")
+            return
+        player = db[0]
+        self.controller.telnet.write('pm {} "{}"'.format(
+            player["steamid"], self.controller.config.values[
+                "mod_qol_greeting"]))

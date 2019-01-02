@@ -40,7 +40,8 @@ class Database(threading.Thread):
         session = self.get_session ( )
         query = session.query ( table )
         results = session.add_all ( records )
-        self.let_session ( session )        
+        self.let_session ( session )
+        self.let_lock()
     
     def blocking_consult(self, table, conditions):
         self.get_lock()
