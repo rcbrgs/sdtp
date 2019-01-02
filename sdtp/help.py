@@ -43,7 +43,7 @@ class Help(threading.Thread):
 
     def check_for_command(self, match_groups):
         self.logger.debug("check_for_command({})".format(match_groups))
-        matcher = re.compile("/help[\w]*(.*)$")
+        matcher = re.compile("^/help[\s]*(.*)$")
         matches = matcher.search(match_groups[11])
         if not matches:
             self.logger.debug("No command detected.")

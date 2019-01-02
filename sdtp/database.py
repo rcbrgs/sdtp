@@ -36,15 +36,15 @@ class Database(threading.Thread):
 
     # blocking API
     def blocking_add(self, table, records):
-        self.get_lock()
+        self.get_lock("add")
         session = self.get_session ( )
         query = session.query ( table )
         results = session.add_all ( records )
         self.let_session ( session )
-        self.let_lock()
+        self.let_lock("add")
     
     def blocking_consult(self, table, conditions):
-        self.get_lock()
+        self.get_lock("consult")
         session = self.get_session ( )
         query = session.query(table)
         for condition in conditions:
@@ -56,11 +56,11 @@ class Database(threading.Thread):
         for entry in results:
             retval.append(entry.get_dictionary())
         self.let_session(session)
-        self.let_lock()       
+        self.let_lock("consult")       
         return retval
 
     def blocking_delete(self, table, conditions):
-        self.get_lock()
+        self.get_lock("delete")
         session = self.get_session()
         query = session.query(table)
         for condition in conditions:
@@ -68,19 +68,21 @@ class Database(threading.Thread):
                 query = query.filter(condition[0] == condition[2])
         query.delete()
         self.let_session(session)
-        self.let_lock()       
+        self.let_lock("delete")       
 
-    def get_lock(self):
+    def get_lock(self, debug = ""):
+        self.logger.debug("get_lock({})".format(debug))
         count = 0
         while self.lock:
             time.sleep(0.1)
             count += 1
             if count > 100:
-                self.logger.warning(".get_lock() grabbing lock forcefully.")
+                self.logger.warning(".get_lock({}) grabbing lock forcefully.".format(debug))
                 break
         self.lock = True
 
     def let_lock(self):
+        self.logger.debug("let_lock({})".format(debug))
         self.lock = False
         
     # non-blocking API
