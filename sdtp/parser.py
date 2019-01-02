@@ -33,6 +33,7 @@ class Parser(threading.Thread):
             'AIAirDrop spawned supply crate' : self.match_prefix + r'INF AIAirDrop: Spawned supply crate at ' + self.match_string_pos + r', plane is at ' + self.match_string_pos,
             'AIAirDrop waiting chunk locations': self.match_prefix + r'INF AIAirDrop: Waiting for supply crate chunk locations to load...',
             'AI find wandering horde targets end': self.match_prefix + r'INF AIDirector: FindWanderingHordeTargets end y < 0',
+            'AIDirector NextStage': self.match_prefix + r'INF AIDirectorGameStagePartySpawner: NextStage done \([\d]+\)$',
 #            'AI night horde' : self.match_prefix + r'INF AIDirector: Night Horde Spawn Finished \(all mobs spawned\).$',
 #            'AI no good spot' : self.match_prefix + r'INF AIDirector: Could not find a valid position to spawn wandering horde \(trying again in 1 hour\)$',
             'AIDirector removed from control': self.match_prefix + r'INF AIDirector: Wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' removed from control',

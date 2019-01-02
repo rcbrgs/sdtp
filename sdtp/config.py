@@ -66,9 +66,10 @@ class Config(object):
             "mod_portals_teleport_cost" : 0,
             # mod qol
             "mod_qol_enable": False,
-            "mod_qol_number_animals": 1,
-            "mod_qol_gimme_gives": "food",
-            "mod_qol_gimme_cooldown": 15,
+            "mod_qol_animals_quantity": 1,
+            "mod_qol_gimme_cooldown_minutes": 15,
+            "mod_qol_gimme_quantity": 1,
+            "mod_qol_gimme_what": "food",
             # mod server reboots
             "mod_serverreboots_enable": False,
             "mod_serverreboots_interval": 12,

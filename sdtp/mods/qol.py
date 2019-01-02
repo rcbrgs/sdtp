@@ -31,7 +31,7 @@ class Qol(threading.Thread):
 
     def setup(self):
         self.animals_spawned_today = []
-        self.gimmes_given_today = []
+        self.gimmes_given = {}
         self.help_animals = {
             "animals": "Will spawn a few animals around you."}
         self.controller.help.registered_commands["animals"] = self.help_animals
@@ -101,24 +101,25 @@ class Qol(threading.Thread):
     def reset_daily_counts(self, match_groups):
         self.logger.debug(match_groups)
         self.animals_spawned_today = []
-        self.gimmes_given_today = []
 
     def spawn_animals(self, player):
         if player["steamid"] in self.animals_spawned_today:
             self.controller.telnet.write('pm {} "You already spawned your animals for today."'.format(player["steamid"]))
             return
         self.animals_spawned_today.append(player["steamid"])
-        for count in range(self.controller.config.values["mod_qol_number_animals"]):
+        for count in range(self.controller.config.values["mod_qol_animals_quantity"]):
             animal = random.choice([81, 82, 83, 84])
             self.controller.telnet.write(
                 "se {} {}".format(player["player_id"], animal))
 
     def gimme(self, player):
-        if player["steamid"] in self.gimmes_given_today:
-            self.controller.telnet.write('pm {} "You already used gimme today."'.format(player["steamid"]))
-            return
-        self.gimmes_given_today.append(player["steamid"])
-        items = [
+        now = time.time()
+        if player["steamid"] in self.gimmes_given.keys():
+            if now - self.gimmes_given[player["steamid"]] < self.controller.config.values["mod_qol_gimme_cooldown_minutes"] * 60:
+                self.controller.telnet.write('pm {} "Your gimme is in cooldown."'.format(player["steamid"]))
+                return
+        self.gimmes_given[player["steamid"]] = now
+        food_items = [
             "foodHoney",
             "foodCanBeef",
             "foodCanChicken",
@@ -164,6 +165,11 @@ class Qol(threading.Thread):
             "foodCropMushrooms",
             "foodCropYuccaFruit",
             ]
-        for count in range(3):
-            self.controller.telnet.write(
-                "give {} {} 1".format(player["player_id"], random.choice(items)))
+        
+        if self.controller.config.values["mod_qol_gimme_what"] == "food":
+            prize = random.choice(food_items)
+        else:
+            prize = self.controller.config.values["mod_qol_gimme_what"]
+            
+        self.controller.telnet.write(
+            "give {} {} {}".format(player["player_id"], prize, self.controller.config.values["mod_qol_gimme_quantity"]))
