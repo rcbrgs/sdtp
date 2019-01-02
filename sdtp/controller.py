@@ -8,6 +8,7 @@ from .parser import Parser
 from .telnet import Telnet
 from .worldstate import WorldState
 
+from .mods.biomeloadhang import BiomeLoadHang
 from .mods.challenge import Challenge
 from .mods.chatlogger import ChatLogger
 from .mods.chattranslator import ChatTranslator
@@ -48,6 +49,7 @@ class Controller(threading.Thread):
         self.worldstate = None
 
         # Mods
+        self.biomeloadhang = None
         self.challenge = None
         self.chatlogger = None
         self.chattranslator = None
@@ -103,6 +105,8 @@ class Controller(threading.Thread):
                             self.telnet,
                             self.database,
                             self.worldstate ]
+        self.biomeloadhang = BiomeLoadHang(self)
+        self.biomeloadhang.start()
         self.challenge = Challenge(self)
         self.challenge.start()
         self.chatlogger = ChatLogger(self)
@@ -121,6 +125,7 @@ class Controller(threading.Thread):
         self.serverreboots = ServerReboots(self)
         self.serverreboots.start()
         self.mods = [
+            self.biomeloadhang,
             self.challenge,
             self.chatlogger,
             self.chattranslator,

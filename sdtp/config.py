@@ -38,6 +38,9 @@ class Config(object):
             "telnet_IP" : "127.0.0.1",
             "telnet_port" : 8081,
             "auto_connect" : False,
+            # mod biome load hang
+            "mod_biomeloadhang_enable": False,
+            "mod_biomeloadhang_countdown": 60,
             # mod challenge
             "mod_challenge_distance": 1600,
             "mod_challenge_enable": False,

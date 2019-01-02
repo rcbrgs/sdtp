@@ -187,7 +187,7 @@ class Parser(threading.Thread):
 #                                       r': [\d]+. Status: Authenticated Message: N/A$',
 #                                       'to_call'  : [ ] },
             'EAC register client': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Register Client\] Success \([\d]+/[\d]+\)\. Client: 0x.+',
-            'EAC register event': self.match_prefix + r' INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Cerberus\] \[RegisterEvent\] EventID: [\w]+ EventName: \'.*\' Parameters: { .* }\.',
+            'EAC register event': self.match_prefix + r' INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Cerberus\] \[RegisterEvent\] EventID: [\w]+ EventName: \'.*\' Parameters: .*',
             'EAC registering user' : self.match_prefix + r'INF \[EAC\] Registering user: EntityID=[-+]*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'$',
             'EAC registering with': self.match_prefix + r'INF Steam authentication successful, registering with EAC: EntityID=[-+\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'EAC unregister' : self.match_prefix + r'INF \[EAC\] Log: User unregistered. GUID: [\d]+$',
@@ -255,7 +255,7 @@ class Parser(threading.Thread):
             'header  4' : r'^Server port: [\d]+$',
             'header  5' : r'^Max players: [\d]+$',
             'header  6' : r'^Game mode:   GameModeSurvival$',
-            'header  7' : r'^World:       New Cosena Valley$',
+            'header  7' : r'^World:       .*$',
             'header  8' : r'Game name:   (.*)$',
             'header  9' : r'^Difficulty:  [\d]+$',
             'header 10' : r'Press \'help\' to get a list of all commands\. Press \'exit\' to end session.',
@@ -341,10 +341,11 @@ class Parser(threading.Thread):
             'lp output' : r'^[\d]+\. id=([\d]+), (.*), pos=' + self.match_string_pos + r', rot=' + self.match_string_pos + r', remote=([\w]+), health=([\d]+), deaths=([\d]+), zombies=([\d]+), players=([\d]+), score=([\d]+), level=([\d]+), steamid=([\d]+), ip=' + self.match_string_ip + r', ping=([\d]+)',
             
             'le/lp output footer' : r'^Total of ([\d]+) in the game$',
-            
+            'loading biomes': self.match_prefix + r'INF Loading and creating biomes took [\d]+ms',
             'mem output' : r'[0-9]{4}-[0-9]{2}-[0-9]{2}.* INF Time: ([0-9]+.[0-9]+)m FPS: ([0-9]+.[0-9]+) Heap: ([0-9]+.[0-9]+)MB Max: ([0-9]+.[0-9]+)MB Chunks: ([0-9]+) CGO: ([0-9]+) Ply: ([0-9]+) Zom: (.*) Ent: ([\d]+) \(([\d]+)\) Items: ([0-9]+)',
             
             'message player' : r'Message to player ".*" sent with sender "Server"',
+            'missing paint': self.match_prefix + r'INF Missing paint ID XML entry: 76 for block \'scrapIronWedge\'',
             'NCS reader exited thread': self.match_prefix + r'INF Exited thread NCS_Reader_[\d]+_[\d]+',
             'NCS writer exited thread': self.match_prefix + r'INF Exited thread NCS_Writer_[\d]+_[\d]+',
             'NCS reader started thread': self.match_prefix + r'INF Started thread NCS_Reader_[\d]+_[\d]+',
@@ -473,6 +474,7 @@ class Parser(threading.Thread):
             'Webserver started': self.match_prefix + r'INF Started Webserver on [\d]+$',
             'world chunks preparing': self.match_prefix + r'INF Preparing World chunks for clients',
             'world chunks size': self.match_prefix + r'INF World chunks size: [\d]+ ., chunk count: [\d]+',
+            'World RWG': r'World:       RWG',
             'World.Cleanup': self.match_prefix + r'INF World.Cleanup',
             'World.Unload': self.match_prefix + r'INF World.Unload',
 #            'exception sharing' : r'IOException: Sharing violation on path .*',

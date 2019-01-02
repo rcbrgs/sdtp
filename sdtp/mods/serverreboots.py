@@ -68,7 +68,7 @@ class ServerReboots(threading.Thread):
 
     def check_for_reboot (self, uptime):
         if self.controller.config.values [ "mod_serverreboots_enable" ]:
-            if uptime > int (self.controller.config.values[
+            if uptime >= int (self.controller.config.values[
                     "mod_serverreboots_interval"]):
                 self.logger.debug("Reboot triggered by uptime.")
                 self.uptime_triggered = True
