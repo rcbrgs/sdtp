@@ -92,6 +92,9 @@ class Qol(threading.Thread):
         if today % 7 == 0:
             self.controller.telnet.write('say "Blood moon is tonight, baby. Woohoo!"')
             return
+        if today % 7 == 6:
+            self.controller.telnet.write('say "Blood moon is tomorrow! OMG!"')
+            return
         self.controller.telnet.write('say "Blood moon is in {} days."'.format(
             7 - int(today % 7)))
 

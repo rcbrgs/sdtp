@@ -143,17 +143,13 @@ class WorldState(threading.Thread):
             self.controller.database.blocking_delete(
                 lp_table, [])
             self.online_players_changed = False
-        this_steamid = int ( match_group [ 15 ] ),
-        self.controller.database.consult (
-            lp_table, [ ( lp_table.steamid, "==", match_group [ 15 ] ) ],
-            self.update_lp_table_2,
-            { "match_group" : match_group } )
-
-    def update_lp_table_2 ( self, results, match_group = None ):
+        this_steamid = int ( match_group [ 15 ] )
+        results = self.controller.database.blocking_consult (
+            lp_table, [ ( lp_table.steamid, "==", match_group [ 15 ] ) ])
         self.logger.debug("results = {}.".format ( results ) )
         if len ( results ) == 0:
             self.logger.debug("New entry." )
-            self.controller.database.add_all (
+            self.controller.database.blocking_add(
                 lp_table,
                 [ lp_table (
                     player_id = match_group [ 0 ],
@@ -173,8 +169,7 @@ class WorldState(threading.Thread):
                     level = match_group [ 14 ],
                     steamid = match_group [ 15 ],
                     ip = match_group [ 16 ],
-                    ping = match_group [ 17 ] ) ],
-                print )
+                    ping = match_group [ 17 ] ) ])
         else:
             self.logger.debug("Update lp entry." )
             entry = results [ 0 ]
@@ -196,12 +191,12 @@ class WorldState(threading.Thread):
             entry["steamid"] = match_group[15]
             entry [ "ip" ] = match_group [ 16 ]
             entry [ "ping" ] = match_group [ 17 ]
-            self.logger.debug("entry after: {}".format(entry))
+            self.logger.debug("Entry after: {}".format(entry))
             self.controller.database.update(
                 lp_table,
                 entry,
                 print )
-            self.logger.debug("added entry." )
+            self.logger.debug("Updated entry." )
         self.logger.debug("returning." )
 
     def update_online_players_count(self, match_group):

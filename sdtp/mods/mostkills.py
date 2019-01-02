@@ -91,7 +91,7 @@ class MostKills(threading.Thread):
         max_player, max_count = self.count_most_kills()
         if int(match_groups[1]) not in [4, 8, 12, 16, 20]:
             return
-        self.logger.info("Announcing most kills counts.")
+        self.logger.debug("Announcing most kills counts.")
         if max_count > 0:
             self.controller.telnet.write('say "{} has the most ({}) zombies killed so far."'.format(max_player["name"], max_count))
         else:

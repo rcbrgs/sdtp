@@ -27,7 +27,10 @@ class ServerReboots(threading.Thread):
         while ( self.keep_running ):
             time.sleep ( 1 )
             if self.uptime_triggered:
-                self.try_to_reboot ( )
+                if self.in_countdown:
+                    self.do_reboot()
+                else:
+                    self.try_to_reboot()
         self.controller.dispatcher.deregister_callback (
             "mem output", self.check_server_uptime )
         self.controller.dispatcher.deregister_callback (
@@ -67,14 +70,14 @@ class ServerReboots(threading.Thread):
         if self.controller.config.values [ "mod_serverreboots_enable" ]:
             if uptime > int (self.controller.config.values[
                     "mod_serverreboots_interval"]):
-                self.logger.info("Reboot triggered by uptime.")
+                self.logger.debug("Reboot triggered by uptime.")
                 self.uptime_triggered = True
 
     def try_to_reboot ( self ):
-        self.logger.info("try_to_reboot()")
+        self.logger.debug("try_to_reboot()")
         if self.controller.config.values [ "mod_serverreboots_empty_condition" ]:
             if not self.controller.worldstate.server_empty:
-                self.logger.info("Server not empty preventing shutdown.")
+                self.logger.debug("Server not empty preventing shutdown.")
                 return
         if time.time ( ) < self.controller.config.values [ "latest_reboot" ] + 3601:
             self.logger.info("Latest reboot was less than an hour ago.")
@@ -85,9 +88,10 @@ class ServerReboots(threading.Thread):
             self.in_countdown = True
             self.countdown = time.time()
 
+    def do_reboot(self):            
         now = time.time()
         time_difference = int(now - self.countdown)
-        if time_difference >= 600:
+        if time_difference >= 300:
             self.controller.telnet.write ( "kickall" ) 
             self.controller.telnet.write ( "saveworld" )
             self.controller.telnet.write ( "shutdown" )
@@ -97,6 +101,7 @@ class ServerReboots(threading.Thread):
             self.in_countdown = False
             self.countdown = 0
             return
-            
-        if time_difference % 60 == 0 or (time_difference < 60 and time_difference % 5 == 0):
-            self.controller.telnet.write ( 'say "Shutdown in {} seconds."'.format ( countdown ) )
+
+        time_to_shutdown = 300 - time_difference
+        if time_to_shutdown % 60 == 0 or (time_to_shutdown < 30 and time_to_shutdown % 5 == 0):
+            self.controller.telnet.write ( 'say "Shutdown in {} seconds."'.format ( time_to_shutdown ) )

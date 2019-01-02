@@ -33,9 +33,15 @@ class Database(threading.Thread):
         self.lock = False
         self.metadata = None
         self.queue = queue.Queue ( )
-        #self.start()
 
     # blocking API
+    def blocking_add(self, table, records):
+        self.get_lock()
+        session = self.get_session ( )
+        query = session.query ( table )
+        results = session.add_all ( records )
+        self.let_session ( session )        
+    
     def blocking_consult(self, table, conditions):
         self.get_lock()
         session = self.get_session ( )

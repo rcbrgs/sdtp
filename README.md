@@ -16,7 +16,12 @@ First, clone the github repo:
 
 Install all the libraries upon which sdtp depends. Which unfortunately change depending on your distribution. In a Fedora machine, these are:
 
-    sudo dnf install python3-sqlalchemy python3-googletrans 
+    sudo dnf install python3-sqlalchemy python3-googletrans
+
+On a debian machine, you also need:
+
+    sudo apt-get install python3-setuptools python3-sqlalchemy
+    python3-pip install googletrans
 
 Install sdtp in your system:
 
@@ -61,9 +66,7 @@ Once in a while sdtp will be updated. When that happens, you should update your 
     cd sdtp
     git pull
     cd ..
-    python3 sdtp/setup.py install
+    sudo python3 sdtp/setup.py install
     
     cd your_server_name
     sdtp
-
-    

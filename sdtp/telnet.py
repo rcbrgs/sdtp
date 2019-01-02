@@ -126,7 +126,7 @@ class Telnet(threading.Thread):
             self.logger.error("Logon failed.")
             self.ongoing_handshake = False
             return
-        self.logger.info("Telnet step 2 completed." )
+        self.logger.debug("Telnet step 2 completed." )
         self.connectivity_level = 2
         self.ongoing_handshake = False
 
