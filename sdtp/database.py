@@ -81,7 +81,7 @@ class Database(threading.Thread):
                 break
         self.lock = True
 
-    def let_lock(self):
+    def let_lock(self, debug = ""):
         self.logger.debug("let_lock({})".format(debug))
         self.lock = False
         
