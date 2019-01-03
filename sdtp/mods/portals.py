@@ -354,8 +354,14 @@ class Portals(threading.Thread):
                 response += ", {}".format(portal["name"])
             except:
                 response = "{}".format(portal["name"])
-        self.controller.telnet.write('pm {} "Public portals are: {}."'.format(
-            player["steamid"], response))
+        try:
+            self.controller.telnet.write(
+                'pm {} "Public portals are: {}."'.format(
+                    player["steamid"], response))
+        except UnboundLocalError:
+            self.controller.telnet.write(
+                'pm {} "There are no public portals."'.format(
+                    player["steamid"], response))
 
     def check_for_cooldown(self, player):
         now = time.time()

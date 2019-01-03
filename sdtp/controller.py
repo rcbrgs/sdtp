@@ -138,7 +138,15 @@ class Controller(threading.Thread):
             self.portals,
             self.qol,
             self.serverreboots]
-        
+
+        count = 0
+        while not self.telnet.ready:
+            time.sleep(0.1)
+            count += 1
+            if count > 1000:
+                self.log.error("Telnet is never ready.")
+                break
+            
         self.telnet.write(
             'say "{}"'.format(self.config.values["sdtp_greetings"]))        
         

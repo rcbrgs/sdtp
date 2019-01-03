@@ -18,8 +18,8 @@ class Metronomer(threading.Thread):
         self.logger.info("Start.")
         self.setup()
         now = time.time ( )
-        latest_gt = now - self.controller.config.values ["gt_interval"] + 5
-        latest_lp = now - self.controller.config.values ["lp_interval"] + 5
+        latest_gt = now - self.controller.config.values ["gt_interval"] / 2
+        latest_lp = now - self.controller.config.values ["lp_interval"] / 2
         latest_llp = now - self.controller.config.values["llp_interval"] / 2
         latest_tick = now - self.controller.config.values["interval_tick"] / 2
         while(self.keep_running):

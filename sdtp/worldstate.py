@@ -75,18 +75,15 @@ class WorldState(threading.Thread):
         self.online_players_changed = True
         
     def update_lkp_table ( self, match_group ):
+        self.logger.debug("update_lkp_table for {}.".format(match_group[1]))
         self.logger.debug("({})".format (match_group))
         this_steamid = int ( match_group [ 15 ] ),
-        self.controller.database.consult (
-            lkp_table, [ ( lkp_table.steamid, "==", match_group [ 15 ] ) ],
-            self.update_lkp_table_2,
-            { "match_group" : match_group } )
-
-    def update_lkp_table_2 ( self, results, match_group = None ):
+        results = self.controller.database.blocking_consult(
+            lkp_table, [ ( lkp_table.steamid, "==", match_group [ 15 ] ) ])
         self.logger.debug("results = {}.".format ( results ) )
         if len ( results ) == 0:
-            self.logger.debug("New entry." )
-            self.controller.database.add_all (
+            self.logger.info("New lkp entry: {}".format(match_group[1]))
+            self.controller.database.blocking_add(
                 lkp_table,
                 [ lkp_table (
                     player_id = match_group [ 0 ],
@@ -106,8 +103,7 @@ class WorldState(threading.Thread):
                     level = match_group [ 14 ],
                     steamid = match_group [ 15 ],
                     ip = match_group [ 16 ],
-                    ping = match_group [ 17 ] ) ],
-                print )
+                    ping = match_group [ 17 ] ) ] )
         else:
             self.logger.debug("Update lkp entry." )
             entry = results [ 0 ]
@@ -130,10 +126,9 @@ class WorldState(threading.Thread):
             entry [ "ip" ] = match_group [ 16 ]
             entry [ "ping" ] = match_group [ 17 ]
             self.logger.debug("entry after: {}".format(entry))
-            self.controller.database.update(
+            self.controller.database.blocking_update(
                 lkp_table,
-                entry,
-                print )
+                entry )
             self.logger.debug("added entry." )
         self.logger.debug("returning." )
 

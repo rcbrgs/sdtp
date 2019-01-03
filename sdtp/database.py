@@ -70,6 +70,19 @@ class Database(threading.Thread):
         self.let_session(session)
         self.let_lock("delete")       
 
+    def blocking_update(self, table, entry):
+        self.get_lock("update")
+        session = self.get_session()
+        statement = update(table).where(table.aid == entry["aid"]).\
+                    values(entry)
+        try:
+            result = session.execute(statement)
+        except Exception as e:
+            self.logger.error("Exception while executing statement: {}.".format(e))
+            raise e
+        self.let_session(session)
+        self.let_lock("update")
+        
     def get_lock(self, debug = ""):
         self.logger.debug("get_lock({})".format(debug))
         count = 0
@@ -130,9 +143,9 @@ class Database(threading.Thread):
         self.logger.debug("Attempting to execute a task." )
         task = self.queue.get ( )
         count = 0
-        self.get_lock()
+        self.get_lock("execute")
         task["method"](*task["arguments"], **task["keyword_arguments"])
-        self.let_lock()
+        self.let_lock("execute")
 
     def stop ( self ):
         self.keep_running = False
