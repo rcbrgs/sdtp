@@ -62,8 +62,8 @@ class Help(threading.Thread):
             return
         if argument in self.registered_commands:
             for key in self.registered_commands[argument]:
-                self.controller.telnet.write(
-                    'pm {} "/{} {}"'.format(player["steamid"], key,
+                self.controller.server.pm(
+                    player, "/{} {}".format(key,
                         self.registered_commands[argument][key]))
 
     def list_commands(self, player):
@@ -72,6 +72,7 @@ class Help(threading.Thread):
                 response += ", {}".format(command)
             except:
                 response = "{}".format(command)
-        self.controller.telnet.write('pm {} "help <command>: Give help on <command>."'.format(player["steamid"]))
-        self.controller.telnet.write('pm {} "Commands are: {}."'.format(
-            player["steamid"], response))
+        self.controller.server.pm(
+            player, "help <command>: Give help on <command>.")
+        self.controller.server.pm(
+            player, "Commands are: {}.".format(response))

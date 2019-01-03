@@ -65,16 +65,6 @@ class Challenge(threading.Thread):
         if argument == "":
             self.toggle_challenge(player)
             return
-
-        self.logger.debug("Checking for help usage.")
-        if argument == "help":
-            self.print_help_message(player)
-            return
-
-    def print_help_message(self, player):
-        for key in self.help.keys():
-            self.controller.telnet.write('pm {} "{} {}"'.format(
-                player["steamid"], key, self.help[key]))
         
     # Mod specific
     ##############

@@ -50,11 +50,13 @@ class MostKills(threading.Thread):
         max_player, max_count = self.count_most_kills()
         if max_count > 0:
             self.controller.telnet.write(
-                'say "{} killed the most zombies today: {}."'.format(
+                'say "[FF0000]{}[000000] killed the most zombies today: {}."'.format(
                     max_player["name"], max_count))
             self.controller.telnet.write(
                 'give {} ammo762mmBulletFMJSteel 50'.format(
                     max_player["player_id"]))
+            self.logger.info("Gave 50 ammo762mmBulletFMJSteel to {}.".format(
+                max_player["name"]))
 
         self.logger.debug("Resetting most kills counts.")
         self.yesterday_players = {}
@@ -93,6 +95,6 @@ class MostKills(threading.Thread):
             return
         self.logger.debug("Announcing most kills counts.")
         if max_count > 0:
-            self.controller.telnet.write('say "{} has the most ({}) zombies killed so far."'.format(max_player["name"], max_count))
+            self.controller.telnet.write('say "[990000]{}[000000] has the most ({}) zombies killed so far."'.format(max_player["name"], max_count))
         else:
             self.logger.info("No player has killed zombies yet today.")

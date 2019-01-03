@@ -190,10 +190,9 @@ class WorldState(threading.Thread):
             entry [ "ip" ] = match_group [ 16 ]
             entry [ "ping" ] = match_group [ 17 ]
             self.logger.debug("Entry after: {}".format(entry))
-            self.controller.database.update(
+            self.controller.database.blocking_update(
                 lp_table,
-                entry,
-                print )
+                entry)
             self.logger.debug("Updated entry." )
         self.logger.debug("returning." )
 

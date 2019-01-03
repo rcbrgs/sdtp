@@ -86,9 +86,8 @@ class Friendships(threading.Thread):
     def toggle_friendship(self, player, name, argument):
         other = self.controller.worldstate.get_player_string(name)
         if other is None:
-            self.controller.telnet.write(
-                'pm {} "No player named \'{}\' found."'.format(
-                    player["steamid"], name))
+            self.controller.server.pm(
+                player, "No player named \'{}\' found.".format(name))
             return
         friend = other
         db_answer = self.controller.database.blocking_consult(
@@ -99,9 +98,9 @@ class Friendships(threading.Thread):
         if len(db_answer) == 1:
             existing_friendship = True
         if existing_friendship and argument[-1] == "+":
-            self.controller.telnet.write(
-                'pm {} "You are already friends with {}."'.format(
-                    player["steamid"], friend["name"]))
+            self.controller.server.pm(
+                player, "You are already friends with {}.".format(
+                    friend["name"]))
             return
         if existing_friendship and (argument[-1] == "-" or \
                                     friend["name"] == argument):
@@ -109,21 +108,20 @@ class Friendships(threading.Thread):
                 FriendshipsTable,
                 [(FriendshipsTable.player_steamid, "==", player["steamid"]),
                  (FriendshipsTable.friend_steamid, "==", friend["steamid"])])
-            self.controller.telnet.write('pm {} "Removed friendship with {}."'.format(player["steamid"], friend["name"]))
+            self.controller.server.pm(
+                player, "Removed friendship with {}.".format(friend["name"]))
             return
         if argument[-1] == "-":
-            self.controller.telnet.write(
-                'pm {} "You cannot delete friendships you don\'t have."'.format(
-                    player["steamid"]))
+            self.controller.server.pm(
+                player, "You cannot delete friendships you don\'t have.")
             return
         self.controller.database.blocking_add(
             FriendshipsTable,
             [FriendshipsTable(
                 player_steamid = player["steamid"],
                 friend_steamid = friend["steamid"])])
-        self.controller.telnet.write(
-            'pm {} "You are now friends with {}."'.format(
-                player["steamid"], friend["name"]))
+        self.controller.server.pm(
+            player, "You are now friends with {}.".format(friend["name"]))
 
     def list_player_friends(self, player):
         db_answer = self.controller.database.blocking_consult(
@@ -138,12 +136,11 @@ class Friendships(threading.Thread):
             except:
                 response = "{}".format(friend["name"])
         try:
-            self.controller.telnet.write('pm {} "Your friends are: {}."'.format(
-                player["steamid"], response))
+            self.controller.server.pm(player, "Your friends are: {}.".format(
+                response))
         except UnboundLocalError:            
-            self.controller.telnet.write(
-                'pm {} "You do not have any friends (yet)!"'.format(
-                    player["steamid"]))
+            self.controller.server.pm(
+                player, "You do not have any friends (yet)!")
         db = self.controller.database.blocking_consult(
             AliasTable, [(AliasTable.steamid, "==", player["steamid"])])
         if len(db) == 1:

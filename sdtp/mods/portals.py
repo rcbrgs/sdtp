@@ -79,11 +79,6 @@ class Portals(threading.Thread):
             self.list_portals(player)
             return
 
-        self.logger.debug("Checking for help usage.")
-        if argument == "help":
-            self.print_help_message(player)
-            return
-        
         self.logger.debug("Checking for public portal listing.")
         if argument == "public":
             self.list_public_portals(player)
@@ -96,14 +91,10 @@ class Portals(threading.Thread):
         self.logger.debug("Portal name is {}.".format(portal_name))
         
         self.logger.debug("Searching DB for portal with name '{}' from player {}.".format(portal_name, player["name"]))
-        self.controller.database.consult(
+        answer = self.controller.database.blocking_consult(
             PortalsTable,
             [(PortalsTable.name, "==", portal_name),
-             (PortalsTable.steamid, "==", player["steamid"])],
-            self.check_for_command_3,
-            {"player": player, "portal_name": portal_name, "argument": argument})
-
-    def check_for_command_3(self, answer, player, portal_name, argument):
+             (PortalsTable.steamid, "==", player["steamid"])])
         if len(answer) > 1:
             self.logger.error("Multiple db entries.")
             return
@@ -152,33 +143,32 @@ class Portals(threading.Thread):
             if len(friendships) == 1:
                 if self.check_for_cooldown(player):
                     return
-                self.controller.telnet.write('pm {} "Teleporting you to {}."'.format(player["steamid"], other["name"]))
+                self.controller.server.pm(
+                    player, "Teleporting you to {}.".format(other["name"]))
                 self.controller.telnet.write("tele {} {} {} {}".format(
                     player["steamid"], int(other["longitude"]),
                     int(other["height"]), int(other["latitude"])))
                 return
-            self.controller.telnet.write('pm {} "You are not {}\'s friend."'.format(player["steamid"], other["name"]))
+            self.controller.server.pm(
+                player, "You are not {}\'s friend.".format(other["name"]))
             return
         
         # Portal is missing.
-        self.controller.telnet.write('pm {} "Portal {} does not exist."'.format(
-            player["steamid"], argument))
+        self.controller.server.pm(player, "Portal {} does not exist.".format(
+            argument))
 
     # Commands
         
     def list_portals(self, player):
         self.logger.info(
             "Listing portals for player {}.".format(player["name"]))
-        self.controller.database.consult(
+        answer = self.controller.database.blocking_consult(
             PortalsTable,
-            [(PortalsTable.steamid, "==", player["steamid"])],
-            self.list_portals_2,
-            {"player": player})
-
-    def list_portals_2(self, answer, player):
+            [(PortalsTable.steamid, "==", player["steamid"])])
         if len(answer) == 0:
             self.logger.debug("Player has no portals." )
-            self.controller.telnet.write('pm {} "You do not have portals set."'.format (player["steamid"]))
+            self.controller.server.pm(
+                player, "You do not have portals set.")
         else:
             self.logger.debug("listing player portals." )
             for portal in answer:
@@ -188,39 +178,18 @@ class Portals(threading.Thread):
                     portal_string = portal["name"]
                 if portal["public"]:
                     portal_string += "*"
-            portals_string = 'pm {} "Your portals are: {}"'.format(
-                player["steamid"], portal_string)
+            portals_string = "Your portals are: {}".format(
+                portal_string)
             self.logger.debug("" + portals_string)
-            self.controller.telnet.write(portals_string)
-
-    def print_help_message(self, player):
-        self.logger.info("Printing help to {}.".format(player["name"]))
-        text = "/go will list your portals."
-        self.controller.telnet.write(
-            'pm {} "{}"'.format(player["steamid"], text))
-        text = "/go public will list public portals."
-        self.controller.telnet.write(
-            'pm {} "{}"'.format(player["steamid"], text))
-        text = "/go <portal name> will teleport you to the portal."
-        self.controller.telnet.write(
-            'pm {} "{}"'.format(player["steamid"], text))
-        text = "/go <portal name>+ will add your current location as a portal."
-        self.controller.telnet.write(
-            'pm {} "{}"'.format(player["steamid"], text))
-        text = "/go <portal name>- will remove that portal."
-        self.controller.telnet.write(
-            'pm {} "{}"'.format(player["steamid"], text))
-        text = "/go <portal name>* will toggle if the portal is public."
-        self.controller.telnet.write(
-            'pm {} "{}"'.format(player["steamid"], text))
+            self.controller.server.pm(player, portals_string)
             
     def teleport_player_to_portal(self, player, portal):
         if self.check_for_cooldown(player):
             return
         self.logger.info(
             "Teleporting {} to {}.".format(player["name"], portal["name"]))
-        self.controller.telnet.write ( 'pm {} "Teleporting you to {}."'.format (
-            player["steamid"], portal["name"] ) )
+        self.controller.server.pm(
+            player, "Teleporting you to {}.".format(portal["name"]))
         teleport_string = 'tele {} {} {} {}'.format(
             player["steamid"],
             int(float(portal["longitude"])),
@@ -230,14 +199,10 @@ class Portals(threading.Thread):
         self.logger.debug(teleport_string)
 
     def check_for_public_portal_use(self, player, argument):
-        self.controller.database.consult(
+        answer = self.controller.database.blocking_consult(
             PortalsTable,
             [(PortalsTable.name, "==", argument),
-             (PortalsTable.public, "==", True)],
-            self.check_for_public_portal_use_2,
-            {"player": player})
-
-    def check_for_public_portal_use_2(self, answer, player):
+             (PortalsTable.public, "==", True)])
         if len(answer) != 1:
             return
         portal = answer[0]
@@ -248,17 +213,18 @@ class Portals(threading.Thread):
     def delete_portal(self, player, portal):
         if portal["steamid"] != player["steamid"]:
             self.logger.info("Player {} attempted to delete portal {} that does not belong to him/her.".format(player["name"], portal["name"]))
-            self.controller.telnet.write('pm {} "You cannot delete portals you do not own."'.format(player["steamid"]))
+            self.controller.server.pm(
+                player, "You cannot delete portals you do not own.")
             return
         
         self.logger.info("Deleting portal {} from {}.".format(
             portal["name"], player["name"]))
-        self.controller.telnet.write('pm {} "Deleted portal {}."'.format ( player["steamid"], portal["name"]))
-        self.controller.database.delete(
+        self.controller.server.pm(
+            player, "Deleted portal {}.".format(portal["name"]))
+        self.controller.database.blocking_delete(
             PortalsTable,
             [(PortalsTable.steamid, "==", player["steamid"]),
-             (PortalsTable.name, "==", portal["name"])],
-            print)
+             (PortalsTable.name, "==", portal["name"])])
 
     def add_portal(self, player, portal_name, public = False):
         # check player has portals left
@@ -269,11 +235,12 @@ class Portals(threading.Thread):
                 [(PortalsTable.steamid, "==", player["steamid"])])
             if len(player_portals) >= self.controller.config.values[
                     "mod_portals_max_portals_per_player"]:
-                self.controller.telnet.write('pm {} "You already have the maximum allowed portals set."'.format(player["steamid"]))
+                self.controller.server.pm(
+                    player, "You already have the maximum allowed portals set.")
                 return
         self.logger.info("Creating portal from position of {}.".format(
             player["name"]))
-        self.controller.database.add_all(
+        self.controller.database.blocking_add(
             PortalsTable,
             [PortalsTable(
                 steamid = player["steamid"],
@@ -281,40 +248,38 @@ class Portals(threading.Thread):
                 longitude = int(player["longitude"]),
                 height = int(player["height"]),
                 latitude = int(player["latitude"]),
-                public = public)],
-            print)
-        self.controller.telnet.write('pm {} "Portal {} created."'.format(
-            player["steamid"], portal_name))
+                public = public)])
+        self.controller.server.pm(player, "Portal {} created.".format(
+            portal_name))
 
     def toggle_portal_public(self, player, portal):
         if player["steamid"] != portal["steamid"]:
             self.logger.info("Player {} attempted to toggle portal {} which he does not own.".format(player["name"], portal["name"]))
-            self.controller.telnet.write('pm {} "You can only toggle portals you own."'.format(player["steamid"]))
+            self.controller.server.pm(
+                player, "You can only toggle portals you own.")
             return
 
         self.logger.debug("Is there another public portal with this name?")
-        self.controller.database.consult(
+        answer = self.controller.database.blocking_consult(
             PortalsTable,
             [(PortalsTable.name, "==", portal["name"]),
-             (PortalsTable.public, "==", True)],
-            self.toggle_portal_public_2,
-            {"player": player, "portal": portal})
-
-    def toggle_portal_public_2(self, answer, player, portal):
+             (PortalsTable.public, "==", True)])
         if len(answer) > 1:
             self.log.error("Multiple public portals named {}.".format(portal["name"]))
             return
         if len(answer) == 1:
             if answer[0]["steamid"] != player["steamid"]:
                 self.logger.info("Player {} tried to toggle a public portal he/she doesn't own.".format(player["name"]))
-                self.controller.telnet.write('pm {} "You cannot toggle a portal you do not own."'.format(player["steamid"]))
+                self.controller.server.pm(
+                    player, "You cannot toggle a portal you do not own.")
                 return
         
         self.logger.debug("Portal is currently public? '{}'.".format ( portal["public"] ) )
         self.logger.info("Toggling portal {} from {}.".format(
             portal["name"], player["name"]))
-        self.controller.telnet.write('pm {} "Toggling portal {}."'.format(player["steamid"], portal["name"]))
-        self.controller.database.update(
+        self.controller.server.pm(
+            player, "Toggling portal {}.".format(portal["name"]))
+        self.controller.database.blocking_update(
             PortalsTable,
             {"aid": portal["aid"],
              "steamid": portal["steamid"],
@@ -322,19 +287,14 @@ class Portals(threading.Thread):
              "longitude": portal["longitude"],
              "height": portal["height"],
              "latitude": portal["latitude"],
-             "public": not portal["public"]},
-            print)
+             "public": not portal["public"]})
 
     def list_public_portals(self, player):
         self.logger.info("Listing public portals for player {}.".format(
             player["name"]))
-        self.controller.database.consult(
+        answer = self.controller.database.blocking_consult(
             PortalsTable,
-            [(PortalsTable.public, "==", True)],
-            self.list_public_portals_2,
-            {"player": player})
-
-    def list_public_portals_2(self, answer, player):
+            [(PortalsTable.public, "==", True)])
         self.logger.debug("Found {} public portals to list to player {}.".format(
             len(answer), player["steamid"]))
         for portal in answer:
@@ -343,19 +303,22 @@ class Portals(threading.Thread):
             except:
                 response = "{}".format(portal["name"])
         try:
-            self.controller.telnet.write(
-                'pm {} "Public portals are: {}."'.format(
-                    player["steamid"], response))
+            self.controller.server.pm(
+                player, "Public portals are: {}.".format(response))
         except UnboundLocalError:
-            self.controller.telnet.write(
-                'pm {} "There are no public portals."'.format(
-                    player["steamid"], response))
+            self.controller.server.pm(
+                player, "There are no public portals.")
 
     def check_for_cooldown(self, player):
         now = time.time()
         if player["steamid"] in self.cooldowns:
             if now - self.cooldowns[player["steamid"]] < self.controller.config.values["mod_portals_cooldown_seconds"]:
-                self.controller.telnet.write('pm {} "Your portal use is in cooldown for another {} seconds."'.format(player["steamid"], int(self.controller.config.values["mod_portals_cooldown_seconds"] - now + self.cooldowns[player["steamid"]])))
+                self.controller.server.pm(
+                    player, "Your portal use is in cooldown for another {} "\
+                    "seconds.".format(
+                        int(self.controller.config.values[
+                            "mod_portals_cooldown_seconds"] - now + \
+                            self.cooldowns[player["steamid"]])))
                 return True
         self.cooldowns[player["steamid"]] = now
         return False

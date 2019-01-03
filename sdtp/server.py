@@ -36,10 +36,10 @@ class Server(threading.Thread):
     ####################
 
     def pm(self, player, message):
-        if self.controller.telnet.ready:
-            self.controller.telnet.write('pm {} "{}"'.format(
-                player["steamid"], message))
-            self.logger.info('pm {} "{}"'.format(
-                player["name"], message))
-        else:
+        if not self.controller.telnet.ready:
             self.logger.error("Telnet not ready when trying to PM.")
+            return
+        self.controller.telnet.write('pm {} "{}"'.format(
+            player["steamid"], message))
+        self.logger.info('pm {} "{}"'.format(
+            player["name"], message))

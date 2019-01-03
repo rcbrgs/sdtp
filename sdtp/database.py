@@ -101,18 +101,22 @@ class Database(threading.Thread):
         
     # non-blocking API
     def add_all ( self, table, records, callback ):
+        self.logger.warning("Using deprecated API.")
         self.logger.debug("table = {}".format ( table ) )
         self.enqueue ( self.__add_all, [ table, records, callback ] )
 
     def consult ( self, table, conditions, callback, pass_along = { } ):
+        self.logger.warning("Using deprecated API.")
         self.logger.debug("table = {}".format ( table ) )
         self.enqueue ( self.__consult, [ table, conditions, callback ], { "pass_along" : pass_along } )
 
     def delete(self, table, conditions, callback, pass_along = {}):
+        self.logger.warning("Using deprecated API.")
         self.logger.debug("table = {}".format(table))
         self.enqueue(self.__delete, [table, conditions, callback], {"pass_along": pass_along})
 
     def update(self, table, record, callback, pass_along = {}):
+        self.logger.warning("Using deprecated API.")
         self.enqueue(self.__update, [table, record, callback], {"pass_along": pass_along})
 
     # /API

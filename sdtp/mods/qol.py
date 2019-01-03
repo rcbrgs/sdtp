@@ -122,19 +122,24 @@ class Qol(threading.Thread):
 
     def spawn_animals(self, player):
         if player["steamid"] in self.animals_spawned_today:
-            self.controller.telnet.write('pm {} "You already spawned your animals for today."'.format(player["steamid"]))
+            self.controller.server.pm(
+                player, "You already spawned your animals for today.")
             return
         self.animals_spawned_today.append(player["steamid"])
         for count in range(self.controller.config.values["mod_qol_animals_quantity"]):
             animal = random.choice([81, 82, 83, 84])
             self.controller.telnet.write(
                 "se {} {}".format(player["player_id"], animal))
+        self.logger.info("Spawning {} animals near {}.".format(
+            self.controller.config.values["mod_qol_animals_quantity"],
+            player["name"]))
 
     def gimme(self, player):
         now = time.time()
         if player["steamid"] in self.gimmes_given.keys():
             if now - self.gimmes_given[player["steamid"]] < self.controller.config.values["mod_qol_gimme_cooldown_minutes"] * 60:
-                self.controller.telnet.write('pm {} "Your gimme is in cooldown."'.format(player["steamid"]))
+                self.controller.server.pm(
+                    player, "Your gimme is in cooldown.")
                 return
         self.gimmes_given[player["steamid"]] = now
         food_items = [
@@ -191,6 +196,9 @@ class Qol(threading.Thread):
             
         self.controller.telnet.write(
             "give {} {} {}".format(player["player_id"], prize, self.controller.config.values["mod_qol_gimme_quantity"]))
+        self.logger.info("Gave {} {} to {}.".format(
+            prize, self.controller.config.values["mod_qol_gimme_quantity"],
+            player["name"]))
 
     def announce_player_connected(self, match_groups):
         self.logger.debug(match_groups)
@@ -198,12 +206,12 @@ class Qol(threading.Thread):
         db = self.controller.database.blocking_consult(
             lkp_table, [(lkp_table.name, "==", match_groups[7])])
         if len(db) != 1:
-            self.logger.error("Player db entry non unique.")
+            self.logger.warning("Player db entry non unique for {}.".format(
+                match_groups[7]))
             return
         player = db[0]
-        self.controller.telnet.write('pm {} "{}"'.format(
-            player["steamid"], self.controller.config.values[
-                "mod_qol_greeting"]))
+        self.controller.server.pm(
+            player, self.controller.config.values["mod_qol_greeting"])
 
     def spawn_bears(self, player, arguments):
         bear = 86

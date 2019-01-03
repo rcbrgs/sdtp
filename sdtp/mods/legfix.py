@@ -51,13 +51,7 @@ class LegFix(threading.Thread):
         self.logger.debug(
             "'{}' used challenge command with argument '{}'.".format (
             possible_player_name, argument))
-        db_answer = self.controller.database.blocking_consult(
-            lkp_table,
-            [(lkp_table.name, "==", possible_player_name)])
-        if len(db_answer) != 1:
-            self.logger.error("DB entry for player name is not unique.")
-            return
-        player = db_answer[0]
+        player = self.controller.worldstate.get_player_steamid(match_group[7])
         
         if argument == "":
             self.fix_broken_leg(player)
@@ -70,8 +64,8 @@ class LegFix(threading.Thread):
 
     def print_help_message(self, player):
         for key in self.help.keys():
-            self.controller.telnet.write('pm {} "{} {}"'.format(
-                player["steamid"], key, self.help[key]))
+            self.controller.server.pm(player, "{} {}".format(
+                key, self.help[key]))
         
     # Mod specific
     ##############

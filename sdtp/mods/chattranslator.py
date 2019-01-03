@@ -67,27 +67,24 @@ class ChatTranslator(threading.Thread):
         detect = self.translator.detect(message)
         self.logger.info("Detected language: {}".format(detect.lang))
         for player in self.controller.worldstate.online_players:
-            self.controller.database.consult(
+            
+            answer = self.controller.database.blocking_consult(
                 ChatTranslatorTable,
-                [(ChatTranslatorTable.steamid, "==", player["steamid"])],
-                self.parse_chat_message_2,
-                {"player": player, "detect": detect, "message": message, "emitter": match_groups[10]})
-
-    def parse_chat_message_2(self, answer, player, detect, message, emitter):
-        if len(answer) != 1:
-            self.logger.error("DB entry not unique.")
-            return
-        chat_translator = answer[0]
-        if not chat_translator["enable"]:
-            return
-        if detect.lang in chat_translator["languages_known"]:
-            return
-        translation = self.translator.translate(
-            message, dest=chat_translator["target_language"])
-        self.logger.info("Translation to {}: {}".format(
-            chat_translator["target_language"], translation))
-        self.controller.telnet.write('pm {} "{}: {}"'.format(
-            player["steamid"], emitter, translation.text))
+                [(ChatTranslatorTable.steamid, "==", player["steamid"])])
+            if len(answer) != 1:
+                self.logger.error("DB entry not unique.")
+                return
+            chat_translator = answer[0]
+            if not chat_translator["enable"]:
+                return
+            if detect.lang in chat_translator["languages_known"]:
+                return
+            translation = self.translator.translate(
+                message, dest=chat_translator["target_language"])
+            self.logger.info("Translation to {}: {}".format(
+                chat_translator["target_language"], translation))
+            self.controller.server.pm(player, "{}: {}".format(
+                emitter, translation.text))
 
     def check_for_commands(self, match_groups):
         matcher = re.compile(r"^/translate[\w]*(.*)$")
@@ -97,17 +94,8 @@ class ChatTranslator(threading.Thread):
                 "No match for command regex: {}". format(match_groups[11]))
             return
         command = match.groups()[0].strip()
-        self.controller.database.consult(
-            lkp_table,
-            [(lkp_table.name, "==", match_groups[10])],
-            self.check_for_commands_2,
-            {"command": command})
-
-    def check_for_commands_2(self, answer, command):
-        if len(answer) != 1:
-            self.logger.error("Player name not unique in db.")
-            return
-        player = answer[0]
+        player = self.controller.worldstate.get_player_steamid(
+            match_groups[7])
         self.logger.debug("Parsing command '{}'.".format(command))
         if command == "":
             self.list_languages(player)
@@ -121,23 +109,17 @@ class ChatTranslator(threading.Thread):
         if command[-1] == "*":
             self.set_target_language(player, command[:-1])
             return
-        if command == "help":
-            self.print_help_message(player)
-            return
         if command == "codes":
             self.print_language_codes(player)
             return
 
     def list_languages(self, player):
-        self.controller.database.consult(
+        answer = self.controller.database.blocking_consult(
             ChatTranslatorTable,
-            [(ChatTranslatorTable.steamid, "==", player["steamid"])],
-            self.list_languages_2,
-            {"player": player})
-
-    def list_languages_2(self, answer, player):
+            [(ChatTranslatorTable.steamid, "==", player["steamid"])])
         if len(answer) == 0:
-            self.controller.telnet.write('pm {} "You don\'t have any languages configured."'.format(player["steamid"]))
+            self.controller.server.pm(
+                player, "You don\'t have any languages configured.")
             return
         if len(answer) != 1:
             self.logger.error("DB entry non-unique.")
@@ -149,58 +131,50 @@ class ChatTranslator(threading.Thread):
         else:
             response += "disabled"
         response += ". The languages you know are: " + db_entry["languages_known"]
-        self.controller.telnet.write('pm {} "{}"'.format(player["steamid"], response))
+        self.controller.server.pm(player, response)
         
     def toggle_enable_translations(self, player):
         self.logger.info("Trying to toggle translations for player {}.".format(player["name"]))
-        self.controller.database.consult(
+        answer = self.controller.database.blocking_consult(
             ChatTranslatorTable,
-            [(ChatTranslatorTable.steamid, "==", player["steamid"])],
-            self.toggle_enable_translations_2,
-            {"player": player})
-
-    def toggle_enable_translations_2(self, answer, player):
-        self.logger.info("toggle_enable_translations_2")
+            [(ChatTranslatorTable.steamid, "==", player["steamid"])])
         if len(answer) != 1:
             self.logger.error("Entry not unique in db.")
             if len(answer) == 0:
-                self.logger.debug("Player has no entry in chat_translator_table.")
-                self.controller.telnet.write('pm {} "First define a language you know with /translate language"'.format(player["steamid"]))
+                self.logger.debug(
+                    "Player has no entry in chat_translator_table.")
+                self.controller.server.pm(
+                    player, "First define a language you know with /translate " \
+                    "language")
             return
         row = answer[0]
         self.logger.info("Before toggling, enable is {}.".format(row["enable"]))
         row["enable"] = not row["enable"]
-        self.controller.database.update(
-            ChatTranslatorTable,
-            row,
-            print)
+        self.controller.database.blocking_update(
+            ChatTranslatorTable, row)
         if row["enable"]:
-            self.controller.telnet.write('pm {} "Translations are now enabled to {}."'.format(
-                player["steamid"], row["target_language"]))
+            self.controller.server.pm(
+                player, "Translations are now enabled to {}.".format(
+                    row["target_language"]))
         else:
-            self.controller.telnet.write('pm {} "Translations are now disabled."'.format(
-                player["steamid"]))
+            self.controller.server.pm(player, "Translations are now disabled.")
 
     def toggle_language(self, player, language):
-        self.controller.database.consult(
+        answer = self.controller.database.blocking_consult(
             ChatTranslatorTable,
-            [(ChatTranslatorTable.steamid, "==", player["steamid"])],
-            self.toggle_language_2,
-            {"player": player, "language": language})
-
-    def toggle_language_2(self, answer, player, language):
+            [(ChatTranslatorTable.steamid, "==", player["steamid"])])
         if len(answer) == 0:
             self.logger.info("New entry on chat_translator_table.")
-            self.controller.database.add_all(
+            self.controller.database.blocking_add(
                 ChatTranslatorTable,
                 [ChatTranslatorTable(
                     steamid = player["steamid"],
                     enable = True,
                     languages_known = language,
-                    target_language = language)],
-                print)
-            self.controller.telnet.write('pm {} "Language {} added to your database. Also, translations have been enabled to this target language."'.format(
-                player["steamid"], language))
+                    target_language = language)])
+            self.controller.server.pm(
+                player, "Language {} added to your database. Also, translations"\
+                " have been enabled to this target language.".format(language))
             return
         if len(answer) == 1:
             self.logger.info("Updating db entry.")
@@ -209,17 +183,20 @@ class ChatTranslator(threading.Thread):
             match = matcher.search(db_entry["languages_known"])
             if not match:
                 db_entry["languages_known"] += " " + language
-                self.controller.telnet.write('pm {} "Language {} added to your database."'.format(player["steamid"], language))
+                self.controller.server.pm(
+                    player, "Language {} added to your database.".format(
+                        language))
             else:
                 db_entry["languages_known"] = db_entry["languages_known"].replace(language, "")
-                self.controller.telnet.write('pm {} "Language {} removed from your database."'.format(player["steamid"], language))
+                self.controller.server.pm(
+                    player, "Language {} removed from your database.".format(
+                        language))
                 if db_entry["target_language"] == language:
                     db_entry["target_language"] = None
                     db_entry["enable"] = False
-            self.controller.database.update(
+            self.controller.database.blocking_update(
                 ChatTranslatorTable,
-                db_entry,
-                print)
+                db_entry)
             return
         if len(answer) > 1:
             self.logger.error("Entry not unique in db.")
@@ -227,14 +204,10 @@ class ChatTranslator(threading.Thread):
         
     def set_target_language(self, player, language):
         if language not in googletrans.LANGUAGES.keys():
-            self.controller.telnet.write('pm {} "Language not known to system."'.format(player["steamid"]))
-        self.controller.database.consult(
+            self.controller.server.pm(player, "Language not known to system.")
+        answer = self.controller.database.blocking_consult(
             ChatTranslatorTable,
-            [(ChatTranslatorTable.steamid, "==", player["steamid"])],
-            self.set_target_language_2,
-            {"player": player, "language": language})
-
-    def set_target_language_2(self, answer, player, language):
+            [(ChatTranslatorTable.steamid, "==", player["steamid"])])
         if len(answer) != 1:
             self.log.error("DB entry is not unique.")
             return
@@ -242,26 +215,12 @@ class ChatTranslator(threading.Thread):
         if language not in chat_translator["languages_known"]:
             self.toggle_language(player, language)
         chat_translator["target_language"] = language
-        self.controller.database.update(
+        self.controller.database.blocking_update(
             ChatTranslatorTable,
-            chat_translator,
-            print)
-        self.controller.telnet.write('pm {} "Your target language for translations in now {}."'.format(
-            player["steamid"], language))
-
-    def print_help_message(self, player):
-        text = "/translate will list your current configuration."
-        self.controller.telnet.write(
-            'pm {} "{}"'.format(player["steamid"], text))
-        text = "/translate <language code> will toggle if you know a language."
-        self.controller.telnet.write(
-            'pm {} "{}"'.format(player["steamid"], text))
-        text = "/translate * will enable or disable translations."
-        self.controller.telnet.write(
-            'pm {} "{}"'.format(player["steamid"], text))
-        text = "/translate <language code>* will set the language to translate to."
-        self.controller.telnet.write(
-            'pm {} "{}"'.format(player["steamid"], text))
+            chat_translator)
+        self.controller.server.pm(
+            "Your target language for translations is now {}.".format(
+                language))
 
     def print_language_codes(self, player):
         for key in googletrans.LANGUAGES.keys():
