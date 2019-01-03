@@ -291,16 +291,16 @@ class WorldState(threading.Thread):
         return player
 
     def get_player_steamid(self, steamid):
-        self.logger.info("Trying to find db entry for steamid {}.".format(
+        self.logger.debug("Trying to find db entry for steamid {}.".format(
             steamid))
         db = self.controller.database.blocking_consult(
             lkp_table, [(lkp_table.steamid, "==", steamid)])
         if len(db) == 1:
-            self.logger.info("DB entry for steamid {} found: {}.".format(
+            self.logger.debug("DB entry for steamid {} found: {}.".format(
                 steamid, db[0]["name"]))
             return db[0]
         else:
-            self.logger.info(
+            self.logger.warning(
                 "Couldn't find single db entry for steamid {}.".format(
                     steamid))
             return None

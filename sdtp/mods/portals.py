@@ -66,19 +66,13 @@ class Portals(threading.Thread):
         self.logger.debug("Command = {}".format(command))
         possible_player_name = match_group[10]
         argument = match.groups()[0].strip()
+        steamid = int(match_group[7])
         self.logger.debug("'{}' used portal command with argument '{}'.".format (
             possible_player_name, argument))
-        self.controller.database.consult(
-            sdtp.lkp_table.lkp_table,
-            [(sdtp.lkp_table.lkp_table.name, "==", possible_player_name)],
-            self.check_for_command_2,
-            {"argument": argument})
-
-    def check_for_command_2(self, answer, argument):
-        if len(answer) != 1:
+        player = self.controller.worldstate.get_player_steamid(steamid)
+        if player is None:
             self.logger.error("DB entry for player name is not unique.")
             return
-        player = answer[0]
         
         self.logger.debug("Checking for list command.")
         if argument == "":

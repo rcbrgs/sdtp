@@ -97,7 +97,7 @@ class Challenge(threading.Thread):
     def run_challenges(self):
         now = time.time()
         for key in self.ongoing_challenges.keys():
-            self.logger.info("Checking if player died at least once.")
+            self.logger.debug("Checking if player died at least once.")
             player = self.controller.worldstate.get_player_steamid(key)
             if player["deaths"] > self.ongoing_challenges[key]["deaths"]:
                 self.remove_from_challenge(player)

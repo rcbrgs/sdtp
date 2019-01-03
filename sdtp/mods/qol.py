@@ -35,6 +35,9 @@ class Qol(threading.Thread):
         self.help_animals = {
             "animals": "Will spawn a few animals around you."}
         self.controller.help.registered_commands["animals"] = self.help_animals
+        self.help_bears = {
+            "bears <num>": "Will spawn a few bears around you."}
+        self.controller.help.registered_commands["bears"] = self.help_bears
         self.help_day7 = {
             "day7": "Will tell how many days until blood moon."}
         self.controller.help.registered_commands["day7"] = self.help_day7
@@ -59,11 +62,19 @@ class Qol(threading.Thread):
     def check_for_commands(self, match_groups):
         self.logger.debug("match_groups = {}".format(match_groups))
         command = ""
+        arguments = []
         matcher = re.compile(r"^/animals$")
         match = matcher.search(match_groups[11])
         if match:
             command = "animals"
         self.logger.debug(match_groups)
+        matcher = re.compile(r"^/bears[\s]*([\d])*$")
+        match = matcher.search(match_groups[11])
+        if match:
+            command = "bears"
+            arguments = match.groups()[0]
+            self.logger.info("command: {}, arguments: {}.".format(
+                command, arguments))
         matcher = re.compile(r"^/day7$")
         match = matcher.search(match_groups[11])
         if match:
@@ -80,6 +91,9 @@ class Qol(threading.Thread):
         self.logger.debug("Parsing command '{}'.".format(command))
         if command == "animals":
             self.spawn_animals(player)
+            return
+        if command == "bears":
+            self.spawn_bears(player, arguments)
             return
         if command == "day7":
             self.print_blood_moon_count(player)
@@ -180,6 +194,7 @@ class Qol(threading.Thread):
 
     def announce_player_connected(self, match_groups):
         self.logger.debug(match_groups)
+        
         db = self.controller.database.blocking_consult(
             lkp_table, [(lkp_table.name, "==", match_groups[7])])
         if len(db) != 1:
@@ -189,3 +204,12 @@ class Qol(threading.Thread):
         self.controller.telnet.write('pm {} "{}"'.format(
             player["steamid"], self.controller.config.values[
                 "mod_qol_greeting"]))
+
+    def spawn_bears(self, player, arguments):
+        bear = 86
+        number = 1
+        if arguments != None:
+            number = int(arguments[0])
+        for count in range(number):
+            self.controller.telnet.write(
+                "se {} {}".format(player["player_id"], bear))
