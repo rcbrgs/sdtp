@@ -70,11 +70,11 @@ class BiomeLoadHang(threading.Thread):
             if not self.controller.config.values["mod_biomeloadhang_kill"]:
                 return
             self.logger.info("Attempting to kill a local server that won't shutdown.")
-            sleep(5)
+            time.sleep(5)
             process = subprocess.Popen(["ps", "aux"], stdout=subprocess.PIPE)
             out, err = process.communicate()
             for line in out.splitlines():
-                if "7DaysToDieServer" in line:
+                if b"7DaysToDieServer" in line:
                     pid = int(line.split(None, 1)[0])
                     os.kill(pid, signal.SIGKILL)
                     self.logger.warning("Sent a signal.SIGKILL to pid {}.".format(pid))

@@ -41,7 +41,7 @@ class Parser(threading.Thread):
 
             'AIDirector spawning scouts': self.match_prefix + r'INF AIDirector: Spawning scouts at ' + self.match_string_pos + r' heading towards ' + self.match_string_pos,
 #            'AI scout fail' : self.match_prefix + r'INF AIDirector: Scout spawning failed, FindHordeTargets\(\) returned false!',
-            'AI Director Scout Horde Spawn Finished' : self.match_prefix + r'INF AIDirector: Scout Horde Spawn Finished \(all mobs spawned\)\.$',
+            'AI Director Scout Horde Spawn Finished' : self.match_prefix + r'INF AIDirector: Scout horde spawn finished \(all mobs spawned\)\.$',
 #            'AI scout remove' : self.match_prefix + r'INF AIDirector: scout horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control.$',
 #                                       'to_call'  : [ ] },
 #            'AI scout-trig fin' : self.match_prefix + r'INF AIDirector: Scout-Triggered Horde Finished \(all mobs spawned\).$',
@@ -61,6 +61,7 @@ class Parser(threading.Thread):
             'AstarManager': self.match_prefix + r'INF AstarManager Cleanup',
 #            'behaviour' : r'The referenced script on this Behaviour is missing!$',
 #                                       'to_call'  : [ ] },
+            'BCM': self.match_prefix + r'INF \(BCM\) .*',
 #            'biome animal' : self.match_prefix + r'INF BiomeSpawnManager spawned ' + \
 #                                       r'.* pos=' + self.match_string_pos + r' id=[\d]+ CBD=BiomeId' + \
 #                                       r'=[\d]+ XZ=[+-]*[\d]+/[+-]*[\d]+ AnimalsAll_Any: c=[\d]+/r=[\d]+$',
@@ -150,7 +151,7 @@ class Parser(threading.Thread):
             'claim player' : r'Player ".* \(([\d]+)\)" owns ([\d]+) keystones \(protected: [\w]+, current hardness multiplier: [\d]+\)',
             'claim stone' : r'\(([-+]*[\d]*), ([-+]*[\d]*), ([-+]*[\d]*)\)$',
             'client ip': self.match_prefix + r'INF Client IP: ' + self.match_string_ip + r'$',
-            'cm executing command': self.match_prefix + r'INF Client [\d]+/.* executing client side command: cm',
+            'client side command': self.match_prefix + r'INF Client [\d]+/.* executing client side command: .*',
 #            'couldnt RPC' : r'^Couldn\'t send RPC function \'RPC_RawData\'$',
 #                                       'to_call'  : [ ] },
             'created new player' : self.match_prefix + r'INF Created new player entry for ID: [\d]+$',
@@ -206,6 +207,7 @@ class Parser(threading.Thread):
 #                                       r'[\d]+ [\w\d]+ [\d]+\' by Telnet from ' + self.match_string_ip + \
 #                                       r':[\d]+$',
 #                                       'to_call'  : [ ] },
+            'et from': r'et from ' + self.match_string_ip_port + r'$',
 #            'executing cmd lkp' : self.match_prefix + r'INF Executing command \'lkp\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ ] },
 #            'executing cmd se' : self.match_prefix + r'INF Executing command \'se ' + \
@@ -306,9 +308,8 @@ class Parser(threading.Thread):
             'LiteNetLib connect from': self.match_prefix + r'INF NET: LiteNetLib: Connect from: ' + self.match_string_ip + r':[\d]+$',
             'LiteNetLib DisconnectPeerCalled': self.match_prefix + r'INF NET: LiteNetLib: Client disconnect from: ' + self.match_string_ip + r':[\d]+ \(DisconnectPeerCalled\)',
             'LiteNetLib received from unknown': self.match_prefix + r'INF NET: LiteNetLib: Received package from an unknown client: ' + self.match_string_ip + r':[\d]+',
-#            'lkp output' : r'[\d]+\. (.*), id=([\d]+), steamid=([\d]+), online=([\w]+), ip=(.*), playtime=([\d]+) m, seen=' + self.match_string_date_simple + '$',
-#                                       'to_call'  : [ self.framework.server.lkp_output_parser ] },
-#            'lkp total' : r'Total of [\d]+ known$',
+            'lkp output' : r'[\d]+\. (.*), id=([\d]+), steamid=([\d]+), online=([\w]+), ip=(.*), playtime=([\d]+) m, seen=' + self.match_string_date_simple + '$',
+            'lkp total' : r'Total of [\d]+ known$',
 #                                       'to_call'  : [ ] },
 #            'llp executing' : r'^' + self.match_string_date + r' INF Executing ' + \
 #                                       r'command \'llp\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
@@ -354,6 +355,7 @@ class Parser(threading.Thread):
 #            'not found' : r'^Playername or entity ID not found.$',
 #                                       'to_call'  : [ ] },
             'NullReferenceException': self.match_prefix + r'NullReferenceException: Object reference not set to an instance of an object',
+            'otherHeight': self.match_prefix + r'WRN Path node otherHeight bad .*$',
             "password incorrect" : r"^Password incorrect, please enter password:$",
             'player created' : self.match_prefix + r'INF Created player with id=([\d]+)$',
             'player joined' : self.match_prefix + 'INF GMSG: Player \'(.*)\' joined the game',
@@ -452,7 +454,7 @@ class Parser(threading.Thread):
 #            'wave spawn' : r'^' + self.match_string_date + r' INF Spawning this wave:' +\
 #                                       r' ([\d]+)',
 #                                       'to_call'  : [ ] },
-            'wave start' : r'^' + self.match_string_date + r' INF Start a new wave \'[\w]+\'\. timeout=[\d]+s, worldtime=[\d]+$',
+            'wave start' : r'^' + self.match_string_date + r' INF Start a new wave \'[\w]+\'\. timeout=[\d]+s\. worldtime=[\d]+$',
 #            'telnet conn block' : self.match_prefix + r'INF Telnet connection closed for too many login attempts: ' + self.match_string_ip + ':[\d]+$',
 #                                       'to_call'  : [ ] },
             'telnet conn from' : self.match_prefix + r'INF Telnet connection from: ' + self.match_string_ip + ':[\d]+$',

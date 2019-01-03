@@ -14,6 +14,7 @@ import threading
 import time
 
 Base = declarative_base ( )
+from sdtp.alias_table import AliasTable
 from sdtp.friendships_table import FriendshipsTable
 from sdtp.lkp_table import lkp_table
 from sdtp.lp_table import lp_table
@@ -157,7 +158,10 @@ class Database(threading.Thread):
         if config [ "db_engine" ] == "sqlite":
             engine_string = "sqlite:///" + config [ "db_sqlite_file_path" ]
         else:
-            engine_string = config [ "db_engine" ] + config [ "db_user" ] + ":" + config [ "db_host_user" ] + "@" + config [ "db_host" ] + ":" +config [ "db_port" ] + config [ "separator" ] + config [ "db_name" ]
+            engine_string = config [ "db_engine" ] + config [ "db_user" ] + \
+                            ":" + config [ "db_host_user" ] + "@" + \
+                            config [ "db_host" ] + ":" + config [ "db_port" ] +\
+                            config [ "separator" ] + config [ "db_name" ]
         self.logger.debug("engine_string = {}".format ( engine_string ) )
         self.engine = create_engine ( engine_string )
         self.logger.debug("self.engine = {}".format(self.engine))
@@ -169,6 +173,8 @@ class Database(threading.Thread):
 
     def create_tables(self):
         self.logger.debug("create_tables()")
+        self.alias_table = AliasTable()
+        self.alias_table.create(self.engine)
         self.friendships_table = FriendshipsTable()
         self.friendships_table.create(self.engine)
         self.lkp_table = lkp_table()

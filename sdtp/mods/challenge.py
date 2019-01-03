@@ -59,13 +59,7 @@ class Challenge(threading.Thread):
         self.logger.debug(
             "'{}' used challenge command with argument '{}'.".format (
             possible_player_name, argument))
-        db_answer = self.controller.database.blocking_consult(
-            lkp_table,
-            [(lkp_table.name, "==", possible_player_name)])
-        if len(db_answer) != 1:
-            self.logger.error("DB entry for player name is not unique.")
-            return
-        player = db_answer[0]
+        player = self.controller.worldstate.get_player_steamid(match_group[7])
         
         self.logger.debug("Checking for challenge command.")
         if argument == "":
@@ -92,16 +86,22 @@ class Challenge(threading.Thread):
         self.ongoing_challenges[player["steamid"]] = {
             "level": 0,
             "latest_turn": time.time(),
-            "player_id": player["player_id"] }
+            "player_id": player["player_id"],
+            "deaths": player["deaths"] }
         self.random_teleport(player)
 
     def remove_from_challenge(self, player):
-        self.controller.telnet.write('pm {} "Your challenge is over at level {}."'.format(player["steamid"], self.ongoing_challenges[player["steamid"]]["level"]))
+        self.controller.telnet.write('say "{}\'s challenge is over at level {}."'.format(player["name"], self.ongoing_challenges[player["steamid"]]["level"]))
         del self.ongoing_challenges[player["steamid"]]
         
     def run_challenges(self):
         now = time.time()
         for key in self.ongoing_challenges.keys():
+            self.logger.info("Checking if player died at least once.")
+            player = self.controller.worldstate.get_player_steamid(key)
+            if player["deaths"] > self.ongoing_challenges[key]["deaths"]:
+                self.remove_from_challenge(player)
+                continue
             entry = self.ongoing_challenges[key]
             if now - entry["latest_turn"] > self.controller.config.values["mod_challenge_round_interval"]:
                 entry["latest_turn"] = now
@@ -118,6 +118,9 @@ class Challenge(threading.Thread):
                          47, 51, 53, 55, 59, 62, 65, 68, 71, 74, 77, 79, 87]
         radiated_zombies = [3, 6, 10, 13, 16, 19, 22, 26, 29, 32, 35, 38, 43, 48,
                             56, 60, 66, 69, 72, 75]
+        regulars = 0
+        ferals = 0
+        radiated = 0
         if level < 5:
             regulars = level
             ferals = 0

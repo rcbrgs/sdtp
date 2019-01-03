@@ -176,7 +176,7 @@ class ClaimAlarm(threading.Thread):
 
     def check_for_presences_4(self, db_answer, claim, claim_player, player):
         if len(db_answer) == 1:
-            self.logger.info("{} inside friend {}'s claim.".format(
+            self.logger.debug("{} inside friend {}'s claim.".format(
                 player["name"], claim_player["name"]))
             return
         self.logger.debug("{} is invading {}'s claim!".format(

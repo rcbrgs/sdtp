@@ -5,6 +5,7 @@ from .friendships import Friendships
 from .help import Help
 from .metronomer import Metronomer
 from .parser import Parser
+from .server import Server
 from .telnet import Telnet
 from .worldstate import WorldState
 
@@ -44,6 +45,7 @@ class Controller(threading.Thread):
         self.help = None
         self.metronomer = None
         self.parser = None
+        self.server = None
         self.telnet = None
         self.database = None
         self.worldstate = None
@@ -92,6 +94,8 @@ class Controller(threading.Thread):
         self.database.start()
         self.help = Help(self)
         self.help.start()
+        self.server = Server(self)
+        self.server.start()
         self.friendships = Friendships(self)
         self.friendships.start()
         self.worldstate = WorldState ( self )
@@ -102,6 +106,7 @@ class Controller(threading.Thread):
                             self.help,
                             self.metronomer,
                             self.parser,
+                            self.server,
                             self.telnet,
                             self.database,
                             self.worldstate ]
@@ -144,19 +149,21 @@ class Controller(threading.Thread):
             time.sleep(0.1)
             count += 1
             if count > 1000:
-                self.log.error("Telnet is never ready.")
+                self.logger.error("Telnet is never ready.")
                 break
-            
-        self.telnet.write(
-            'say "{}"'.format(self.config.values["sdtp_greetings"]))        
+
+        if self.config.values["sdtp_greetings"] != "":
+            self.telnet.write(
+                'say "{}"'.format(self.config.values["sdtp_greetings"]))        
         
     def stop ( self ):
         self.logger.info("sdtp shutdown initiated.")
         self.keep_running = False
 
     def tear_down(self):
-        self.telnet.write(
-            'say "{}"'.format(self.config.values["sdtp_goodbye"]))
+        if self.config.values["sdtp_goodbye"] != "":
+            self.telnet.write(
+                'say "{}"'.format(self.config.values["sdtp_goodbye"]))
         for mod in self.mods:
             self.logger.debug(
                 "controller.stop: calling mod.stop in {}.".format(mod.__class__))
@@ -169,6 +176,7 @@ class Controller(threading.Thread):
                 time.sleep(0.1)
         self.config.save_configuration_file()
         self.friendships.stop()
+        self.server.stop()
         self.help.stop()
         self.worldstate.stop()
         self.metronomer.stop()

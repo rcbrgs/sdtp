@@ -2,13 +2,14 @@
 
 import logging
 import re
-from sdtp.lp_table import lp_table
-from sdtp.mods.portals_tables import PortalsTable
 import sys
 import threading
 import time
 
 import sdtp
+from sdtp.friendships_table import FriendshipsTable
+from sdtp.lp_table import lp_table
+from sdtp.mods.portals_tables import PortalsTable
 
 class Portals(threading.Thread):
     def __init__ ( self, controller ):
@@ -146,30 +147,23 @@ class Portals(threading.Thread):
             self.check_for_public_portal_use(player, portal_name)
 
         self.logger.debug("Checking for player to player teleport.")
-        self.controller.database.consult(
-            sdtp.lkp_table.lkp_table,
-            [(sdtp.lkp_table.lkp_table.name, "==", portal_name)],
-            self.check_for_command_5,
-            {"argument": argument, "player": player, "portal_name": portal_name})
-        
-    def check_for_command_5(self, db_answer, argument, player, portal_name):
-        if len(db_answer) == 1:
-            possible_friend = db_answer[0]
+        other = self.controller.worldstate.get_player_string(portal_name)
+        if other is not None:
             friendships = self.controller.database.blocking_consult(
-                sdtp.friendships_table.FriendshipsTable,
-                [(sdtp.friendships_table.FriendshipsTable.player_steamid, "==",
-                  possible_friend["steamid"]),
-                 (sdtp.friendships_table.FriendshipsTable.friend_steamid, "==",
+                FriendshipsTable,
+                [(FriendshipsTable.player_steamid, "==",
+                  other["steamid"]),
+                 (FriendshipsTable.friend_steamid, "==",
                   player["steamid"])])
             if len(friendships) == 1:
                 if self.check_for_cooldown(player):
                     return
-                self.controller.telnet.write('pm {} "Teleporting you to {}."'.format(player["steamid"], possible_friend["name"]))
+                self.controller.telnet.write('pm {} "Teleporting you to {}."'.format(player["steamid"], other["name"]))
                 self.controller.telnet.write("tele {} {} {} {}".format(
-                    player["steamid"], int(possible_friend["longitude"]),
-                    int(possible_friend["height"]), int(possible_friend["latitude"])))
+                    player["steamid"], int(other["longitude"]),
+                    int(other["height"]), int(other["latitude"])))
                 return
-            self.controller.telnet.write('pm {} "You are not {}\'s friend."'.format(player["steamid"], possible_friend["name"]))
+            self.controller.telnet.write('pm {} "You are not {}\'s friend."'.format(player["steamid"], other["name"]))
             return
         
         # Portal is missing.
@@ -366,8 +360,8 @@ class Portals(threading.Thread):
     def check_for_cooldown(self, player):
         now = time.time()
         if player["steamid"] in self.cooldowns:
-            if now - self.cooldowns[player["steamid"]] < self.controller.config.values["mod_portals_cooldown"]:
-                self.controller.telnet.write('pm {} "Your portal use is in cooldown for another {} seconds."'.format(player["steamid"], int(self.controller.config.values["mod_portals_cooldown"] - now + self.cooldowns[player["steamid"]])))
+            if now - self.cooldowns[player["steamid"]] < self.controller.config.values["mod_portals_cooldown_seconds"]:
+                self.controller.telnet.write('pm {} "Your portal use is in cooldown for another {} seconds."'.format(player["steamid"], int(self.controller.config.values["mod_portals_cooldown_seconds"] - now + self.cooldowns[player["steamid"]])))
                 return True
         self.cooldowns[player["steamid"]] = now
         return False

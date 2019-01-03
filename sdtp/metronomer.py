@@ -18,27 +18,32 @@ class Metronomer(threading.Thread):
         self.logger.info("Start.")
         self.setup()
         now = time.time ( )
-        latest_gt = now - self.controller.config.values ["gt_interval"] / 2
-        latest_lp = now - self.controller.config.values ["lp_interval"] / 2
-        latest_llp = now - self.controller.config.values["llp_interval"] / 2
+        latest_gt = now - self.controller.config.values ["interval_gt"] / 2
+        latest_lp = now - self.controller.config.values ["interval_lp"] / 2
+        latest_lkp = now - self.controller.config.values["interval_lkp"] / 2
+        latest_llp = now - self.controller.config.values["interval_llp"] / 2
         latest_tick = now - self.controller.config.values["interval_tick"] / 2
         while(self.keep_running):
             time.sleep(0.1)
             old = now
             now = time.time()
-            if(now - latest_llp > self.controller.config.values["llp_interval"]):
+            if(now - latest_gt > self.controller.config.values["interval_gt"]):
+                latest_gt = now
+                if self.controller.telnet.ready:
+                    self.controller.telnet.write("gt")
+            if(now - latest_lkp > self.controller.config.values["interval_lkp"]):
+                latest_lkp = now
+                if self.controller.telnet.ready:
+                    self.controller.telnet.write("lkp")
+            if(now - latest_llp > self.controller.config.values["interval_llp"]):
                 latest_llp = now
                 if self.controller.telnet.ready:
                     self.controller.telnet.write("llp", lock_after_write = True)
                     # Lock will be released by mod claim_alarm.
-            if(now - latest_lp > self.controller.config.values["lp_interval"]):
+            if(now - latest_lp > self.controller.config.values["interval_lp"]):
                 latest_lp = now
                 if self.controller.telnet.ready:
                     self.controller.telnet.write("lp")
-            if(now - latest_gt > self.controller.config.values["gt_interval"]):
-                latest_gt = now
-                if self.controller.telnet.ready:
-                    self.controller.telnet.write("gt")
             if(now - latest_tick > self.controller.config.values["interval_tick"]):
                 latest_tick = now
                 if self.controller.worldstate.server_empty:
