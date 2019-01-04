@@ -23,7 +23,7 @@ class WorldState(threading.Thread):
         self.latest_day = 0
         self.latest_hour = 0
         self.server_empty = False
-        self.start ( )
+        self.zombies_alive = -1
 
     # Thread control
     def run ( self ):
@@ -53,6 +53,8 @@ class WorldState(threading.Thread):
         self.controller.dispatcher.register_callback(
             "le/lp output footer", self.update_online_players_count )
         self.controller.dispatcher.register_callback(
+            "mem output", self.update_zombies_alive)
+        self.controller.dispatcher.register_callback(
             "player joined", self.player_connected)
         self.controller.dispatcher.register_callback(
             "player left", self.player_disconnected)
@@ -60,10 +62,16 @@ class WorldState(threading.Thread):
     def deregister_callbacks ( self ):
         self.controller.dispatcher.deregister_callback(
             "gt command output", self.log_time_of_day)
+        self.controller.dispatcher.deregister_callback(
+            "lkp output", self.parse_lkp_output)
+        self.controller.dispatcher.deregister_callback(
+            "lp output", self.update_lkp_table )
         self.controller.dispatcher.deregister_callback (
             "lp output", self.update_lp_table )
         self.controller.dispatcher.deregister_callback (
             "le/lp output footer", self.update_online_players_count )
+        self.controller.dispatcher.deregister_callback(
+            "mem output", self.update_zombies_alive)
         self.controller.dispatcher.deregister_callback(
             "player joined", self.player_connected)
         self.controller.dispatcher.deregister_callback(
@@ -258,15 +266,18 @@ class WorldState(threading.Thread):
                                   ip = ip)])
         self.logger.info("Added lkp_table entry for {}.".format(name))
 
+    def update_zombies_alive(self, match_groups):
+        self.zombies_alive = int(match_groups[7])
+        
     # API
         
     def get_player_string(self, name_or_alias):
-        self.logger.info("Trying to get player for name or alias '{}'.".format(
+        self.logger.debug("Trying to get player for name or alias '{}'.".format(
             name_or_alias))
         db = self.controller.database.blocking_consult(
             lkp_table, [(lkp_table.name, "==", name_or_alias)])
         if len(db) == 1:
-            self.logger.info("Player {} found.".format(db[0]["name"]))
+            self.logger.debug("Player {} found.".format(db[0]["name"]))
             return db[0]
         if len(db) > 1:
             self.logger.error("Multiple players with name {} on db.".format(

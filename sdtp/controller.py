@@ -98,7 +98,8 @@ class Controller(threading.Thread):
         self.server.start()
         self.friendships = Friendships(self)
         self.friendships.start()
-        self.worldstate = WorldState ( self )
+        self.worldstate = WorldState(self)
+        self.worldstate.start()
 
         # Mods
         self.components = [ self.dispatcher,

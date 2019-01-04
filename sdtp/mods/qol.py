@@ -115,6 +115,9 @@ class Qol(threading.Thread):
             return
         self.controller.telnet.write('say "Blood moon is in {} days."'.format(
             7 - int(today % 7)))
+        self.controller.telnet.write(
+            'say "There are {} zombies alive in the server."'.format(
+                self.controller.worldstate.zombies_alive))
 
     def reset_daily_counts(self, match_groups):
         self.logger.debug(match_groups)

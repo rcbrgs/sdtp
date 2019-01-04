@@ -56,7 +56,7 @@ class Friendships(threading.Thread):
             return
         command = matches.groups()[0].strip()
         arguments = matches.groups()[1].strip().split(" ")
-        self.logger.info("command: '{}', arguments: {}".format(
+        self.logger.debug("command: '{}', arguments: {}".format(
             command, arguments))
         
         name = ""
@@ -75,7 +75,7 @@ class Friendships(threading.Thread):
             if arguments[0] == "alias":
                 name = arguments[1].strip()
                 subcommand = "alias"
-        self.logger.info("subcommand = {}, name = {}".format(subcommand, name))
+        self.logger.debug("subcommand = {}, name = {}".format(subcommand, name))
 
         player = self.controller.worldstate.get_player_steamid(match_groups[7])
         other = self.controller.worldstate.get_player_string(name)
