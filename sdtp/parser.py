@@ -39,7 +39,7 @@ class Parser(threading.Thread):
             'AIDirector scout removed from control': self.match_prefix + r'INF AIDirector: Scout horde \'\[type=.*, name=.*, id=[\d]+\]\' removed from control',
             'AIDirector wanderer removed from control': self.match_prefix + r'INF AIDirector: Wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' removed from control',
             'AIDirector Scout Horde Spawn Finished' : self.match_prefix + r'INF AIDirector: Scout horde spawn finished \(all mobs spawned\)$',
-            'AIDirector scout horde spawned': self.match_prefix + r'INF AIDirector: scout horde spawned \'\[type=.*, name=.*, id=[\d]+\]\'\. Moving to point of interest',
+            'AIDirector scout horde spawned': self.match_prefix + r'INF AIDirector: scout horde spawned .* Moving to point of interest',
             'AIDirector spawning scouts': self.match_prefix + r'INF AIDirector: Spawning scouts at ' + self.match_string_pos + r' heading towards ' + self.match_string_pos,           
 #            'AI scout fail' : self.match_prefix + r'INF AIDirector: Scout spawning failed, FindHordeTargets\(\) returned false!',
 #            'AI scout horde' : self.match_prefix + r'INF AIDirector: scout horde zombie \'\[type=EntityZombie, name=spiderzombie, id=[\d]+\]\' was spawned and is moving towards point of interest\.$',

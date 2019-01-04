@@ -248,7 +248,7 @@ class WorldState(threading.Thread):
         db = self.controller.database.blocking_consult(
             lkp_table, [(lkp_table.steamid, "==", steamid)])
         if len(db) != 0:
-            self.logger.info("lkp output for {} ignored: already on db.".format(
+            self.logger.debug("lkp output for {} ignored: already on db.".format(
                 name))
             return
         self.controller.database.blocking_add(
