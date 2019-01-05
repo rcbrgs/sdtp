@@ -35,6 +35,13 @@ class Config(object):
             "telnet_IP" : "127.0.0.1",
             "telnet_port" : 8081,
             "auto_connect" : False,
+            # mod announcements
+            "mod_announcements_enable": True,
+            "mod_announcements_commands": {"sdtp":
+                                            {"text": "Seven Days To Py - get it at https://github.com/rcbrgs/sdtp",
+                                             "interval": 24*3600,
+                                             "latest": -1}},
+                                                    
             # mod biome load hang
             "mod_biomeloadhang_enable": False,
             "mod_biomeloadhang_countdown": 60,
@@ -42,6 +49,7 @@ class Config(object):
             # mod challenge
             "mod_challenge_distance": 1600,
             "mod_challenge_enable": False,
+            "mod_challenge_quitters_teleport_enable": True,
             "mod_challenge_round_interval": 15,
             # mod chatlogger
             "mod_chatlogger_enable": True,
@@ -64,6 +72,7 @@ class Config(object):
             "mod_portals_max_portals_per_player" : -1,
             "mod_portals_teleport_cost" : 0,
             # mod qol
+            "mod_qol_bears_cooldown_seconds": 24*3600,
             "mod_qol_enable": False,
             "mod_qol_animals_quantity": 1,
             "mod_qol_gimme_cooldown_minutes": 15,

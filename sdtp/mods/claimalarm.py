@@ -81,7 +81,7 @@ class ClaimAlarm(threading.Thread):
         if len(answer) == 0:
             self.controller.database.blocking_add(
                 llp_table,
-                [llp_table(steamid = steamid,
+                [llp_table(steamid = self.parsing_steamid,
                            longitude = int(match_groups[0]),
                            height = int(match_groups[1]),
                            latitude = int(match_groups[2]))])

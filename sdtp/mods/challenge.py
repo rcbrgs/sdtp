@@ -36,14 +36,19 @@ class Challenge(threading.Thread):
             "challenge": "toggles wether you are in the challenge or not. In the challenge, you are teleported randomly and have to fight incresing hordes of zombies."}
         self.controller.help.registered_commands["challenge"] = self.help
         self.ongoing_challenges = {}
+        self.challenged_today = []
         self.controller.dispatcher.register_callback(
             "chat message", self.check_for_commands)
+        self.controller.dispatcher.register_callback(
+            "new day", self.reset_daily_counts)
         self.controller.dispatcher.register_callback(
             "player died", self.check_for_challenge_death)
 
     def tear_down(self):
         self.controller.dispatcher.deregister_callback(
             "chat message", self.check_for_commands)
+        self.controller.dispatcher.deregister_callback(
+            "new day", self.reset_daily_counts)
         self.controller.dispatcher.deregister_callback(
             "player died", self.check_for_challenge_death)
 
@@ -71,15 +76,37 @@ class Challenge(threading.Thread):
     
     def toggle_challenge(self, player):
         if player["steamid"] in self.ongoing_challenges.keys():
+            self.check_for_quitters_teleport(player)
             self.remove_from_challenge(player)
             return
+        
+        if player["steamid"] in self.challenged_today:
+            self.controller.server.pm(
+                player, "You have already been challenged today.")
+            return
+        self.challenged_today.append(player["steamid"])
+        
         self.ongoing_challenges[player["steamid"]] = {
             "level": 0,
             "latest_turn": time.time(),
             "player_id": player["player_id"],
-            "deaths": player["deaths"] }
+            "deaths": player["deaths"],
+            "initial longitude": int(player["longitude"]),
+            "initial height": int(player["height"]),
+            "initial latitude": int(player["latitude"])}
         self.random_teleport(player)
 
+    def check_for_quitters_teleport(self, player):
+        if self.controller.config.values[
+                "mod_challenge_quitters_teleport_enable"]:
+            self.controller.telnet.write('tele {} {} {} {}'.format(
+                player["steamid"],
+                self.ongoing_challenges[player["steamid"]]["initial longitude"],
+                self.ongoing_challenges[player["steamid"]]["initial height"],
+                self.ongoing_challenges[player["steamid"]]["initial latitude"]))
+            self.controller.server.pm(
+                player, "Sending you back to where you belong, quitter!")
+        
     def remove_from_challenge(self, player):
         self.controller.telnet.write('say "{}\'s challenge is over at level {}."'.format(player["name"], self.ongoing_challenges[player["steamid"]]["level"]))
         del self.ongoing_challenges[player["steamid"]]
@@ -100,6 +127,9 @@ class Challenge(threading.Thread):
                     self.ongoing_challenges[key]["player_id"],
                     self.ongoing_challenges[key]["level"])
 
+    def reset_daily_counts(self, match_groups):
+        self.challenged_today = []
+                
     def challenge_round(self, player_id, level):
         regular_zombies = [4, 7, 8, 11, 14, 17, 20, 24, 27, 30, 33, 36, 41, 44,
                            46, 49, 50, 52, 54, 57, 58, 61, 64, 67, 70, 73, 76,
@@ -140,7 +170,8 @@ class Challenge(threading.Thread):
 
     def check_for_challenge_death(self, match_groups):
         name = match_groups[7]
-        self.logger.info("Trying to ascertain whether {} was in a challenge.".format(name))
+        self.logger.debug(
+            "Trying to ascertain whether {} was in a challenge.".format(name))
         db_answer = self.controller.database.blocking_consult(
             lkp_table,
             [(lkp_table.name, "==", name)])

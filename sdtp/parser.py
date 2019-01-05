@@ -36,7 +36,7 @@ class Parser(threading.Thread):
             'AIDirector NextStage': self.match_prefix + r'INF AIDirectorGameStagePartySpawner: NextStage done \([\d]+\)$',
 #            'AI night horde' : self.match_prefix + r'INF AIDirector: Night Horde Spawn Finished \(all mobs spawned\).$',
 #            'AI no good spot' : self.match_prefix + r'INF AIDirector: Could not find a valid position to spawn wandering horde \(trying again in 1 hour\)$',
-            'AIDirector scout removed from control': self.match_prefix + r'INF AIDirector: Scout horde \'\[type=.*, name=.*, id=[\d]+\]\' removed from control',
+            'AIDirector scout removed from control': self.match_prefix + r'INF AIDirector: scout horde \'\[type=.*, name=.*, id=[\d]+\]\' removed from control',
             'AIDirector wanderer removed from control': self.match_prefix + r'INF AIDirector: Wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' removed from control',
             'AIDirector Scout Horde Spawn Finished' : self.match_prefix + r'INF AIDirector: Scout horde spawn finished \(all mobs spawned\)$',
             'AIDirector scout horde spawned': self.match_prefix + r'INF AIDirector: scout horde spawned .* Moving to point of interest',
@@ -208,6 +208,7 @@ class Parser(threading.Thread):
 #                                       r':[\d]+$',
 #                                       'to_call'  : [ ] },
             'et from': r'[net]+ from ' + self.match_string_ip_port + r'$',
+            'Exception Err': r'Exception: Err',
 #            'executing cmd lkp' : self.match_prefix + r'INF Executing command \'lkp\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ ] },
 #            'executing cmd se' : self.match_prefix + r'INF Executing command \'se ' + \
@@ -356,6 +357,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
             'NullReferenceException': self.match_prefix + r'NullReferenceException: Object reference not set to an instance of an object',
             'otherHeight': self.match_prefix + r'WRN Path node otherHeight bad .*$',
+            'party computed game stage': self.match_prefix + r'INF Party with [\d]+ player\(s\) has a computed game stage of [\d]+$',
             'party members': self.match_prefix + r'INF Party members:.*',
             "password incorrect" : r"^Password incorrect, please enter password:$",
             'player created' : self.match_prefix + r'INF Created player with id=([\d]+)$',
@@ -448,6 +450,7 @@ class Parser(threading.Thread):
             'Steamworks.NET server public': self.match_prefix + r'INF \[Steamworks\.NET\] Making server public',
             'Steamworks.Net stop server': self.match_prefix + r'INF \[Steamworks\.NET\] Stopping server$',
             'steamworks.NET not connected': self.match_prefix + r'INF \[Steamworks\.NET\] Authentication callback. ID: [\d]+, owner: [\d]+, result: k_EAuthSessionResponseUserNotConnectedToSteam',
+            'sub-emitters': r'Sub-emitters must be children of the system that spawns them',
             'sunrise': self.match_prefix + r'INF \(Sunrise\) Blood moon is over!',
 #            'supply plane' : r'[\d]+\. id=[\d]+, GameObject (EntitySupplyPlane), pos=' +\
 #                                       self.match_string_pos + r', rot=' + self.match_string_pos + \
@@ -473,6 +476,7 @@ class Parser(threading.Thread):
 #                                       r'([+-]*[\d]+) ([+-]*[\d]+)\' by Telnet from ' + \
 #                                       self.match_string_ip + ':([\d]+)',
 #                                       'to_call'  : [ ] },
+            'treePlantedOak41m': self.match_prefix + r'ERR Block on position [-+\d]+, [-+\d]+, [-+\d]+ with name \'treePlantedOak41m\' should be a parent but is not! \(1\)',
 #            'version' : r'^' + self.match_string_date + r' INF Executing ' + \
 #                                       r'command \'version\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ ] },

@@ -2,12 +2,14 @@
 #------------------------------------------------------------------------------80
 
 import logging
+import math
 import random
 import re
 import threading
 import time
 
 from sdtp.lkp_table import lkp_table
+from sdtp.table_cooldowns import TableCooldowns
 
 class Qol(threading.Thread):
     def __init__(self, controller):
@@ -73,7 +75,7 @@ class Qol(threading.Thread):
         if match:
             command = "bears"
             arguments = match.groups()[0]
-            self.logger.info("command: {}, arguments: {}.".format(
+            self.logger.debug("command: {}, arguments: {}.".format(
                 command, arguments))
         matcher = re.compile(r"^/day7$")
         match = matcher.search(match_groups[11])
@@ -217,6 +219,33 @@ class Qol(threading.Thread):
             player, self.controller.config.values["mod_qol_greeting"])
 
     def spawn_bears(self, player, arguments):
+        self.logger.info("spawn_bears()")
+        now = time.time()
+        cooldowns = self.controller.database.blocking_consult(
+            TableCooldowns, [(TableCooldowns.steamid, "==", player["steamid"])])
+        if len(cooldowns) == 1:
+            self.logger.info("Cooldown exist.")
+            difference = now - cooldowns[0]["bears"]
+            if difference < self.controller.config.values[
+                    "mod_qol_bears_cooldown_seconds"]:
+                self.controller.server.pm(
+                    player, "Spawning bears in cooldown for another {}".format(
+                        self.pretty_print_seconds(
+                            self.controller.config.values[
+                                "mod_qol_bears_cooldown_seconds"] - difference)))
+                return
+
+            cooldowns[0]["bears"] = now
+            self.controller.database.blocking_update(
+                TableCooldowns, cooldowns[0])
+        if len(cooldowns) == 0:
+            self.logger.info("Cooldown entry does not exist.")
+            self.controller.database.blocking_add(
+                TableCooldowns, [TableCooldowns(
+                    steamid = player["steamid"],
+                    bears = now)])
+
+        self.logger.info("Spawning bears.")
         bear = 86
         number = 1
         if arguments != None:
@@ -224,3 +253,26 @@ class Qol(threading.Thread):
         for count in range(number):
             self.controller.telnet.write(
                 "se {} {}".format(player["player_id"], bear))
+            time.sleep(0.1)
+
+    #API
+
+    def pretty_print_seconds(self, seconds):
+        self.logger.info("seconds = {}".format(seconds))
+        days = math.floor(seconds / (24*3600))
+        hours = math.floor( (seconds - days * (24*3600)) / 3600)
+        minutes = math.floor( (seconds - days * (24*3600) - hours * 3600) / 60)
+        secs = math.floor( seconds - days * (24*3600) - hours * 3600 - minutes * 60)
+        self.logger.info(
+            "days = {} hours = {} minutes = {} seconds = {}".format(
+                days, hours, minutes, secs))
+        
+        if days > 0:
+            return "{} days, {} hours, {} minutes and {} seconds".format(
+                days, hours, minutes, secs)
+        if hours > 0:
+            return "{} hours, {} minutes and {} seconds".format(
+                hours, minutes, secs)
+        if minutes > 0:
+            return "{} minutes and {} seconds".format(minutes, secs)
+        return "{} seconds".format(secs)

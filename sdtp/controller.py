@@ -9,6 +9,7 @@ from .server import Server
 from .telnet import Telnet
 from .worldstate import WorldState
 
+from .mods.announcements import Announcements
 from .mods.biomeloadhang import BiomeLoadHang
 from .mods.challenge import Challenge
 from .mods.chatlogger import ChatLogger
@@ -100,8 +101,6 @@ class Controller(threading.Thread):
         self.friendships.start()
         self.worldstate = WorldState(self)
         self.worldstate.start()
-
-        # Mods
         self.components = [ self.dispatcher,
                             self.friendships,
                             self.help,
@@ -111,6 +110,10 @@ class Controller(threading.Thread):
                             self.telnet,
                             self.database,
                             self.worldstate ]
+        
+        # Mods
+        self.announcements = Announcements(self)
+        self.announcements.start()
         self.biomeloadhang = BiomeLoadHang(self)
         self.biomeloadhang.start()
         self.challenge = Challenge(self)
@@ -149,7 +152,7 @@ class Controller(threading.Thread):
         while not self.telnet.ready:
             time.sleep(0.1)
             count += 1
-            if count > 1000:
+            if count > 100:
                 self.logger.error("Telnet is never ready.")
                 break
 
@@ -199,10 +202,25 @@ class Controller(threading.Thread):
                         component.__class__))
                     break
         self.dispatcher.stop ( )
+        count = 0
         while ( self.dispatcher.is_alive ( ) ):
             self.logger.debug("controller.stop: Waiting on dispatcher to stop.")
-            time.sleep ( 0.1 )       
+            time.sleep ( 0.1 )
+            count += 1
+            if count > 100:
+                self.logger.warning("Dispatcher never stops. Ignoring.")
+                break
+            
+        for mod in self.mods:
+            self.logger.info("Trying to join {}".format(mod))
+            mod.join()
+        for component in self.components:
+            self.logger.info("Trying to join {}".format(component))
+            component.join()
 
+        print("threading.active_count()".format(threading.active_count()))
+        print("threading.enumerate()".format(threading.enumerate()))
+            
     def components_check(self):
         for component in self.components:
             if not component.is_alive():

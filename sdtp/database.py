@@ -18,6 +18,8 @@ from sdtp.alias_table import AliasTable
 from sdtp.friendships_table import FriendshipsTable
 from sdtp.lkp_table import lkp_table
 from sdtp.lp_table import lp_table
+from sdtp.table_cooldowns import TableCooldowns
+
 from sdtp.mods.chat_translator_table import ChatTranslatorTable
 from sdtp.mods.llp_table import llp_table
 from sdtp.mods.portals_tables import PortalsTable
@@ -191,6 +193,8 @@ class Database(threading.Thread):
         self.llp_table.create(self.engine)
         self.portals = PortalsTable()
         self.portals.create(self.engine)
+        self.cooldowns = TableCooldowns()
+        self.cooldowns.create(self.engine)
         global Base
         Base.metadata.create_all(self.engine)
         self.logger.debug("self.metadata = {}".format(self.metadata))

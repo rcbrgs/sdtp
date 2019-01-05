@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import sys
+import threading
+
 import sdtp
 
 def main():
@@ -15,8 +18,12 @@ def main():
     try:
         controller.join()
     except KeyboardInterrupt:
+        logger.info("Keyboard interrrupt detected: stopping sdtp.")
         controller.stop()
+        logger.info("controller stopped.")
         controller.join()
+        logger.info("controller joined.")
+        sys.exit()
 
 if __name__ == "__main__":
     main()

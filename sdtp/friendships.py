@@ -98,7 +98,7 @@ class Friendships(threading.Thread):
             self.print_friendships(player)
             return
         if subcommand == "toggle":
-            self.toggle_friendship(player, other)
+            self.toggle_friendship(player, other, name)
             return
 
     def add_friendship(self, player, other):
@@ -191,7 +191,7 @@ class Friendships(threading.Thread):
             self.controller.server.pm(player, "You have an alias: {}.".format(
                 db[0]["alias"]))
 
-    def toggle_friendship(self, player, other):
+    def toggle_friendship(self, player, other, name):
         if other is None:
             self.controller.server.pm(
                 player, "No player named \'{}\' found.".format(name))
