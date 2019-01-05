@@ -78,16 +78,11 @@ class Announcements(threading.Thread):
         now = time.time()
         for key in self.controller.config.values[
                 "mod_announcements_commands"].keys():
-            if self.controller.config.values[
-                    "mod_announcements_commands"][key]["interval"] == -1:
+            item = self.controller.config.values[
+                "mod_announcements_commands"][key]
+            if item["interval"] == -1:
                 continue
-            if now - self.controller.config.values[
-                    "mod_announcements_commands"][key]["latest"] > \
-                    self.controller.config.values[
-                        "mod_announcements_commands"][key]["interval"]:
-                self.controller.config.values[
-                    "mod_announcements_commands"][key]["latest"] = now
+            if now - item["latest"] > item["interval"]:
+                item["latest"] = now
                 if self.controller.telnet.ready:
-                    self.controller.telnet.write('say "{}"'.format(
-                        self.controller.config.values[
-                            "mod_announcements_commands"][key]["text"]))
+                    self.controller.telnet.write('say "{}"'.format(item["text"]))

@@ -83,6 +83,12 @@ class Config(object):
             "mod_serverreboots_enable": False,
             "mod_serverreboots_interval": 12,
             "mod_serverreboots_empty_condition" : True,
+            # mod vote
+            "mod_vote_enable": False,
+            "mod_vote_prize_bag": [{"what": "",
+                                    "quality": "",
+                                    "quantity": ""}],
+            "mod_vote_server_api_key": "Get it from https://7daystodie-servers.com",
         }
         self.values["config_file"] = "{}_preconfig.json".format(
             self.values["app_name"])

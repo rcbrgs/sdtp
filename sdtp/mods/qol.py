@@ -224,7 +224,7 @@ class Qol(threading.Thread):
         cooldowns = self.controller.database.blocking_consult(
             TableCooldowns, [(TableCooldowns.steamid, "==", player["steamid"])])
         if len(cooldowns) == 1:
-            self.logger.info("Cooldown exist.")
+            self.logger.debug("Cooldown exist.")
             difference = now - cooldowns[0]["bears"]
             if difference < self.controller.config.values[
                     "mod_qol_bears_cooldown_seconds"]:
@@ -258,12 +258,12 @@ class Qol(threading.Thread):
     #API
 
     def pretty_print_seconds(self, seconds):
-        self.logger.info("seconds = {}".format(seconds))
+        self.logger.debug("seconds = {}".format(seconds))
         days = math.floor(seconds / (24*3600))
         hours = math.floor( (seconds - days * (24*3600)) / 3600)
         minutes = math.floor( (seconds - days * (24*3600) - hours * 3600) / 60)
         secs = math.floor( seconds - days * (24*3600) - hours * 3600 - minutes * 60)
-        self.logger.info(
+        self.logger.debug(
             "days = {} hours = {} minutes = {} seconds = {}".format(
                 days, hours, minutes, secs))
         

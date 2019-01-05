@@ -22,6 +22,7 @@ from .mods.mostkills import MostKills
 from .mods.portals import Portals
 from .mods.qol import Qol
 from .mods.serverreboots import ServerReboots
+from .mods.vote import Vote
 
 import importlib
 import json
@@ -134,7 +135,10 @@ class Controller(threading.Thread):
         self.qol.start()
         self.serverreboots = ServerReboots(self)
         self.serverreboots.start()
+        self.vote = Vote(self)
+        self.vote.start()
         self.mods = [
+            self.announcements,
             self.biomeloadhang,
             self.challenge,
             self.chatlogger,
@@ -146,7 +150,8 @@ class Controller(threading.Thread):
             #self.ping_limiter,
             self.portals,
             self.qol,
-            self.serverreboots]
+            self.serverreboots,
+            self.vote]
 
         count = 0
         while not self.telnet.ready:
@@ -210,17 +215,7 @@ class Controller(threading.Thread):
             if count > 100:
                 self.logger.warning("Dispatcher never stops. Ignoring.")
                 break
-            
-        for mod in self.mods:
-            self.logger.info("Trying to join {}".format(mod))
-            mod.join()
-        for component in self.components:
-            self.logger.info("Trying to join {}".format(component))
-            component.join()
-
-        print("threading.active_count()".format(threading.active_count()))
-        print("threading.enumerate()".format(threading.enumerate()))
-            
+                        
     def components_check(self):
         for component in self.components:
             if not component.is_alive():

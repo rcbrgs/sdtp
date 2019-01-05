@@ -35,6 +35,15 @@ class Server(threading.Thread):
     # Component specific
     ####################
 
+    def give(self, player, what, quantity, quality = ""):
+        if not self.controller.telnet.ready:
+            self.logger.error("Telnet not ready when trying to give.")
+            return
+        self.controller.telnet.write('give {} {} {} {}'.format(
+            player["steamid"], what, quantity, quality))
+        self.logger.info('gave {} {} {} of quality \'{}\'.'.format(
+            player["name"], quantity, what, quality))        
+    
     def pm(self, player, message):
         if not self.controller.telnet.ready:
             self.logger.error("Telnet not ready when trying to PM.")

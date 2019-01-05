@@ -457,9 +457,7 @@ class Parser(threading.Thread):
 #                                       r', lifetime=float.Max, remote=False, dead=False,$',
 #                                       'to_call'  : [ ] },
             'telnet closed' : self.match_prefix + r'INF Telnet connection closed: ' + self.match_string_ip + r':[\d]+$',
-#            'wave spawn' : r'^' + self.match_string_date + r' INF Spawning this wave:' +\
-#                                       r' ([\d]+)',
-#                                       'to_call'  : [ ] },
+            'wave spawn' : r'^' + self.match_string_date + r' INF Spawning this wave: ([\d]+)',
             'wave start' : r'^' + self.match_string_date + r' INF Start a new wave \'[\w]+\'\. timeout=[\d]+s\. worldtime=[\d]+$',
 #            'telnet conn block' : self.match_prefix + r'INF Telnet connection closed for too many login attempts: ' + self.match_string_ip + ':[\d]+$',
 #                                       'to_call'  : [ ] },
