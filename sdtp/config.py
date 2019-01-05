@@ -29,6 +29,8 @@ class Config(object):
             "log_file_name" : "sdtp.log",
             "log_file_path" : "",
             "max_ping" : 10000,
+            "night_time_begins_at": 22,
+            "night_time_ends_at": 4,
             "sdtp_greetings" : "[sdtp] Seven Days To Py: started.",
             "sdtp_goodbye" : "[sdtp] Seven Days To Py: stopped.",
             "telnet_password" : "BEWARE - PASSWORD WILL BE STORED UNENCRYPTED",

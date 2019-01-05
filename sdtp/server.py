@@ -52,3 +52,9 @@ class Server(threading.Thread):
             player["steamid"], message))
         self.logger.info('pm {} "{}"'.format(
             player["name"], message))
+
+    def say(self, message):
+        if not self.controller.telnet.ready:
+            self.logger.error("Telnet not ready when trying to say.")
+            return
+        self.controller.telnet.write('say "{}"'.format(message))

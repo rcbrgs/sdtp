@@ -47,7 +47,7 @@ class Telnet(threading.Thread):
             self.logger.debug(line_string)
             self.controller.parser.enqueue(line_string)
         self.close_connection()
-        self.logger.info("run() finished.")
+        self.logger.debug("run() finished.")
 
     def stop ( self ):
         self.keep_running = False

@@ -229,10 +229,7 @@ class Parser(threading.Thread):
 #                                       self.match_string_pos + r', lifetime=[\d]+\.[\d]+, remote=[\w]+, ' + \
 #                                       r'dead=[\w]+,$',
 #                                       'to_call'  : [ self.framework.game_events.tree_felled ] }, 
-#            'fell off world' : self.match_prefix + r'WRN Entity \[type=.*, name=.*' +\
-#                                       r', id=[\d]+\] fell off the world, id=[\d]+ pos=' + \
-#                                       self.match_string_pos + r'$',
-#                                       'to_call'  : [ ] },
+            'fell off world' : self.match_prefix + r'WRN Entity \[type=.*, name=.*, cnt=[\d]+\] fell off the world, id=[\d]+ pos=' + self.match_string_pos + r'$',
 #            'block fell off' : self.match_prefix + r'WRN Entity FallingBlock_[\d]+ \(EntityFallingBlock\) fell off the world, id=[\d]+ pos=' + self.match_string_pos + r'$',
 #                                       'to_call'  : [ ] },
 #            'could not save file' : self.match_prefix + r'ERR Could not save file \'.*\': Sharing violation on path .*$',
@@ -405,6 +402,7 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
             'sending world done': self.match_prefix + r'INF Sending world to EntityID=[+-]*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\' done$',
             'sending world starting': self.match_prefix + r'INF Starting to send world to EntityID=[+-]*[\d], PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'\.\.\.',
+            'shaggy hair': self.match_prefix + r'INF Alt slots does not contain female_hair_shaggy02!$',
             'sideshave hair': self.match_prefix + r'INF Alt slots does not contain female_sideshave_hair!$',
             'SleeperVolume restoring': self.match_prefix + r'INF [\d\.]+ SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Restoring at ' + self.match_string_pos_unparenthesized + r' \'.*\'',
             "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'.*\', class .*',
@@ -416,7 +414,8 @@ class Parser(threading.Thread):
 #                                       'to_call'  : [ ] },
 #            'socket exception' : self.match_prefix + r'SocketException: An established connection was aborted by the software in your host machine.',
 #                                       'to_call'  : [ ] },
-            'socket exception reset': r'^SocketException: Connection reset by peer$',            
+            'socket exception reset': r'^SocketException: Connection reset by peer$',
+            'spawn cant walk': self.match_prefix + r'WRN Spawn class [\d]+ can\'t walk on block',
 #            'spawn feral horde' : self.match_prefix + r'INF Spawning Feral Horde\.$',
 #                                       'to_call'  : [ ] },
 #            'spawn night horde' : r'^' + self.match_string_date + \
@@ -452,6 +451,7 @@ class Parser(threading.Thread):
             'steamworks.NET not connected': self.match_prefix + r'INF \[Steamworks\.NET\] Authentication callback. ID: [\d]+, owner: [\d]+, result: k_EAuthSessionResponseUserNotConnectedToSteam',
             'sub-emitters': r'Sub-emitters must be children of the system that spawns them',
             'sunrise': self.match_prefix + r'INF \(Sunrise\) Blood moon is over!',
+            'sunset': self.match_prefix + r'INF \(Sunset\) Blood moon horde is starting for day [\d]+!',
 #            'supply plane' : r'[\d]+\. id=[\d]+, GameObject (EntitySupplyPlane), pos=' +\
 #                                       self.match_string_pos + r', rot=' + self.match_string_pos + \
 #                                       r', lifetime=float.Max, remote=False, dead=False,$',

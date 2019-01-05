@@ -20,9 +20,9 @@ def main():
     except KeyboardInterrupt:
         logger.info("Keyboard interrrupt detected: stopping sdtp.")
         controller.stop()
-        logger.info("controller stopped.")
+        logger.debug("controller stopped.")
         controller.join()
-        logger.info("controller joined.")
+        logger.debug("controller joined.")
         sys.exit()
 
 if __name__ == "__main__":
