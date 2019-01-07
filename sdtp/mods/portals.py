@@ -10,6 +10,7 @@ import sdtp
 from sdtp.friendships_table import FriendshipsTable
 from sdtp.lp_table import lp_table
 from sdtp.mods.portals_tables import PortalsTable
+from sdtp.table_cooldowns import TableCooldowns
 
 class Portals(threading.Thread):
     def __init__ ( self, controller ):
@@ -18,7 +19,6 @@ class Portals(threading.Thread):
         self.keep_running = True
         self.logger = logging.getLogger(__name__)
 
-        self.cooldowns = {}
         self.start ( )
 
     def run(self):
@@ -129,7 +129,8 @@ class Portals(threading.Thread):
             return
         else:
             self.logger.debug("Checking for public portals.")
-            self.check_for_public_portal_use(player, portal_name)
+            if self.check_for_public_portal_use(player, portal_name):
+                return
 
         self.logger.debug("Checking for player to player teleport.")
         other = self.controller.worldstate.get_player_string(portal_name)
@@ -141,7 +142,7 @@ class Portals(threading.Thread):
                  (FriendshipsTable.friend_steamid, "==",
                   player["steamid"])])
             if len(friendships) == 1:
-                if self.check_for_cooldown(player):
+                if self.check_for_cooldown(player, "player"):
                     return
                 self.controller.server.pm(
                     player, "Teleporting you to {}.".format(other["name"]))
@@ -184,7 +185,7 @@ class Portals(threading.Thread):
             self.controller.server.pm(player, portals_string)
             
     def teleport_player_to_portal(self, player, portal):
-        if self.check_for_cooldown(player):
+        if self.check_for_cooldown(player, "portal"):
             return
         self.logger.info(
             "Teleporting {} to {}.".format(player["name"], portal["name"]))
@@ -204,11 +205,11 @@ class Portals(threading.Thread):
             [(PortalsTable.name, "==", argument),
              (PortalsTable.public, "==", True)])
         if len(answer) != 1:
-            return
+            return False
         portal = answer[0]
         self.logger.info("Public portal use detected.")
         self.teleport_player_to_portal(player, portal)
-        return
+        return True
 
     def delete_portal(self, player, portal):
         if portal["steamid"] != player["steamid"]:
@@ -311,16 +312,58 @@ class Portals(threading.Thread):
             self.controller.server.pm(
                 player, "There are no public portals.")
 
-    def check_for_cooldown(self, player):
+    def check_for_cooldown(self, player, type_of_cooldown):
         now = time.time()
-        if player["steamid"] in self.cooldowns:
-            if now - self.cooldowns[player["steamid"]] < self.controller.config.values["mod_portals_cooldown_seconds"]:
+        cooldowns = self.controller.database.blocking_consult(
+            TableCooldowns, [(TableCooldowns.steamid, "==", player["steamid"])])
+        if len(cooldowns) == 0:
+            self.logger.info("Cooldown db entry for {} does not exist.".format(
+                player["name"]))
+            if type_of_cooldown == "player":
+                self.controller.database.blocking_add(
+                    TableCooldowns, [TableCooldowns(
+                        steamid = player["steamid"],
+                        portals_player = now)])
+            if type_of_cooldown == "portal":
+                self.controller.database.blocking_add(
+                    TableCooldowns, [TableCooldowns(
+                        steamid = player["steamid"],
+                        portals_portal = now)])
+            return False
+
+        self.logger.info("Cooldown db entry for {} exists.".format(
+            player["name"]))
+        if type_of_cooldown == "player":
+            difference = now - cooldowns[0]["portals_player"]
+            if difference < self.controller.config.values[
+                   "mod_portals_player_cooldown_seconds"]:
                 self.controller.server.pm(
-                    player, "Your portal use is in cooldown for another {}.".\
-                    format(self.controller.qol.pretty_print_seconds(
+                    player, "Your teleport to player is in cooldown for another"\
+                    " {}.".format(self.controller.qol.pretty_print_seconds(
                         int(self.controller.config.values[
-                            "mod_portals_cooldown_seconds"] - now + \
-                            self.cooldowns[player["steamid"]]))))
+                            "mod_portals_player_cooldown_seconds"] -\
+                            difference))))
                 return True
-        self.cooldowns[player["steamid"]] = now
-        return False
+        if type_of_cooldown == "portal":
+            difference = now - cooldowns[0]["portals_portal"]
+            if difference < self.controller.config.values[
+                   "mod_portals_portal_cooldown_seconds"]:
+                self.controller.server.pm(
+                    player, "Your teleport to portal is in cooldown for another"\
+                    " {}.".format(self.controller.qol.pretty_print_seconds(
+                        int(self.controller.config.values[
+                            "mod_portals_portal_cooldown_seconds"] -\
+                            difference))))
+                return True
+
+        self.logger.info("Player {} not yet in cooldown.".format(player["name"]))
+        if type_of_cooldown == "player":
+            cooldowns[0]["portals_player"] = now
+            self.controller.database.blocking_update(
+                TableCooldowns, cooldowns[0])
+            return False
+        if type_of_cooldown == "portal":
+            cooldowns[0]["portals_portal"] = now
+            self.controller.database.blocking_update(
+                TableCooldowns, cooldowns[0])
+            return False

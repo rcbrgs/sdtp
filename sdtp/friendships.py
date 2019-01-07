@@ -81,10 +81,10 @@ class Friendships(threading.Thread):
         other = self.controller.worldstate.get_player_string(name)
         
         if command == "friend":
-            self.command_friend(subcommand, player, other)
+            self.command_friend(subcommand, player, other, name)
             return
 
-    def command_friend(self, subcommand, player, other):
+    def command_friend(self, subcommand, player, other, name):
         if subcommand == "add":
             self.add_friendship(player, other)
             return

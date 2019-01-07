@@ -65,10 +65,10 @@ class Config(object):
             # mod most kills
             "mod_mostkills_enable": False,
             # mod portals
-            "mod_portals_cooldown_seconds": 3600,
+            "mod_portals_player_cooldown_seconds": 3600,
+            "mod_portals_portal_cooldown_seconds": 3600,
             "mod_portals_enable" : False,
             "mod_portals_max_portals_per_player" : -1,
-            "mod_portals_teleport_cost" : 0,
             # mod qol
             "mod_qol_bears_cooldown_seconds": 24*3600,
             "mod_qol_enable": False,
