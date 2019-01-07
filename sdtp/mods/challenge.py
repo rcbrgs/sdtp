@@ -9,6 +9,7 @@ import time
 
 from sdtp.lkp_table import lkp_table
 from sdtp.mods.llp_table import llp_table
+from sdtp.table_cooldowns import TableCooldowns
 
 class Challenge(threading.Thread):
     def __init__(self, controller):
@@ -36,7 +37,6 @@ class Challenge(threading.Thread):
             "challenge": "toggles wether you are in the challenge or not. In the challenge, you are teleported randomly and have to fight incresing hordes of zombies."}
         self.controller.help.registered_commands["challenge"] = self.help
         self.ongoing_challenges = {}
-        self.challenged_today = []
         self.controller.dispatcher.register_callback(
             "chat message", self.check_for_commands)
         self.controller.dispatcher.register_callback(
@@ -80,11 +80,10 @@ class Challenge(threading.Thread):
             self.remove_from_challenge(player)
             return
         
-        if player["steamid"] in self.challenged_today:
-            self.controller.server.pm(
-                player, "You have already been challenged today.")
+        if self.check_cooldown(player):
             return
-        self.challenged_today.append(player["steamid"])
+        else:
+            self.add_cooldown(player)
         
         self.ongoing_challenges[player["steamid"]] = {
             "level": 0,
@@ -96,6 +95,41 @@ class Challenge(threading.Thread):
             "initial latitude": int(player["latitude"])}
         self.random_teleport(player)
 
+    def add_cooldown(self, player):
+        cooldowns = self.controller.database.blocking_consult(
+            TableCooldowns, [(TableCooldowns.steamid, "==", player["steamid"])])
+        now = time.time()
+        if len(cooldowns) == 1:
+            cooldowns[0]["challenge"] = now
+            self.controller.database.blocking_update(
+                TableCooldowns, cooldowns[0])
+            return
+        self.controller.database.blocking_add(
+            TableCooldowns, [TableCooldowns(
+                steamid = player["steamid"],
+                challenge = now)])
+                
+    def check_cooldown(self, player):
+        self.logger.info("Checking cooldown for {}.".format(player["name"]))
+        cooldowns = self.controller.database.blocking_consult(
+            TableCooldowns, [(TableCooldowns.steamid, "==", player["steamid"])])
+        now = time.time()
+        if len(cooldowns) == 1:
+            self.logger.info("Player {} has cooldown db entry.".format(
+                player["name"]))
+            difference = now - cooldowns[0]["challenge"]
+            if difference < self.controller.config.values[
+                    "mod_challenge_cooldown_seconds"]:
+                self.logger.info("Player {} in cooldown.".format(player["name"]))
+                self.controller.server.pm(
+                    player,
+                    "Your challenge is in cooldown for another {}.".format(
+                        self.controller.qol.pretty_print_seconds(
+                            self.controller.config.values[
+                                "mod_challenge_cooldown_seconds"] - difference)))
+                return True
+        return False
+        
     def check_for_quitters_teleport(self, player):
         if self.controller.config.values[
                 "mod_challenge_quitters_teleport_enable"]:
@@ -129,7 +163,7 @@ class Challenge(threading.Thread):
                     entry["level"])
 
     def reset_daily_counts(self, match_groups):
-        self.challenged_today = []
+        pass
                 
     def challenge_round(self, player, level):
         regular_zombies = self.controller.server.normal_zombies

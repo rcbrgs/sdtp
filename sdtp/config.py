@@ -45,6 +45,7 @@ class Config(object):
             "mod_biomeloadhang_countdown": 60,
             "mod_biomeloadhang_kill": False,
             # mod challenge
+            "mod_challenge_cooldown_seconds": 24*3600,
             "mod_challenge_distance": 1600,
             "mod_challenge_enable": False,
             "mod_challenge_quitters_teleport_enable": True,
