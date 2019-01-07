@@ -212,7 +212,9 @@ class Portals(threading.Thread):
 
     def delete_portal(self, player, portal):
         if portal["steamid"] != player["steamid"]:
-            self.logger.info("Player {} attempted to delete portal {} that does not belong to him/her.".format(player["name"], portal["name"]))
+            self.logger.info("Player {} attempted to delete portal {} that does"\
+                             " not belong to him/her.".format(
+                                 player["name"], portal["name"]))
             self.controller.server.pm(
                 player, "You cannot delete portals you do not own.")
             return
@@ -314,11 +316,11 @@ class Portals(threading.Thread):
         if player["steamid"] in self.cooldowns:
             if now - self.cooldowns[player["steamid"]] < self.controller.config.values["mod_portals_cooldown_seconds"]:
                 self.controller.server.pm(
-                    player, "Your portal use is in cooldown for another {} "\
-                    "seconds.".format(
+                    player, "Your portal use is in cooldown for another {}.".\
+                    format(self.controller.qol.pretty_print_seconds(
                         int(self.controller.config.values[
                             "mod_portals_cooldown_seconds"] - now + \
-                            self.cooldowns[player["steamid"]])))
+                            self.cooldowns[player["steamid"]]))))
                 return True
         self.cooldowns[player["steamid"]] = now
         return False

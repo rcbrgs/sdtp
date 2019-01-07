@@ -21,6 +21,7 @@ from .mods.legfix import LegFix
 from .mods.mostkills import MostKills
 from .mods.portals import Portals
 from .mods.qol import Qol
+from .mods.relax import Relax
 from .mods.serverreboots import ServerReboots
 from .mods.vote import Vote
 
@@ -133,6 +134,8 @@ class Controller(threading.Thread):
         self.portals = Portals(self)
         self.qol = Qol(self)
         self.qol.start()
+        self.relax = Relax(self)
+        self.relax.start()
         self.serverreboots = ServerReboots(self)
         self.serverreboots.start()
         self.vote = Vote(self)
@@ -149,6 +152,7 @@ class Controller(threading.Thread):
             self.mostkills,
             #self.ping_limiter,
             self.portals,
+            self.relax,
             self.qol,
             self.serverreboots,
             self.vote]

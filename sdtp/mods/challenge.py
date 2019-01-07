@@ -120,24 +120,21 @@ class Challenge(threading.Thread):
                 self.remove_from_challenge(player)
                 continue
             entry = self.ongoing_challenges[key]
-            if now - entry["latest_turn"] > self.controller.config.values["mod_challenge_round_interval"]:
+            if now - entry["latest_turn"] > self.controller.config.values[
+                    "mod_challenge_round_interval"]:
                 entry["latest_turn"] = now
                 entry["level"] += 1
                 self.challenge_round(
-                    self.ongoing_challenges[key]["player_id"],
-                    self.ongoing_challenges[key]["level"])
+                    player,
+                    entry["level"])
 
     def reset_daily_counts(self, match_groups):
         self.challenged_today = []
                 
-    def challenge_round(self, player_id, level):
-        regular_zombies = [4, 7, 8, 11, 14, 17, 20, 24, 27, 30, 33, 36, 41, 44,
-                           46, 49, 50, 52, 54, 57, 58, 61, 64, 67, 70, 73, 76,
-                           78, 86, 88, 90, 92]
-        feral_zombies = [2, 5, 9, 12, 15, 18, 21, 25, 28, 31, 34, 37, 40, 42, 45,
-                         47, 51, 53, 55, 59, 62, 65, 68, 71, 74, 77, 79, 87]
-        radiated_zombies = [3, 6, 10, 13, 16, 19, 22, 26, 29, 32, 35, 38, 43, 48,
-                            56, 60, 66, 69, 72, 75]
+    def challenge_round(self, player, level):
+        regular_zombies = self.controller.server.normal_zombies
+        feral_zombies = self.controller.server.feral_zombies
+        radiated_zombies = self.controller.server.radiated_zombies
         regulars = 0
         ferals = 0
         radiated = 0
@@ -159,14 +156,14 @@ class Challenge(threading.Thread):
             radiated = int(level / 10)
 
         for zombie in range(regulars):
-            self.controller.telnet.write('se {} {}'.format(
-                player_id, random.choice(regular_zombies)))
+            self.controller.server.se(
+                player, random.choice(regular_zombies))
         for zombie in range(ferals):
-            self.controller.telnet.write('se {} {}'.format(
-                player_id, random.choice(feral_zombies)))
+            self.controller.server.se(
+                player, random.choice(feral_zombies))
         for zombie in range(radiated):
-            self.controller.telnet.write('se {} {}'.format(
-                player_id, random.choice(radiated_zombies)))
+            self.controller.server.se(
+                player, random.choice(radiated_zombies))
 
     def check_for_challenge_death(self, match_groups):
         name = match_groups[7]

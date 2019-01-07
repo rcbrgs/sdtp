@@ -209,8 +209,8 @@ class Database(threading.Thread):
         if callback == print:
             self.logger.debug("Ignoring 'print' callback." )
             return
-        self.logger.debug("Trying callback '{} ( {} )'.".format ( callback, results ) )
-        callback ( results )
+        self.logger.debug("Trying callback '{}({})'.".format(callback, results))
+        callback(results)
 
     def __consult ( self, table, conditions, callback, pass_along ):
         self.logger.debug("Querying table {} with conditions '{}'.".format ( table, conditions ) )

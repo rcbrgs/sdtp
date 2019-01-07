@@ -77,6 +77,10 @@ class Config(object):
             "mod_qol_gimme_quantity": 1,
             "mod_qol_gimme_what": "food",
             "mod_qol_greeting": "[00FFFF]Ah! Fresh meat to feed my hungry zombies!",
+            # mod relax
+            "mod_relax_cooldown_seconds": 24*3600, 
+            "mod_relax_enable": False,
+            "mod_relax_percentage_doubling_zombies": 25,
             # mod server reboots
             "mod_serverreboots_enable": False,
             "mod_serverreboots_interval": 12,
@@ -146,4 +150,6 @@ class Config(object):
         if self.values [ key ] == False:
             self.values [ key ] = True
             return
-        self.logger.error("config.toggle ( {} ) called, but value for key is not a boolean.".format ( key ) )
+        self.logger.error(
+            "config.toggle({}) called, but value for key is not a boolean.".\
+            format(key))

@@ -9,7 +9,8 @@ class TableCooldowns(Base, Table_abstract):
     __tablename__ = "cooldowns"
     aid = Column(Integer, primary_key = True)
     steamid = Column(Integer)
-    bears = Column(Integer)
+    bears = Column(Integer, default = 0)
+    relax = Column(Integer, default = 0)
     
     def create ( self, engine ):
         global Base
@@ -17,4 +18,5 @@ class TableCooldowns(Base, Table_abstract):
 
     fields = { "aid" : { "multiplicity" : 0 },
                "steamid" : { "multiplicity" : 0 },
-               "bears" : { "multiplicity" : 0 }}
+               "bears" : { "multiplicity" : 0 },
+               "relax": {"multiplicity": 0}}
