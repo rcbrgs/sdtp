@@ -43,7 +43,6 @@ class Config(object):
                                             {"text": "Seven Days To Py - get it at https://github.com/rcbrgs/sdtp",
                                              "interval": 24*3600,
                                              "latest": -1}},
-                                                    
             # mod biome load hang
             "mod_biomeloadhang_enable": False,
             "mod_biomeloadhang_countdown": 60,

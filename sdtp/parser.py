@@ -40,7 +40,7 @@ class Parser(threading.Thread):
             'AIDirector wanderer removed from control': self.match_prefix + r'INF AIDirector: Wandering horde zombie \'\[type=.*, name=.*, id=[\d]+\]\' removed from control',
             'AIDirector Scout Horde Spawn Finished' : self.match_prefix + r'INF AIDirector: Scout horde spawn finished \(all mobs spawned\)$',
             'AIDirector scout horde spawned': self.match_prefix + r'INF AIDirector: scout horde spawned .* Moving to point of interest',
-            'AIDirector spawning scouts': self.match_prefix + r'INF AIDirector: Spawning scouts at ' + self.match_string_pos + r' heading towards ' + self.match_string_pos,           
+            'AIDirector spawning scouts': self.match_prefix + r'INF AIDirector: Spawning scouts at ' + self.match_string_pos + r', heading towards ' + self.match_string_pos,           
 #            'AI scout fail' : self.match_prefix + r'INF AIDirector: Scout spawning failed, FindHordeTargets\(\) returned false!',
 #            'AI scout horde' : self.match_prefix + r'INF AIDirector: scout horde zombie \'\[type=EntityZombie, name=spiderzombie, id=[\d]+\]\' was spawned and is moving towards point of interest\.$',
 #            'AI scout remove' : self.match_prefix + r'INF AIDirector: scout horde zombie \'[type=[\w]+, name=[\w]+, id=[\d]+\]\' is being removed from horde control.$',
@@ -207,7 +207,7 @@ class Parser(threading.Thread):
 #                                       r'[\d]+ [\w\d]+ [\d]+\' by Telnet from ' + self.match_string_ip + \
 #                                       r':[\d]+$',
 #                                       'to_call'  : [ ] },
-            'et from': r'[net]+ from ' + self.match_string_ip_port + r'$',
+            'et from': r'[lnet\s]+from ' + self.match_string_ip_port + r'$',
             'Exception Err': r'Exception: Err',
 #            'executing cmd lkp' : self.match_prefix + r'INF Executing command \'lkp\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ ] },

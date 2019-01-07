@@ -104,7 +104,7 @@ class MostKills(threading.Thread):
     def announce_counts(self, match_groups):
         self.logger.debug(match_groups)
         max_player, max_count = self.count_most_kills(self.yesterday_players)
-        if int(match_groups[1]) not in [4, 8, 12, 16, 20]:
+        if int(match_groups[1]) not in [6, 10, 14, 18, 22]:
             return
         self.logger.debug("Announcing most kills counts.")
         if max_count > 0:

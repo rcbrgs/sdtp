@@ -33,6 +33,8 @@ class Announcements(threading.Thread):
         self.commands = self.controller.config.values[
             "mod_announcements_commands"]
         for key in self.commands:
+            if not self.commands[key]["command"]:
+                continue
             self.controller.help.registered_commands[
                 key] = self.commands[key]["text"]
         self.controller.dispatcher.register_callback(
