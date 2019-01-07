@@ -215,8 +215,7 @@ class Parser(threading.Thread):
 #                                       r'[\d]+ [\d]+\' by Telnet from ' + self.match_string_ip + \
 #                                       r':[\d]+$',
 #                                       'to_call'  : [ ] },
-#            'executing version' : self.match_prefix + r'INF Executing command \'version\' from client [\d]+$',
-#                                       'to_call'  : [ ] },
+            'executing cmd client' : self.match_prefix + r'INF Executing command \'.*\' from client [\d]+$',
             "existing connection closed" : r"SocketException: An existing connection was forcibly closed by the remote host.",
 #            'failed set triangles' : r'Failed setting triangles. Some indices are referencing out of bounds vertices. IndexCount: [\d]+, VertexCount: [\d]+$',
 #                                       'to_call'  : [ ] },

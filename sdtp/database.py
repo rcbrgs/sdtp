@@ -162,7 +162,7 @@ class Database(threading.Thread):
         self.logger.debug("create_engine()")
         config = self.controller.config.values
         if config [ "db_engine" ] == "sqlite":
-            engine_string = "sqlite:///" + config [ "db_sqlite_file_path" ]
+            engine_string = "sqlite:///" + config [ "database_file_name" ]
         else:
             engine_string = config [ "db_engine" ] + config [ "db_user" ] + \
                             ":" + config [ "db_host_user" ] + "@" + \

@@ -12,23 +12,19 @@ class Config(object):
         self.controller = controller
         self.logger = logging.getLogger(__name__)
 
+        self.configuration_file_valid = False
         self.values = {
             "app_name" : "sdtp",
             "chat_input_name" : "",
-            "configuration_file_name" : "default.json",
-            "database_file_name" : "sdtp_sqlite.db",
+            "configuration_file_name" : "sdtp_config.json",
+            "database_file_name" : "sdtp_db.sqlite",
             "db_engine" : "sqlite",
-            "enable_lp" : True,
-            "enable_ping_limiter" : False,
             "interval_gt": 15,
             "interval_lkp": 3600,
             "interval_llp": 60,
             "interval_lp" : 5,
             "interval_tick": 60,
             "latest_reboot" : 0,
-            "log_file_name" : "sdtp.log",
-            "log_file_path" : "",
-            "max_ping" : 10000,
             "night_time_begins_at": 22,
             "night_time_ends_at": 4,
             "sdtp_greetings" : "[sdtp] Seven Days To Py: started.",
@@ -40,7 +36,8 @@ class Config(object):
             # mod announcements
             "mod_announcements_enable": True,
             "mod_announcements_commands": {"sdtp":
-                                            {"text": "Seven Days To Py - get it at https://github.com/rcbrgs/sdtp",
+                                            {"command": False,
+                                             "text": "Seven Days To Py - get it at https://github.com/rcbrgs/sdtp",
                                              "interval": 24*3600,
                                              "latest": -1}},
             # mod biome load hang
@@ -91,10 +88,6 @@ class Config(object):
                                     "quantity": ""}],
             "mod_vote_server_api_key": "Get it from https://7daystodie-servers.com",
         }
-        self.values["config_file"] = "{}_preconfig.json".format(
-            self.values["app_name"])
-        self.values["db_sqlite_file_path"] = "{}_default_db.sqlite".format(
-            self.values["app_name"])
 
     def falsify ( self, key ):
         self.values [ key ] = False
@@ -112,41 +105,39 @@ class Config(object):
     def set ( self, key, value ):
         self.values [ key ] = value
 
-    def load_configuration_file ( self ):
+    def load_configuration_file (self):
         try:
-            preconfig_file = open ( self.get ( "config_file" ), "r" )
+            config_file = open(self.get("configuration_file_name"), "r")
         except:
-            self.logger.error("Could not open the pre-configuration file {}.".format ( self.get ( "config_file" ) ) )
+            self.logger.error("Could not open the configuration file {}.".format(
+                self.get("configuration_file_name")))
+            self.configuration_file_valid = True
             return
         try:
-            preconfig = json.load ( preconfig_file )
-            for key in list ( preconfig.keys ( ) ):
-                self.logger.debug("config [ \"{}\" ] = {}".format ( key, preconfig [ key ] ) )
-                self.values [ key ] = preconfig [ key ]
-            self.logger.debug("Loaded pre-configuration file." )
+            config = json.load ( config_file )
+            for key in list ( config.keys ( ) ):
+                self.logger.debug("config[\"{}\"] = {}".format(
+                    key, config[key]))
+                self.values [ key ] = config [ key ]
+            self.configuration_file_valid = True
+            self.logger.info("Loaded configuration file {}.".format(
+                self.get("configuration_file_name")))
         except ValueError:
-            self.logger.info("Configuration file named '{}' is invalid. Using default values.".format ( self.get ( "config_file" ) ) )
+            self.logger.error(
+                "Configuration file named '{}' is invalid.".format(
+                    self.get("configuration_file_name")))
             return
-
-        try:
-            config_file = open ( self.get ( "config_file" ), "r" )
-        except IOError:
-            self.logger.error("Could not open the configuration file {}.".format ( self.get ( "config_file" ) ) )
-            return
-        try:
-            final_config = json.load ( config_file )
-            for key in list ( final_config.keys ( ) ):
-                self.logger.debug("config [ \"{}\" ] = {}".format ( key, final_config [ key ] ) )
-                self.values [ key ] = final_config [ key ]
-            self.logger.debug("Loaded configuration file." )
-        except ValueError:
-            self.logger.info("Configuration file named '{}' is invalid. Using default values.".format ( self.get ( "config_file" ) ) )
 
     def save_configuration_file ( self ):
-        self.logger.debug("saving current configuration in '{}'.".format ( self.get ( "config_file" ) ) )
-        config_file = open ( self.get ( "config_file" ), "w" )
+        if not self.configuration_file_valid:
+            self.logger.error("Not saving invalid configuration file.")
+            return
+        self.logger.info("Saving current configuration in '{}'.".format(
+            self.get("configuration_file_name")))
+        config_file = open(self.get("configuration_file_name"), "w")
         json.dump(self.values, config_file, indent=4, sort_keys=True)
-        self.logger.debug("Configuration file '{}' saved.".format ( self.get ( "config_file" ) ) )
+        self.logger.debug("Configuration file '{}' saved.".format(
+            self.get("configuration_file_name")))
 
     def toggle ( self, key ):
         if self.values [ key ] == True:
