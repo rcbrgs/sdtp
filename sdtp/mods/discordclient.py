@@ -112,6 +112,9 @@ class DiscordClient(threading.Thread):
                 user, message))
 
     def print_on_discord(self, match_groups):
+        if not self.keep_running:
+            return
+        
         self.logger.debug(match_groups)
         if match_groups[11] == "Tick":
             return

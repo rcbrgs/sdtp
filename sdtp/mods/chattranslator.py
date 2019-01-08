@@ -59,6 +59,9 @@ class ChatTranslator(threading.Thread):
     def parse_chat_message(self, match_groups):
         reconstructed_message = "[{}] {}: {}".format(
             match_groups[9], match_groups[10], match_groups[11])
+        self.logger.info("reconstructed_message = {}".format(
+            reconstructed_message))
+        
         emitter = match_groups[10]
         if match_groups[10] == "Server":
             if len (match_groups[11]) > len("[discord]"):
@@ -69,6 +72,12 @@ class ChatTranslator(threading.Thread):
         message = match_groups[11]
         if message[0] == "/":
             return
+        if "[discord]" in message:
+            msg = message.split("[discord] ")[1]
+            message = msg.split(": ", 1)[1]
+            emitter = msg.split(": ", 1)[0]
+        self.logger.info("emitter = {}, message = {}")
+        
         detect = self.translator.detect(message)
         self.logger.info("Detected language: {}".format(detect.lang))
 
