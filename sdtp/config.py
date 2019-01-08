@@ -55,6 +55,8 @@ class Config(object):
             "mod_chatlogger_file_path": "chat.txt",
             # mod chat translator
             "mod_chattranslator_enable": False,
+            "mod_chattranslator_serverwide_enable": False,
+            "mod_chattranslator_serverwide_language": "en",
             # mod claim alarm
             "mod_claimalarm_distance": 10,
             "mod_claimalarm_enable": False,

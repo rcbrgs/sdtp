@@ -59,15 +59,33 @@ class ChatTranslator(threading.Thread):
     def parse_chat_message(self, match_groups):
         reconstructed_message = "[{}] {}: {}".format(
             match_groups[9], match_groups[10], match_groups[11])
+        emitter = match_groups[10]
         if match_groups[10] == "Server":
-            return
+            if len (match_groups[11]) > len("[discord]"):
+                if match_groups[11][:len("[discord]")] != "[discord]":
+                    return
+            else:
+                return    
         message = match_groups[11]
         if message[0] == "/":
             return
         detect = self.translator.detect(message)
         self.logger.info("Detected language: {}".format(detect.lang))
+
+        translations = {}
+        if self.controller.config.values["mod_chattranslator_serverwide_enable"]:
+            self.logger.info("Serverwide translations are enabled.")
+            if detect.lang != self.controller.config.values[
+                    "mod_chattranslator_serverwide_language"]:               
+                translation = self.translator.translate(
+                    message, dest=self.controller.config.values[
+                        "mod_chattranslator_serverwide_language"])
+                translations[self.controller.config.values[
+                    "mod_chattranslator_serverwide_language"]] = translation
+                self.controller.server.say(
+                    "{}: {}".format(emitter, translation.text))
+        
         for player in self.controller.worldstate.online_players:
-            
             answer = self.controller.database.blocking_consult(
                 ChatTranslatorTable,
                 [(ChatTranslatorTable.steamid, "==", player["steamid"])])
@@ -82,10 +100,15 @@ class ChatTranslator(threading.Thread):
                 return
             if detect.lang in chat_translator["languages_known"]:
                 return
-            translation = self.translator.translate(
-                message, dest=chat_translator["target_language"])
-            self.logger.info("Translation to {}: {}".format(
-                chat_translator["target_language"], translation))
+            translation = ""
+            if chat_translator["target_language"] in translations:
+                translation = translations[chat_translator["target_language"]]
+            else:
+                translation = self.translator.translate(
+                    message, dest=chat_translator["target_language"])
+                translations[chat_translator["target_language"]] = translation
+                self.logger.info("Translation to {}: {}".format(
+                    chat_translator["target_language"], translation.text))
             self.controller.server.pm(player, "{}: {}".format(
                 emitter, translation.text))
 

@@ -4,7 +4,7 @@ import discord
 import logging
 import zmq
 
-class DiscordClient(discord.Client):
+class DiscordWrapper(discord.Client):
     def __init__(self, listen_socket):
         super().__init__()
         self.listen_socket = listen_socket
@@ -18,7 +18,6 @@ class DiscordClient(discord.Client):
         if message.author == self.user:
             self.logger.info("Dropping self message.")
             return
-        #self.channel = message.channel
         self.listen_socket.send_string("{}: {}".format(
             message.author, message.content))
         self.listen_socket.recv()
@@ -67,43 +66,34 @@ listen_socket = context.socket(zmq.REQ)
 listen_socket.connect('tcp://127.0.0.1:{}'.format(args.listen_port))
 logger.info("Listen socket connected.")
 
-async def talk_to_discord(discord_client):
+talk_socket = context.socket(zmq.REP)
+talk_socket.bind('tcp://127.0.0.1:{}'.format(args.talk_port))
+logger.info("Talk socket created.")
+
+poller = zmq.Poller()
+poller.register(talk_socket)
+
+async def talk_to_discord(discord_client, talk_socket, poller):
     logger = logging.getLogger(__name__)
-
-    talk_socket = context.socket(zmq.REP)
-    talk_socket.bind('tcp://127.0.0.1:{}'.format(args.talk_port))
-    logger.info("Talk socket created.")
-
-    poller = zmq.Poller()
-    poller.register(talk_socket)
  
     while True:
         try:
-            poll = dict(poller.poll(1000))
+            poll = dict(poller.poll(100))
+            await asyncio.sleep(.01)
         except KeyboardInterrupt as e:
             break
+        
         if talk_socket in poll and poll[talk_socket] == zmq.POLLIN:
+            logger.info("Receiving msg.")
             msg = talk_socket.recv().decode("utf-8")
-            #talk_socket.send(b'ACK')
-            logger.info(msg)
+            logger.info("Sending ACK.")
+            talk_socket.send(b'ACK')
+
+            logger.info("discord_client.talk({})".format(msg))
             await discord_client.talk(msg)
-        else:
-            talk_socket.setsockopt(zmq.LINGER, 0)
-            talk_socket.close()
-            poller.unregister(talk_socket)
 
-            await asyncio.sleep(.1)
-            talk_socket = context.socket(zmq.REP)
-            talk_socket.bind('tcp://127.0.0.1:{}'.format(args.talk_port))
-            poller.register(talk_socket)
-                
-            logger.debug("Talk socket created.")
-            
-
-        await asyncio.sleep(.1)
-
-integration = DiscordClient(listen_socket)
-integration.loop.create_task(talk_to_discord(integration))
+integration = DiscordWrapper(listen_socket)
+integration.loop.create_task(talk_to_discord(integration, talk_socket, poller))
 logger.info("Loop task created.")
 
 loop = asyncio.get_event_loop()

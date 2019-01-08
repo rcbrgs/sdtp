@@ -27,10 +27,10 @@ class Server(threading.Thread):
         self.logger.info("Stop.")
 
     def setup(self):
-        self.normal_zombies = [4, 7, 8, 11, 14, 17, 20, 27, 30, 33, 36, 41,
+        self.normal_zombies = [4, 8, 11, 14, 17, 20, 27, 30, 33, 36, 41,
                                44, 46, 49, 50, 52, 57, 58, 61, 64, 67, 70,
                                73, 76, 78]
-        self.special_zombies = [24, 54]
+        self.special_zombies = [7, 24, 54]
         self.feral_zombies = [2, 5, 9, 12, 15, 18, 21, 25, 28, 31, 34, 37, 40,
                               42, 45, 47, 51, 53, 55, 59, 62, 65, 68, 71, 74,
                               77, 79, 87]
