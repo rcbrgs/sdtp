@@ -58,6 +58,13 @@ class Config(object):
             # mod claim alarm
             "mod_claimalarm_distance": 10,
             "mod_claimalarm_enable": False,
+            # mod discord client
+            "mod_discordclient_channel": "sdtp",
+            "mod_discordclient_enable": False,
+            "mod_discordclient_guild_id": "Guild ID",
+            "mod_discordclient_listen_port": 5555,
+            "mod_discordclient_talk_port": 6666,
+            "mod_discordclient_token": "TOKEN",
             # mod forbidden countries
             "mod_forbiddencountries_enable": False,
             "mod_forbiddencountries_banned_countries": ["ch", "ru"],

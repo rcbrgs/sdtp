@@ -15,6 +15,7 @@ from .mods.challenge import Challenge
 from .mods.chatlogger import ChatLogger
 from .mods.chattranslator import ChatTranslator
 from .mods.claimalarm import ClaimAlarm
+from .mods.discordclient import DiscordClient
 from .mods.forbiddencountries import ForbiddenCountries
 from .mods.legfix import LegFix
 #from .mods.ping_limiter import ping_limiter
@@ -59,6 +60,7 @@ class Controller(threading.Thread):
         self.chatlogger = None
         self.chattranslator = None
         self.claimalarm = None
+        self.discordclient = None
         self.forbiddencountries = None
         self.legfix = None
         self.mostkills = None
@@ -124,6 +126,8 @@ class Controller(threading.Thread):
         self.chatlogger.start()
         self.chattranslator = ChatTranslator(self)
         self.claimalarm = ClaimAlarm(self)
+        self.discordclient = DiscordClient(self)
+        self.discordclient.start()
         self.forbiddencountries = ForbiddenCountries(self)
         self.forbiddencountries.start()
         self.legfix = LegFix(self)
@@ -147,6 +151,7 @@ class Controller(threading.Thread):
             self.chatlogger,
             self.chattranslator,
             self.claimalarm,
+            self.discordclient,
             self.forbiddencountries,
             self.legfix,
             self.mostkills,
@@ -187,6 +192,7 @@ class Controller(threading.Thread):
                     "controller.stop: Waiting on mod {} to stop.".format(
                         mod.__class__))
                 time.sleep(0.1)
+
         self.config.save_configuration_file()
         self.friendships.stop()
         self.server.stop()
@@ -195,6 +201,7 @@ class Controller(threading.Thread):
         self.metronomer.stop()
         self.database.stop()
         self.parser.stop()
+        self.parser.join()
         self.telnet.stop()
         for component in self.components:
             if component == self.dispatcher:

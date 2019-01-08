@@ -45,7 +45,8 @@ class Telnet(threading.Thread):
             except Exception as e:
                 self.logger.error("Error {} while processing line.decode('{}')".format(e, line))
             self.logger.debug(line_string)
-            self.controller.parser.enqueue(line_string)
+            if self.controller.parser is not None:
+                self.controller.parser.enqueue(line_string)
         self.close_connection()
         self.logger.debug("run() finished.")
 
@@ -185,7 +186,7 @@ class Telnet(threading.Thread):
             return
         return line
 
-    def write ( self, input_msg, lock_after_write = False ):
+    def write(self, input_msg, lock_after_write = False):
         count = 0
         while self.write_lock:
             time.sleep(0.1)
@@ -194,7 +195,8 @@ class Telnet(threading.Thread):
                 self.logger.warning("Forcefully releasing write lock.")
                 self.write_lock = False
         if self.connectivity_level == 0:
-            self.logger.debug("Ignoring attempt to write  with level 0 connectivity." )
+            self.logger.debug(
+                "Ignoring attempt to write  with level 0 connectivity." )
             return
 
         self.logger.debug("write({}, {})".format(input_msg, lock_after_write))

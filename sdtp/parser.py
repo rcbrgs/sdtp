@@ -495,34 +495,39 @@ class Parser(threading.Thread):
 
     def run ( self ):
         self.logger.info("Start.")
-        while ( self.keep_running ):
-            line = self.dequeue ( )
-            if line [ "text" ]  == "":
+        while(self.keep_running):
+            line = self.dequeue()
+            if line["text"]  == "":
                 continue
             self.logger.debug("line = {}".format ( line ) )
-            if type ( line [ "text" ] ) != str:
+            if type (line["text"]) != str:
                 self.logger.debug(
                     "type(line['text']) = {}".format(type(line["text"])))
                 try:
-                    line [ "text" ] = bytes ( line [ "text" ] )
+                    line["text"] = bytes(line["text"])
                 except Exception as e:
-                    self.logger.error("Unable to cast to bytes." )
+                    self.logger.error("Unable to cast to bytes.")
                     return
             any_match = False
-            for key in self.matchers.keys ( ):
-                match = self.matchers [ key ].search ( line [ 'text' ] )
+            for key in self.matchers.keys():
+                match = self.matchers[key].search(line['text'])
                 if match:
                     any_match = True
                     matched_key = key
-                    match_timestamp = time.time ( )
-                    self.logger.debug("key '{}', match.groups = '{}'.".format ( key, match.groups ( ) ) )
-                    self.controller.dispatcher.call_registered_callbacks ( key, match.groups ( ) )
+                    match_timestamp = time.time()
+                    self.logger.debug("key '{}', match.groups = '{}'.".format(
+                        key, match.groups()))
+                    self.controller.dispatcher.call_registered_callbacks(
+                        key, match.groups())
+                    self.logger.debug("Dispatcher called for key '{}'.".format(
+                        key))
 
             if not any_match:
                 try:
-                    self.logger.info("Unparsed output: '{}'.".format ( line [ "text" ] ) )
+                    self.logger.info("Unparsed output: '{}'.".format
+                                     (line["text"]))
                 except UnicodeEncodeError as e:
-                    self.logger.error("UnicodeEncodeError: {}".format ( e ) )
+                    self.logger.error("UnicodeEncodeError: {}".format(e))
                 continue
 
     def stop ( self ):

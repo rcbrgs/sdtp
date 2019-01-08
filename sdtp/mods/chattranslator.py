@@ -71,6 +71,9 @@ class ChatTranslator(threading.Thread):
             answer = self.controller.database.blocking_consult(
                 ChatTranslatorTable,
                 [(ChatTranslatorTable.steamid, "==", player["steamid"])])
+            if len(answer) == 0:
+                self.logger.debug("Player hasn't setup translations.")
+                return
             if len(answer) != 1:
                 self.logger.error("DB entry not unique.")
                 return
