@@ -59,7 +59,7 @@ class ChatTranslator(threading.Thread):
     def parse_chat_message(self, match_groups):
         reconstructed_message = "[{}] {}: {}".format(
             match_groups[9], match_groups[10], match_groups[11])
-        self.logger.info("reconstructed_message = {}".format(
+        self.logger.debug("reconstructed_message = {}".format(
             reconstructed_message))
         
         emitter = match_groups[10]
@@ -76,14 +76,14 @@ class ChatTranslator(threading.Thread):
             msg = message.split("[discord] ")[1]
             message = msg.split(": ", 1)[1]
             emitter = msg.split(": ", 1)[0]
-        self.logger.info("emitter = {}, message = {}")
+        self.logger.debug("emitter = {}, message = {}")
         
         detect = self.translator.detect(message)
-        self.logger.info("Detected language: {}".format(detect.lang))
+        self.logger.debug("Detected language: {}".format(detect.lang))
 
         translations = {}
         if self.controller.config.values["mod_chattranslator_serverwide_enable"]:
-            self.logger.info("Serverwide translations are enabled.")
+            self.logger.debug("Serverwide translations are enabled.")
             if detect.lang != self.controller.config.values[
                     "mod_chattranslator_serverwide_language"]:               
                 translation = self.translator.translate(

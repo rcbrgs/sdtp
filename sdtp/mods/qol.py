@@ -274,5 +274,8 @@ class Qol(threading.Thread):
             return "{} hours, {} minutes and {} seconds".format(
                 hours, minutes, secs)
         if minutes > 0:
-            return "{} minutes and {} seconds".format(minutes, secs)
+            if secs > 0:
+                return "{} minutes and {} seconds".format(minutes, secs)
+            else:
+                return "{} minutes".format(minutes, secs)
         return "{} seconds".format(secs)

@@ -124,16 +124,16 @@ class DiscordClient(threading.Thread):
         msg = "{}: {}".format(
             match_groups[10], match_groups[11])
                
-        self.logger.info("Sending string '{}'.".format(msg))
+        self.logger.debug("Sending string '{}'.".format(msg))
         self.talk_socket.send_string(msg)
         
-        self.logger.info("Polling for ACK.")
+        self.logger.debug("Polling for ACK.")
         polling = dict(self.talk_poller.poll(1000))
         
-        self.logger.info("Checking polling.")
+        self.logger.debug("Checking polling.")
         if self.talk_socket in polling and \
            polling[self.talk_socket] == zmq.POLLIN:
-            self.logger.info("Receiving ACK.")
+            self.logger.debug("Receiving ACK.")
             self.talk_socket.recv()
 
-        self.logger.info("Returning.")
+        self.logger.debug("Returning.")

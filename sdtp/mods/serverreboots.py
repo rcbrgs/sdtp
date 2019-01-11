@@ -103,5 +103,7 @@ class ServerReboots(threading.Thread):
             return
 
         time_to_shutdown = 300 - time_difference
-        if time_to_shutdown % 60 == 0 or (time_to_shutdown < 30 and time_to_shutdown % 5 == 0):
-            self.controller.telnet.write ( 'say "Shutdown in {} seconds."'.format ( time_to_shutdown ) )
+        if time_to_shutdown % 60 == 0 or \
+           (time_to_shutdown < 30 and time_to_shutdown % 5 == 0):
+            self.controller.telnet.write('say "Shutdown in {}."'.format(
+                self.controller.qol.pretty_print_seconds(time_to_shutdown)))

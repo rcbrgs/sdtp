@@ -16,7 +16,7 @@ class DiscordWrapper(discord.Client):
     async def on_message(self, message):
         self.logger.info("{}: {}".format(message.author, message.content))
         if message.author == self.user:
-            self.logger.info("Dropping self message.")
+            self.logger.debug("Dropping self message.")
             return
         self.listen_socket.send_string("{}: {}".format(
             message.author, message.content))
@@ -41,7 +41,7 @@ class DiscordWrapper(discord.Client):
         self.logger.info("channel = {}".format(self.channel))
         
     async def talk(self, msg):
-        self.logger.info("msg = {}".format(msg))
+        self.logger.debug("msg = {}".format(msg))
         if self.channel is not None:
             await self.channel.send("[chat] {}".format(msg))
         else:
@@ -84,12 +84,12 @@ async def talk_to_discord(discord_client, talk_socket, poller):
             break
         
         if talk_socket in poll and poll[talk_socket] == zmq.POLLIN:
-            logger.info("Receiving msg.")
+            logger.debug("Receiving msg.")
             msg = talk_socket.recv().decode("utf-8")
-            logger.info("Sending ACK.")
+            logger.debug("Sending ACK.")
             talk_socket.send(b'ACK')
 
-            logger.info("discord_client.talk({})".format(msg))
+            logger.debug("discord_client.talk({})".format(msg))
             await discord_client.talk(msg)
 
 integration = DiscordWrapper(listen_socket)

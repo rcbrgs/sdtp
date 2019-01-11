@@ -75,3 +75,4 @@ class LegFix(threading.Thread):
             player["steamid"]))
         self.controller.telnet.write('debuffplayer {} buffLegSprained'.format(
             player["steamid"]))
+        self.controller.server.pm(player, "Your leg is magically fixed.")
