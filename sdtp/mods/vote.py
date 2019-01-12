@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------------------------80
 
+import certifi
 import logging
 import re
 import threading
@@ -73,7 +74,9 @@ class Vote(threading.Thread):
 
     def claim(self, player, arguments):
         self.logger.debug("Checking if {} has voted.".format(player["name"]))
-        http = urllib3.PoolManager()
+        http = urllib3.PoolManager(
+            cert_reqs = 'CERT_REQUIRED',
+            ca_certs = certifi.where())
         r = http.request('GET', 'https://7daystodie-servers.com/api/?object='\
                          'votes&element=claim&key={}&steamid={}'.format(
                              self.controller.config.values[

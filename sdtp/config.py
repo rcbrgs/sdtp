@@ -70,6 +70,8 @@ class Config(object):
             # mod forbidden countries
             "mod_forbiddencountries_enable": False,
             "mod_forbiddencountries_banned_countries": ["ch", "ru"],
+            # mod interpreter
+            "mod_interpreter_enable": False,
             # mod leg fix
             "mod_legfix_enable": False,
             # mod most kills

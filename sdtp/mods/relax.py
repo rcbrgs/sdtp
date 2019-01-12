@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------------------------80
 
+import copy
 import logging
 import random
 import re
@@ -101,22 +102,24 @@ class Relax(threading.Thread):
                     TableCooldowns, [TableCooldowns(
                         steamid = player["steamid"],
                         relax = now)])
+            self.logger.info("Player cooldown added/updated.")
         else:
             del self.relaxing_players[player["steamid"]]
             self.controller.server.pm(player, "Your relaxation session ends.")
 
     def run_relaxation(self):
+        relaxers = copy.copy(self.relaxing_players)
         try:
-            for steamid in self.relaxing_players.keys():
+            for steamid in relaxers.keys():
                 player = self.controller.worldstate.get_player_steamid(steamid)
-                if player["deaths"] > self.relaxing_players[steamid]["deaths"]:
+                if player["deaths"] > relaxers[steamid]["deaths"]:
                     self.toggle_relax(player)
                     return
-                if player["zombies"] > self.relaxing_players[steamid]["zombies"]:
-                    self.relaxing_players[steamid]["relax"] = False
-                    self.relaxing_players[steamid]["zombies"] = player["zombies"]
-                if not self.relaxing_players[steamid]["relax"]:
-                    self.relaxing_players[steamid]["relax"] = True
+                if player["zombies"] > relaxers[steamid]["zombies"]:
+                    relaxers[steamid]["relax"] = False
+                    relaxers[steamid]["zombies"] = player["zombies"]
+                if not relaxers[steamid]["relax"]:
+                    relaxers[steamid]["relax"] = True
                     self.controller.server.se(
                         player, random.choice(
                             self.controller.server.normal_zombies))
@@ -125,6 +128,10 @@ class Relax(threading.Thread):
                         self.controller.server.se(
                             player, random.choice(
                                 self.controller.server.normal_zombies))
+
+                self.relaxing_players[steamid] = player
+                self.relaxing_players[steamid]["relax"] = relaxers[
+                    steamid]["relax"]
         except KeyError:
             self.log.debug(
                 "Player toggled out while run_relaxation was in course.")

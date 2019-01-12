@@ -17,6 +17,7 @@ from .mods.chattranslator import ChatTranslator
 from .mods.claimalarm import ClaimAlarm
 from .mods.discordclient import DiscordClient
 from .mods.forbiddencountries import ForbiddenCountries
+from .mods.interpreter import Interpreter
 from .mods.legfix import LegFix
 #from .mods.ping_limiter import ping_limiter
 from .mods.mostkills import MostKills
@@ -62,6 +63,7 @@ class Controller(threading.Thread):
         self.claimalarm = None
         self.discordclient = None
         self.forbiddencountries = None
+        self.interpreter = None
         self.legfix = None
         self.mostkills = None
         #self.ping_limiter = None
@@ -130,6 +132,8 @@ class Controller(threading.Thread):
         self.discordclient.start()
         self.forbiddencountries = ForbiddenCountries(self)
         self.forbiddencountries.start()
+        self.interpreter = Interpreter(self)
+        self.interpreter.start()
         self.legfix = LegFix(self)
         self.legfix.start()
         self.mostkills = MostKills(self)
@@ -153,6 +157,7 @@ class Controller(threading.Thread):
             self.claimalarm,
             self.discordclient,
             self.forbiddencountries,
+            self.interpreter,
             self.legfix,
             self.mostkills,
             #self.ping_limiter,
@@ -194,6 +199,7 @@ class Controller(threading.Thread):
                 time.sleep(0.1)
 
         self.config.save_configuration_file()
+        self.interpreter.stop()
         self.friendships.stop()
         self.server.stop()
         self.help.stop()

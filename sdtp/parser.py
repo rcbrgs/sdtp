@@ -32,6 +32,7 @@ class Parser(threading.Thread):
             'AIAirDrop spawned aircraft': self.match_prefix + r'INF AIAirDrop: Spawned aircraft at \(' + self.match_string_pos + r'\), heading \(\([-+\d\.]*, [-+\d\.]*\)\)',
             'AIAirDrop spawned supply crate' : self.match_prefix + r'INF AIAirDrop: Spawned supply crate at ' + self.match_string_pos + r', plane is at ' + self.match_string_pos,
             'AIAirDrop waiting chunk locations': self.match_prefix + r'INF AIAirDrop: Waiting for supply crate chunk locations to load...',
+            'AIDirector FindWanderingHordeTargets at player': self.match_prefix + r'INF AIDirector: FindWanderingHordeTargets at player \'\[type=EntityPlayer, name=.*, id=[\d]+\]\', dist [\.\d]+$',
             'AI find wandering horde targets end': self.match_prefix + r'INF AIDirector: FindWanderingHordeTargets end y < 0',
             'AIDirector NextStage': self.match_prefix + r'INF AIDirectorGameStagePartySpawner: NextStage done \([\d]+\)$',
 #            'AI night horde' : self.match_prefix + r'INF AIDirector: Night Horde Spawn Finished \(all mobs spawned\).$',
@@ -137,6 +138,7 @@ class Parser(threading.Thread):
 #                                       r'=[\d]+ XZ=[+-]*[\d]+/[+-]*[\d]+ ' + \
 #                                       r'ZombiesWastelandNight_Night: c=[\d]+/r=[\d]+ ZombiesWasteland_Day: c=[\d]+/r=[\d]+$',
 #                                       'to_call'  : [ ] },
+            'BlockAdded': self.match_prefix + r'INF BlockAdded: [\d]+, ' + self.match_string_pos_unparenthesized + r'$',
             'BlockSpawnEntity': self.match_prefix + r'INF BlockSpawnEntity:: Spawn New Trader\.',
             'blood moon party': self.match_prefix + r'INF BloodMoonParty: SpawnZombie grp [\d]+ feralHordeStageGS[\d]+ \(count [\d]+, numToSpawn [\d]+, maxAlive [\d]+\), cnt [\d]+ .*, at player [\d]+, day/time [\d]+ [\d]+:[\d]+$',
             'chat message': self.match_string_date + r' INF Chat \(from \'(.*)\', entity id \'([+-]*[\d]+)\', to \'(.*)\'\): \'(.*)\': (.*)',
@@ -172,7 +174,7 @@ class Parser(threading.Thread):
             'EAC client auth local': self.match_prefix + r'INF \[EAC\] UserStatusHandler callback\. Status: ClientAuthenticatedLocal ReqKick: False Message: Client authenticated',
             'EAC client auth remote': self.match_prefix + r'INF \[EAC\] UserStatusHandler callback\. Status: ClientAuthenticatedRemote ReqKick: False Message: Client authenticated remotely',
             'EAC connection established': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Cerberus\] \[Backend\] Connection established\.$',
-            'EAC free user' : self.match_prefix+ r'INF \[EAC\] FreeUser: EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
+            'EAC free user' : self.match_prefix+ r'INF \[EAC\] FreeUser: EntityID=[-+\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'EAC kicking player' : self.match_prefix + r'Kicking player: Kicked by EAC. ' + \
 #                                       r'Please check if you started the game with AntiCheat protection ' + \
 #                                       r'software enabled$',
@@ -192,6 +194,7 @@ class Parser(threading.Thread):
             'EAC register event': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Cerberus\] \[RegisterEvent\] EventID: .* EventName: \'.*\' Parameters: .*',
             'EAC registering user' : self.match_prefix + r'INF \[EAC\] Registering user: EntityID=[-+]*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'$',
             'EAC registering with': self.match_prefix + r'INF Steam authentication successful, registering with EAC: EntityID=[-+\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
+            'EAC starting server': self.match_prefix + r'INF \[EAC\] Starting EAC server$',
 #            'EAC unregister' : self.match_prefix + r'INF \[EAC\] Log: User unregistered. GUID: [\d]+$',
             'EAC server initialize': self.match_prefix + r'INF \[EAC\] Log: \[EAC Server\]  \[Info\] \[Initialize\] ServerName: \'7 Days To Die\' RegisterTimeout: 60.',
 #                                       'to_call'  : [ ] },
@@ -307,6 +310,7 @@ class Parser(threading.Thread):
             'LiteNetLib connect from': self.match_prefix + r'INF NET: LiteNetLib: Connect from: ' + self.match_string_ip + r':[\d]+$',
             'LiteNetLib DisconnectPeerCalled': self.match_prefix + r'INF NET: LiteNetLib: Client disconnect from: ' + self.match_string_ip + r':[\d]+ \(DisconnectPeerCalled\)',
             'LiteNetLib received from unknown': self.match_prefix + r'INF NET: LiteNetLib: Received package from an unknown client: ' + self.match_string_ip + r':[\d]+',
+            'LiteNetLib Timeout': self.match_prefix + r'INF NET: LiteNetLib: Client disconnect from: ' + self.match_string_ip_port + r' \(Timeout\)',
             'lkp output' : r'[\d]+\. (.*), id=([\d]+), steamid=([\d]+), online=([\w]+), ip=(.*), playtime=([\d]+) m, seen=' + self.match_string_date_simple + '$',
             'lkp total' : r'Total of [\d]+ known$',
 #                                       'to_call'  : [ ] },
@@ -346,7 +350,7 @@ class Parser(threading.Thread):
             'mem output' : r'[0-9]{4}-[0-9]{2}-[0-9]{2}.* INF Time: ([0-9]+.[0-9]+)m FPS: ([0-9]+.[0-9]+) Heap: ([0-9]+.[0-9]+)MB Max: ([0-9]+.[0-9]+)MB Chunks: ([0-9]+) CGO: ([0-9]+) Ply: ([0-9]+) Zom: (.*) Ent: ([\d]+) \(([\d]+)\) Items: ([0-9]+)',
             
             'message player' : r'Message to player ".*" sent with sender "Server"',
-            'missing paint': self.match_prefix + r'INF Missing paint ID XML entry: 76 for block \'scrapIronWedge\'',
+            'missing paint': self.match_prefix + r'INF Missing paint ID XML entry: 76 for block \'.*\'',
             'NCS reader exited thread': self.match_prefix + r'INF Exited thread NCS_Reader_[\d]+_[\d]+',
             'NCS writer exited thread': self.match_prefix + r'INF Exited thread NCS_Writer_[\d]+_[\d]+',
             'NCS reader started thread': self.match_prefix + r'INF Started thread NCS_Reader_[\d]+_[\d]+',
@@ -407,6 +411,7 @@ class Parser(threading.Thread):
             'sideshave hair': self.match_prefix + r'INF Alt slots does not contain female_sideshave_hair!$',
             'SleeperVolume restoring': self.match_prefix + r'INF [\d\.]+ SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Restoring at ' + self.match_string_pos_unparenthesized + r' \'.*\'',
             "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'.*\', class .*',
+            'SleeperVolume still alive': self.match_prefix + r'INF [\d\.]+ SleeperVolume [-+\d]+, [-+\d]+, [-+\d]+\. Still alive \'GameObject\'',
             "server disconnect" : self.match_string_date + r"INF Disconnect",
             "server shutting down": self.match_prefix + r'INF Server shutting down!',
 #            'si command executing' : self.match_string_date + \
