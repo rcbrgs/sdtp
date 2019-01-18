@@ -18,6 +18,7 @@ class Telnet(threading.Thread):
         self.ready = False
         self.connectivity_level = 0
         self.latest_handshake = 0
+        self.latest_write = ""
         self.ongoing_handshake = False
         self.output_matchers = [ re.compile ( b'^.*\n' ),
                                  re.compile ( b'^Day [\d]+, [\d]{2}:[\d]{2} ' ),
@@ -192,7 +193,9 @@ class Telnet(threading.Thread):
             time.sleep(0.1)
             count += 1
             if count > 100:
-                self.logger.warning("Forcefully releasing write lock.")
+                self.logger.warning("Forcefully releasing write lock. "\
+                                    "latest_write = '{}'".format(
+                                        self.latest_write))
                 self.write_lock = False
         if self.connectivity_level == 0:
             self.logger.debug(
@@ -218,4 +221,5 @@ class Telnet(threading.Thread):
         if lock_after_write:
             self.write_lock = True
             self.logger.debug("Write locked.")
+        self.latest_write = input_msg
         self.logger.debug("Message written.")

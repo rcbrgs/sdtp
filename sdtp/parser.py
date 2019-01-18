@@ -368,8 +368,6 @@ class Parser(threading.Thread):
 #            'player kicked' : self.match_prefix + r'INF Executing command \'kick [\d]+\'' + \
 #                                       r' by Telnet from ' + self.match_string_ip + ':[\d]+$',
 #                                       'to_call'  : [ ] },
-#            'playerlogin' : self.match_prefix + r'INF PlayerLogin: .*/Alpha [\d]+\.[\d]+$',
-#                                       'to_call'  : [ ] },
 #            'playername not found' : r'^Playername or entity/steamid id not found$',
 #                                       'to_call'  : [ ] },
             'player offline' : self.match_prefix + r'INF Player set to offline: [\d]+$',
@@ -388,7 +386,7 @@ class Parser(threading.Thread):
 #                                       r' eliminated Player (.*)',
 #                                       'to_call'  : [ self.framework.game_events.player_kill ] },
             'player left' : self.match_prefix + r'INF GMSG: Player \'(.*)\' left the game$',
-            'player login' : self.match_prefix + r'INF PlayerLogin: .*/Alpha 17$',
+            'player login' : self.match_prefix + r'INF PlayerLogin: .*/Alpha [\d\.]+$',
             'player req spawn' : self.match_prefix + r'INF RequestToSpawnPlayer: [\d]+, .*, [\d]+$',
             "player spawned in the world": self.match_prefix + r'INF PlayerSpawnedInWorld \(reason: (.*), position: ' + self.match_string_pos_unparenthesized + r'\): EntityID=[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'',
 #            'pm executing' : r'^' + self.match_string_date + r' INF Executing command' + \
@@ -408,6 +406,7 @@ class Parser(threading.Thread):
             'sending world done': self.match_prefix + r'INF Sending world to EntityID=[+-]*[\d]+, PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\' done$',
             'sending world starting': self.match_prefix + r'INF Starting to send world to EntityID=[+-]*[\d], PlayerID=\'[\d]+\', OwnerID=\'[\d]+\', PlayerName=\'.*\'\.\.\.',
             'shaggy hair': self.match_prefix + r'INF Alt slots does not contain female_hair_shaggy02!$',
+            'shaggy hair hat': self.match_prefix +r'INF Alt slots does not contain male_shaggy_hair_hat!',
             'sideshave hair': self.match_prefix + r'INF Alt slots does not contain female_sideshave_hair!$',
             'SleeperVolume restoring': self.match_prefix + r'INF [\d\.]+ SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Restoring at ' + self.match_string_pos_unparenthesized + r' \'.*\'',
             "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'.*\', class .*',
@@ -481,6 +480,7 @@ class Parser(threading.Thread):
 #                                       self.match_string_ip + ':([\d]+)',
 #                                       'to_call'  : [ ] },
             'treePlantedOak41m': self.match_prefix + r'ERR Block on position [-+\d]+, [-+\d]+, [-+\d]+ with name \'treePlantedOak41m\' should be a parent but is not! \(1\)',
+            'VehicleManager save': self.match_prefix + r'INF VehicleManager Save',
 #            'version' : r'^' + self.match_string_date + r' INF Executing ' + \
 #                                       r'command \'version\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ ] },
