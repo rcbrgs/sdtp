@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#------------------------------------------------------------------------------8081
 
 import logging
 import re
@@ -232,7 +233,7 @@ class Portals(threading.Thread):
     def add_portal(self, player, portal_name, public = False):
         # check player has portals left
         if self.controller.config.values[
-                "mod_portals_max_portals_per_player"] > 0:
+                "mod_portals_max_portals_per_player"] >= 0:
             player_portals = self.controller.database.blocking_consult(
                 PortalsTable,
                 [(PortalsTable.steamid, "==", player["steamid"])])

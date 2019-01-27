@@ -212,7 +212,7 @@ class Parser(threading.Thread):
 #                                       r'[\d]+ [\w\d]+ [\d]+\' by Telnet from ' + self.match_string_ip + \
 #                                       r':[\d]+$',
 #                                       'to_call'  : [ ] },
-            'et from': r'[lnet\s]+from ' + self.match_string_ip_port + r'$',
+            'et from': r'[lnet\s]*from ' + self.match_string_ip_port + r'$',
             'Exception Err': r'Exception: Err',
 #            'executing cmd lkp' : self.match_prefix + r'INF Executing command \'lkp\' by Telnet from ' + self.match_string_ip + r':[\d]+$',
 #                                       'to_call'  : [ ] },

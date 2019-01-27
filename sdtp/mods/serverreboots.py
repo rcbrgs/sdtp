@@ -80,7 +80,7 @@ class ServerReboots(threading.Thread):
                 self.logger.debug("Server not empty preventing shutdown.")
                 return
         if time.time ( ) < self.controller.config.values [ "latest_reboot" ] + 3601:
-            self.logger.info("Latest reboot was less than an hour ago.")
+            self.logger.debug("Latest reboot was less than an hour ago.")
             return
 
         if not self.in_countdown:

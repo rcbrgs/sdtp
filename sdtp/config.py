@@ -35,7 +35,12 @@ class Config(object):
             "auto_connect" : False,
             # mod announcements
             "mod_announcements_enable": True,
-            "mod_announcements_commands": {"sdtp":
+            "mod_announcements_commands": {"help":
+                                           {"command": False,
+                                            "text": "Type /help to get a list of commands. /help <cmd> for help on <cmd>.",
+                                            "interval": 3600,
+                                            "latest": -1},
+                                           "sdtp":
                                             {"command": False,
                                              "text": "Seven Days To Py - get it at https://github.com/rcbrgs/sdtp",
                                              "interval": 24*3600,
@@ -70,6 +75,7 @@ class Config(object):
             # mod forbidden countries
             "mod_forbiddencountries_enable": False,
             "mod_forbiddencountries_banned_countries": ["ch", "ru"],
+            "mod_forbiddencountries_whitelist": [],
             # mod interpreter
             "mod_interpreter_enable": False,
             # mod leg fix

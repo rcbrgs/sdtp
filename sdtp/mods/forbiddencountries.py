@@ -44,8 +44,12 @@ class ForbiddenCountries(threading.Thread):
 
     def check_IP_is_blocked ( self, match ):
         name = match [ 1 ]
-        steamid = match [ 15 ]
+        steamid = int(match [ 15 ])
         ip = match [ 16 ]
+
+        if steamid in self.controller.config.values["mod_forbiddencountries_whitelist"]:
+            return
+        
         country = self.geoip.country_code_by_addr ( ip )
 
         matcher_home192 = re.compile ( r"^192\.168\." )
