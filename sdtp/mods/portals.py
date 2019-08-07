@@ -24,6 +24,8 @@ class Portals(threading.Thread):
 
     def run(self):
         self.logger.info("Start.")
+        if not self.controller.config.values["mod_portals_enable"]:
+            return
         self.help = {
             "go": "will list your portals.",
             "go public": "will list public portals.",
