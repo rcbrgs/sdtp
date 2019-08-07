@@ -48,9 +48,9 @@ Then, run sdtp; wait a few seconds and stop it with Ctrl+C.
     sdtp
     ^C
 
-Now you will have a few files in the current folder. The configuration file is sdtp_preconfig.json, so go ahead and edit it:
+Now you will have a few files in the current folder. The configuration file is sdtp_config.json, so go ahead and edit it:
 
-    emacs sdtp_preconfig.json
+    emacs sdtp_config.json
 
 After you selected mods to be enabled and the parameters values, save the file and run sdtp again:
 
