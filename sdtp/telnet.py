@@ -14,6 +14,7 @@ class Telnet(threading.Thread):
         self.controller = controller
         self.keep_running = True
         self.logger = logging.getLogger(__name__)
+        #self.logger.setLevel(logging.DEBUG)
 
         self.ready = False
         self.connectivity_level = 0

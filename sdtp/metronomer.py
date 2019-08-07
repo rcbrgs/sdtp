@@ -38,8 +38,12 @@ class Metronomer(threading.Thread):
             if(now - latest_llp > self.controller.config.values["interval_llp"]):
                 latest_llp = now
                 if self.controller.telnet.ready:
-                    self.controller.telnet.write("llp", lock_after_write = True)
-                    # Lock will be released by mod claim_alarm.
+                    if self.controller.config.values["mod_claimalarm_enable"]:
+                        # Lock will be released by mod claim_alarm.
+                        self.controller.telnet.write("llp", lock_after_write = True)
+                    else:
+                        self.controller.telnet.write("llp")
+                        
             if(now - latest_lp > self.controller.config.values["interval_lp"]):
                 latest_lp = now
                 if self.controller.telnet.ready:
