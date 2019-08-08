@@ -169,6 +169,9 @@ class Controller(threading.Thread):
 
         count = 0
         while not self.telnet.ready:
+            if self.telnet.wrong_password:
+                self.logger.info("Shutting down because of wrong telnet password.")
+                self.stop()
             time.sleep(0.1)
             count += 1
             if count > 100:

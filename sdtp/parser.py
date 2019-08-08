@@ -361,7 +361,7 @@ class Parser(threading.Thread):
             'otherHeight': self.match_prefix + r'WRN Path node otherHeight bad .*$',
             'party computed game stage': self.match_prefix + r'INF Party with [\d]+ player\(s\) has a computed game stage of [\d]+$',
             'party members': self.match_prefix + r'INF Party members:.*',
-            "password incorrect" : r"^Password incorrect, please enter password:$",
+            "password incorrect": r"^Password incorrect, please enter password:$",
             'player created' : self.match_prefix + r'INF Created player with id=([\d]+)$',
             'player gameStage': self.match_prefix + r'INF Player id [\d]+ gameStage: [\d]+$',
             'player joined' : self.match_prefix + 'INF GMSG: Player \'(.*)\' joined the game',

@@ -26,6 +26,7 @@ class Telnet(threading.Thread):
                                  re.compile ( b'Total of [\d]+ in the game' ) ]
         self.telnet = None
         self.write_lock = False
+        self.wrong_password = False
 
     def run(self):
         self.logger.info("Start.")
@@ -119,7 +120,7 @@ class Telnet(threading.Thread):
             return
         self.logger.debug("Waiting for 'Logon successful.'")
         try:
-            linetest = self.telnet.read_until(b'Logon successful.')
+            linetest = self.telnet.read_until(b'Logon successful.', timeout=10)
         except Exception as e:
             self.logger.error("linetest exception: {}.".format(e))
             self.ongoing_handshake = False
@@ -128,8 +129,11 @@ class Telnet(threading.Thread):
             self.logger.debug(linetest.decode('utf-8'))
             self.logger.info("Telnet connected successfully.")
         else:
-            self.logger.error("Logon failed.")
+            self.logger.error("Logon failed. linetest = {}".format(linetest))
             self.ongoing_handshake = False
+            if (linetest == b'\r\nPassword incorrect, please enter password:\r\n'):
+                self.logger.warning("Wrong password!")
+                self.wrong_password = True
             return
         self.logger.debug("Telnet step 2 completed." )
         self.connectivity_level = 2
