@@ -409,7 +409,7 @@ class Parser(threading.Thread):
             'shaggy hair hat': self.match_prefix +r'INF Alt slots does not contain male_shaggy_hair_hat!',
             'sideshave hair': self.match_prefix + r'INF Alt slots does not contain female_sideshave_hair!$',
             'SleeperVolume restoring': self.match_prefix + r'INF [\d\.]+ SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Restoring at ' + self.match_string_pos_unparenthesized + r' \'.*\'',
-            "sleepervolume spawning": self.match_prefix + r'INF SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'.*\', class .*',
+            "sleepervolume spawning": self.match_prefix + r'INF [\d\.]+ SleeperVolume ' + self.match_string_pos_unparenthesized + r'\. Spawning at ' + self.match_string_pos_unparenthesized + r', group \'.*\', class .*',
             'SleeperVolume still alive': self.match_prefix + r'INF [\d\.]+ SleeperVolume [-+\d]+, [-+\d]+, [-+\d]+\. Still alive \'GameObject\'',
             "server disconnect" : self.match_string_date + r"INF Disconnect",
             "server shutting down": self.match_prefix + r'INF Server shutting down!',
@@ -491,6 +491,9 @@ class Parser(threading.Thread):
             'World RWG': r'World:       RWG',
             'World.Cleanup': self.match_prefix + r'INF World.Cleanup',
             'World.Unload': self.match_prefix + r'INF World.Unload',
+            'xpFromHarvestingThisLevel': self.match_prefix + r'CVarLogValue: \$xpFromHarvestingThisLevel == 0$',
+            'xpFromKillThisLevel': self.match_prefix + r'CVarLogValue: \$xpFromKillThisLevel == 0$',
+            'xpFromLootThisLevel': self.match_prefix + r'CVarLogValue: \$xpFromLootThisLevel == 0$',
 #            'exception sharing' : r'IOException: Sharing violation on path .*',
 #                                       'to_call'  : [ self.framework.quiet_listener ] },
         }

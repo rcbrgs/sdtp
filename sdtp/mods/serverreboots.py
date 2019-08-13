@@ -60,7 +60,8 @@ class ServerReboots(threading.Thread):
         self.logger.debug("uptime = {} hours".format ( uptime ) )
         if uptime > self.latest_uptime_announcement:
             if self.latest_uptime_announcement != -1:
-                self.logger.debug("Server online for {} hours.".format(uptime))
+                self.logger.debug("Server online for {}.".format(
+                    self.controller.qol.pretty_print_seconds(uptime)))
                 self.controller.telnet.write (
                     'say "Server online for {} hours.".'.format ( uptime ) )
             self.latest_uptime_announcement = uptime
